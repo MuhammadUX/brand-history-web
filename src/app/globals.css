@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-inter: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-noto-arabic: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+}
+
+html,
+body {
+  background-color: #f7f8fa;
+  color: #16181d;
+}
+
+body {
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-noto-arabic);
+}
