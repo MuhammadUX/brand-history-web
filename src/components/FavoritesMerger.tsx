@@ -79,6 +79,7 @@ export default function FavoritesMerger({ locale }: { locale: Locale }) {
   return (
     <div
       role="status"
+      aria-live="polite"
       className="mb-6 rounded-card border border-primary/30 bg-primary-tint px-4 py-3 text-sm font-medium text-primary"
     >
       {dict.favorite.merged(mergedCount)}

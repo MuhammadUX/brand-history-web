@@ -5,11 +5,12 @@ import ProfileForm from "./ProfileForm";
 import AccountFavorites from "./AccountFavorites";
 import SignOutButton from "./SignOutButton";
 import SubscriptionPanel from "./SubscriptionPanel";
+import PrivacyPanel from "./PrivacyPanel";
 import { getDictionary } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
 import type { SubscriptionRecord } from "@/lib/entitlements";
 
-type Tab = "profile" | "subscription" | "favorites" | "downloads";
+type Tab = "profile" | "subscription" | "favorites" | "downloads" | "privacy";
 
 export default function AccountTabs({
   locale,
@@ -32,6 +33,7 @@ export default function AccountTabs({
     { id: "subscription", label: dict.accountPro.tab },
     { id: "favorites", label: dict.account.tabs.favorites },
     { id: "downloads", label: dict.account.tabs.downloads },
+    { id: "privacy", label: dict.privacy.tab },
   ];
 
   return (
@@ -127,6 +129,20 @@ export default function AccountTabs({
           <p className="mt-1 text-sm text-secondary">
             {dict.account.downloadsBody}
           </p>
+        </section>
+      )}
+
+      {tab === "privacy" && (
+        <section
+          role="tabpanel"
+          id="panel-privacy"
+          aria-labelledby="tab-privacy"
+        >
+          <h2 className="text-lg font-bold text-ink">{dict.privacy.title}</h2>
+          <p className="mb-5 mt-1 text-sm text-secondary">
+            {dict.privacy.subtitle}
+          </p>
+          <PrivacyPanel locale={locale} />
         </section>
       )}
     </div>

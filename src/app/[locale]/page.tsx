@@ -6,8 +6,26 @@ import { getBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const dict = getDictionary(locale);
+  return buildMetadata({
+    locale,
+    pathAfterLocale: "",
+    title: `${dict.brandName} — ${dict.home.heroTitle}`,
+    description: dict.home.heroSubtitle,
+  });
+}
 
 export default async function HomePage({
   params,
@@ -28,7 +46,7 @@ export default async function HomePage({
   return (
     <>
       <TopNav locale={typedLocale} />
-      <main>
+      <main id="main-content">
         {/* Hero */}
         <section className="border-b border-border bg-surface">
           <div className="mx-auto max-w-container px-4 py-16 sm:px-6 sm:py-20">

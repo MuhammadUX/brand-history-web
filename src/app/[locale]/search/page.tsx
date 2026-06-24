@@ -8,8 +8,33 @@ import { searchBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string; sector?: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const { q } = await searchParams;
+  const dict = getDictionary(locale);
+  const query = (q ?? "").trim();
+  const title = query
+    ? `${dict.search.resultsFor(query)} — ${dict.brandName}`
+    : `${dict.search.promptTitle} — ${dict.brandName}`;
+  return buildMetadata({
+    locale,
+    pathAfterLocale: "search",
+    title,
+    description: dict.search.promptBody,
+  });
+}
 
 export default async function SearchPage({
   params,
@@ -34,7 +59,7 @@ export default async function SearchPage({
   return (
     <>
       <TopNav locale={typedLocale} pathAfterLocale="search" />
-      <main className="mx-auto max-w-container px-4 py-10 sm:px-6">
+      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         {!query ? (
           <div className="rounded-card border border-border bg-surface p-10 text-center">
             <h1 className="text-xl font-semibold text-ink">

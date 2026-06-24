@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
+import PrivacyChoicesButton from "./PrivacyChoicesButton";
 
 export default function Footer({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -22,6 +23,7 @@ export default function Footer({ locale }: { locale: Locale }) {
             <Link href={`/${locale}/suggest`} className={linkCls}>
               {dict.footer.suggest}
             </Link>
+            <PrivacyChoicesButton label={dict.consent.privacyChoices} className={linkCls} />
           </nav>
         </div>
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

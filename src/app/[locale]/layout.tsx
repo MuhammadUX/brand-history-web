@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { getDictionary, isLocale } from "@/i18n";
+import ConsentBanner from "@/components/ConsentBanner";
 import type { Locale } from "@/lib/types";
 
 export function generateStaticParams() {
@@ -40,7 +41,14 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="min-h-screen bg-page text-ink antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[60] focus:rounded-btn focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        >
+          {dict.a11y.skipToContent}
+        </a>
         {children}
+        <ConsentBanner locale={typedLocale} />
       </body>
     </html>
   );

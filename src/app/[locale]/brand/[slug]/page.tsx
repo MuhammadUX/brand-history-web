@@ -19,8 +19,43 @@ import { getFavoritesContext } from "@/lib/favorites";
 import { getEntitlements } from "@/lib/entitlements";
 import { getDictionary, isLocale } from "@/i18n";
 import type { BrandAsset, Locale } from "@/lib/types";
+import type { Metadata } from "next";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) return {};
+  const typedLocale = locale as Locale;
+  const isAr = typedLocale === "ar";
+  const dict = getDictionary(typedLocale);
+  const brand = await getBrandBySlug(slug);
+  if (!brand) {
+    return buildMetadata({
+      locale: typedLocale,
+      pathAfterLocale: `brand/${slug}`,
+      title: `${dict.notFound.title} — ${dict.brandName}`,
+      description: dict.notFound.body,
+    });
+  }
+  const name = (isAr ? brand.name_ar : brand.name_en) || brand.name_en;
+  const summary =
+    (isAr ? brand.summary_ar : brand.summary_en) ||
+    `${name} — ${dict.brandName}`;
+  const ogUrl = `${SITE_URL}/${typedLocale}/brand/${brand.slug}/opengraph-image`;
+  return buildMetadata({
+    locale: typedLocale,
+    pathAfterLocale: `brand/${brand.slug}`,
+    title: `${name} — ${dict.brandName}`,
+    description: summary.slice(0, 200),
+    images: [{ url: ogUrl, width: 1200, height: 630, alt: name }],
+  });
+}
 
 const ASSET_TYPE_LABELS: Record<string, { en: string; ar: string }> = {
   logo_primary: { en: "Primary logo", ar: "الشعار الأساسي" },
@@ -134,7 +169,7 @@ export default async function BrandPage({
   return (
     <>
       <TopNav locale={typedLocale} />
-      <main>
+      <main id="main-content">
         {/* Hero */}
         <section className="border-b border-border bg-surface">
           <div className="mx-auto max-w-container px-4 py-12 sm:px-6">

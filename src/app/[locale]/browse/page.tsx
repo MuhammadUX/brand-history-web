@@ -7,8 +7,26 @@ import { getBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const dict = getDictionary(locale);
+  return buildMetadata({
+    locale,
+    pathAfterLocale: "browse",
+    title: `${dict.browse.title} — ${dict.brandName}`,
+    description: dict.browse.subtitle,
+  });
+}
 
 function groupAlphabetically(
   brands: Brand[],
@@ -59,7 +77,7 @@ export default async function BrowsePage({
   return (
     <>
       <TopNav locale={typedLocale} pathAfterLocale="browse" />
-      <main className="mx-auto max-w-container px-4 py-10 sm:px-6">
+      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
             {dict.browse.title}

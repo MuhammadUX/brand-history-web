@@ -20,7 +20,7 @@ export default async function SuggestPage({
   return (
     <>
       <TopNav locale={typedLocale} pathAfterLocale="suggest" />
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <main id="main-content" className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <header className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
             {dict.suggest.title}

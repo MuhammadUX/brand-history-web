@@ -105,7 +105,7 @@ export default function AdminShell({
             </Link>
           ))}
         </nav>
-        <main className="mx-auto w-full max-w-container flex-1 px-4 py-8 sm:px-6">
+        <main id="main-content" className="mx-auto w-full max-w-container flex-1 px-4 py-8 sm:px-6">
           {children}
         </main>
       </div>

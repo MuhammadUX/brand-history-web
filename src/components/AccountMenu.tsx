@@ -74,6 +74,14 @@ export default function AccountMenu({
           >
             {dict.auth.account}
           </Link>
+          <Link
+            href={`/${locale}/notifications`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm text-ink transition hover:bg-page focus:bg-page focus:outline-none"
+          >
+            {dict.notifications.title}
+          </Link>
           {(role === "editor" || role === "admin") && (
             <Link
               href={`/${locale}/admin`}

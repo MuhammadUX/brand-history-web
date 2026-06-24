@@ -34,7 +34,7 @@ export default async function ComparePage({
     return (
       <>
         <TopNav locale={typedLocale} />
-        <main className="mx-auto max-w-container px-4 py-16 sm:px-6">
+        <main id="main-content" className="mx-auto max-w-container px-4 py-16 sm:px-6">
           <div className="rounded-card border border-border bg-surface p-10 text-center">
             <h1 className="text-xl font-semibold text-ink">
               {dict.compare.notEnoughTitle}

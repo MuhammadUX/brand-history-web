@@ -90,6 +90,7 @@ export default function DownloadLogoButton({
       <button
         type="button"
         onClick={downloadSvg}
+        aria-label={`${name} — ${label}`}
         className={className ?? baseBtn}
       >
         {label}
@@ -98,6 +99,7 @@ export default function DownloadLogoButton({
         type="button"
         onClick={downloadPng}
         disabled={busy}
+        aria-label={`${name} — ${pngLabel}`}
         className="inline-flex items-center justify-center rounded-btn border border-border bg-surface px-3 py-2 text-xs font-medium text-secondary transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
       >
         {pngLabel}

@@ -30,7 +30,7 @@ export default function AuthShell({
           </Link>
         </div>
       </header>
-      <main className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
+      <main id="main-content" className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6">
         <div className="rounded-card border border-border bg-surface p-6 sm:p-8">
           <h1 className="text-2xl font-bold tracking-tight text-ink">{title}</h1>
           {subtitle && <p className="mt-1.5 text-sm text-secondary">{subtitle}</p>}

@@ -32,7 +32,7 @@ export default async function ProPage({
   return (
     <>
       <TopNav locale={typedLocale} pathAfterLocale="pro" />
-      <main className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+      <main id="main-content" className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
         <div className="text-center">
           <span className="inline-flex rounded-pill bg-primary-tint px-3 py-1 text-xs font-semibold text-primary">
             {dict.nav.proBadge}

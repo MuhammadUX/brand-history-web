@@ -9,8 +9,26 @@ import { getTrendingBrands, getRecentlyUpdatedBrands } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
+import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const dict = getDictionary(locale);
+  return buildMetadata({
+    locale,
+    pathAfterLocale: "discover",
+    title: `${dict.discover.title} — ${dict.brandName}`,
+    description: dict.discover.subtitle,
+  });
+}
 
 export default async function DiscoverPage({
   params,
@@ -46,7 +64,7 @@ export default async function DiscoverPage({
   return (
     <>
       <TopNav locale={typedLocale} pathAfterLocale="discover" />
-      <main className="mx-auto max-w-container px-4 py-10 sm:px-6">
+      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
             {dict.discover.title}
