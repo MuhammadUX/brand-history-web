@@ -11,16 +11,22 @@ npx vercel --prod
 - Vercel detects Next.js automatically, runs `npm install` + `npm run build` in its cloud, and returns a live URL.
 
 ## Option B — Git + Vercel integration
-1. Create an empty GitHub repo (e.g. `brand-history-web`).
-2. From the app folder:
-   ```bash
-   cd "/Users/muhammadalfaifi/Brands/brand-history-app"
-   git init && git add . && git commit -m "Brand History — Sprint 0 vertical slice"
-   git branch -M main
-   git remote add origin <your-repo-url>
-   git push -u origin main
-   ```
+1. Create an empty GitHub repo (e.g. `brand-history-web`) and copy its URL.
+2. From the app folder, run these one line at a time (replace `REPO_URL` with your repo URL — no angle brackets):
+
+```bash
+cd "/Users/muhammadalfaifi/Brands/brand-history-app"
+git init
+git add .
+git commit -m "Brand History — Sprint 0 vertical slice"
+git branch -M main
+git remote add origin REPO_URL
+git push -u origin main
+```
+
 3. In Vercel → **Add New Project** → import the repo → Deploy.
+
+> Note: the earlier `zsh: parse error near '\n'` came from the `<your-repo-url>` placeholder — in zsh, `<` and `>` are file-redirection operators, so the angle brackets broke the command. Use a plain value like `REPO_URL` (or your actual `https://github.com/...` URL) with no `<` `>`. Running each line separately (above) also avoids any paste/indentation issues.
 
 ## Optional: set env in Vercel (recommended for clarity)
 Project → Settings → Environment Variables:

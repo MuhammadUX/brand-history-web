@@ -4,27 +4,32 @@ import { useState } from "react";
 import ProfileForm from "./ProfileForm";
 import AccountFavorites from "./AccountFavorites";
 import SignOutButton from "./SignOutButton";
+import SubscriptionPanel from "./SubscriptionPanel";
 import { getDictionary } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
+import type { SubscriptionRecord } from "@/lib/entitlements";
 
-type Tab = "profile" | "favorites" | "downloads";
+type Tab = "profile" | "subscription" | "favorites" | "downloads";
 
 export default function AccountTabs({
   locale,
   email,
   displayName,
   favorites,
+  subscription,
 }: {
   locale: Locale;
   email: string;
   displayName: string;
   favorites: Brand[];
+  subscription: SubscriptionRecord | null;
 }) {
   const dict = getDictionary(locale);
   const [tab, setTab] = useState<Tab>("profile");
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "profile", label: dict.account.tabs.profile },
+    { id: "subscription", label: dict.accountPro.tab },
     { id: "favorites", label: dict.account.tabs.favorites },
     { id: "downloads", label: dict.account.tabs.downloads },
   ];
@@ -75,6 +80,22 @@ export default function AccountTabs({
           <div className="mt-8 border-t border-border pt-6">
             <SignOutButton locale={locale} />
           </div>
+        </section>
+      )}
+
+      {tab === "subscription" && (
+        <section
+          role="tabpanel"
+          id="panel-subscription"
+          aria-labelledby="tab-subscription"
+        >
+          <h2 className="text-lg font-bold text-ink">
+            {dict.accountPro.title}
+          </h2>
+          <p className="mb-5 mt-1 text-sm text-secondary">
+            {dict.accountPro.subtitle}
+          </p>
+          <SubscriptionPanel locale={locale} subscription={subscription} />
         </section>
       )}
 

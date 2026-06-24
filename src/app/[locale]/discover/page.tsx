@@ -4,6 +4,7 @@ import TopNav from "@/components/TopNav";
 import Footer from "@/components/Footer";
 import BrandGrid from "@/components/BrandGrid";
 import LogoTile from "@/components/LogoTile";
+import AdSlot from "@/components/AdSlot";
 import { getTrendingBrands, getRecentlyUpdatedBrands } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -115,6 +116,11 @@ export default async function DiscoverPage({
             isAuthed={favCtx.isAuthed}
           />
         </section>
+
+        {/* Sponsored slot between rows (free users only; server-decided) */}
+        <div className="mb-12">
+          <AdSlot locale={typedLocale} variant="row" />
+        </div>
 
         {/* Recently updated */}
         <section>

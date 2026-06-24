@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Locale } from "@/lib/types";
 import { getDictionary, otherLocale } from "@/i18n";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { getIsPro } from "@/lib/entitlements";
 import AccountMenu from "./AccountMenu";
 
 interface TopNavProps {
@@ -36,6 +37,9 @@ export default async function TopNav({ locale, pathAfterLocale = "" }: TopNavPro
       .maybeSingle();
     role = profile?.role;
   }
+
+  // Pro state (server-authoritative) — drives the nav CTA.
+  const isPro = user ? await getIsPro() : false;
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-surface">
@@ -92,12 +96,22 @@ export default async function TopNav({ locale, pathAfterLocale = "" }: TopNavPro
               {dict.nav.login}
             </Link>
           )}
-          <Link
-            href={`/${locale}/pro`}
-            className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            {dict.nav.getPro}
-          </Link>
+          {isPro ? (
+            <Link
+              href={`/${locale}/account`}
+              className="inline-flex items-center gap-1.5 rounded-btn border border-primary bg-primary-tint px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <span aria-hidden="true">★</span>
+              {dict.nav.proBadge}
+            </Link>
+          ) : (
+            <Link
+              href={`/${locale}/pro`}
+              className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              {dict.nav.getPro}
+            </Link>
+          )}
         </nav>
       </div>
     </header>

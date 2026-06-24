@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import LogoTile from "@/components/LogoTile";
 import CopyButton from "@/components/CopyButton";
 import DownloadLogoButton from "@/components/DownloadLogoButton";
+import BrandKitButton from "@/components/BrandKitButton";
+import AdSlot from "@/components/AdSlot";
 import FavoriteButton from "@/components/FavoriteButton";
 import {
   getBrandBySlug,
@@ -14,6 +16,7 @@ import {
   getTimeline,
 } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
+import { getEntitlements } from "@/lib/entitlements";
 import { getDictionary, isLocale } from "@/i18n";
 import type { BrandAsset, Locale } from "@/lib/types";
 
@@ -41,14 +44,17 @@ export default async function BrandPage({
   const brand = await getBrandBySlug(slug);
   if (!brand) notFound();
 
-  const [assets, archivedAssets, colors, timeline, favCtx] = await Promise.all([
-    getBrandAssets(brand.id),
-    getArchivedAssets(brand.id),
-    getBrandColors(brand.id),
-    getTimeline(brand.id),
-    getFavoritesContext(),
-  ]);
+  const [assets, archivedAssets, colors, timeline, favCtx, entitlements] =
+    await Promise.all([
+      getBrandAssets(brand.id),
+      getArchivedAssets(brand.id),
+      getBrandColors(brand.id),
+      getTimeline(brand.id),
+      getFavoritesContext(),
+      getEntitlements(),
+    ]);
   const isFavorited = favCtx.favoriteIds.includes(brand.id);
+  const isProUser = entitlements.high_res && entitlements.bulk_zip;
 
   const name = isAr ? brand.name_ar : brand.name_en;
   const altName = isAr ? brand.name_en : brand.name_ar;
@@ -94,6 +100,22 @@ export default async function BrandPage({
         <span className="inline-flex rounded-btn border border-border px-4 py-2 text-sm font-medium text-secondary">
           {dict.brand.policyLinkOut}
         </span>
+      );
+    }
+    // Pro-policy asset: Pro users get the real (high-res) action; free users
+    // see the PRO lock that opens the paywall.
+    if (isProUser) {
+      return (
+        <BrandKitButton
+          locale={typedLocale}
+          slug={brand!.slug}
+          initials={brand!.initials}
+          color={brand!.primary_color}
+          name={name}
+          colors={colors}
+          isPro
+          kind="highres"
+        />
       );
     }
     return (
@@ -184,15 +206,26 @@ export default async function BrandPage({
                       {dict.brand.compare}
                     </Link>
                   )}
-                  <Link
-                    href={`/${typedLocale}/pro`}
-                    className="inline-flex cursor-pointer items-center gap-2 rounded-btn border border-border bg-page px-5 py-2.5 text-sm font-medium text-tertiary transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                  >
-                    <span className="rounded-pill bg-sponsoredBg px-2 py-0.5 text-xs font-semibold text-sponsored">
-                      {dict.brand.proLock}
-                    </span>
-                    {dict.brand.downloadKit}
-                  </Link>
+                  <BrandKitButton
+                    locale={typedLocale}
+                    slug={brand.slug}
+                    initials={brand.initials}
+                    color={brand.primary_color}
+                    name={name}
+                    colors={colors}
+                    isPro={isProUser}
+                    kind="highres"
+                  />
+                  <BrandKitButton
+                    locale={typedLocale}
+                    slug={brand.slug}
+                    initials={brand.initials}
+                    color={brand.primary_color}
+                    name={name}
+                    colors={colors}
+                    isPro={isProUser}
+                    kind="kit"
+                  />
                 </div>
               </div>
             </div>
@@ -274,6 +307,11 @@ export default async function BrandPage({
               </div>
             )}
           </section>
+
+          {/* Sponsored slot (free users only; server-decided) */}
+          <div className="mt-10">
+            <AdSlot locale={typedLocale} variant="sidebar" />
+          </div>
 
           {/* Guidelines */}
           <section id="guidelines" className="mt-14 scroll-mt-24">
