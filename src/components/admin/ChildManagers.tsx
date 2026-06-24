@@ -23,15 +23,32 @@ const ghostBtn =
 const delBtn =
   "rounded-btn border border-border px-2.5 py-1.5 text-xs font-medium text-sponsored transition hover:bg-sponsoredBg disabled:opacity-60";
 
+type ChildResult = { ok: boolean; message?: string };
+
 function useRefresh() {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const run = (fn: () => Promise<unknown>) =>
+  const [error, setError] = useState<string | null>(null);
+  const run = (fn: () => Promise<ChildResult>, messages: Record<string, string>) =>
     start(async () => {
-      await fn();
+      setError(null);
+      const res = await fn();
+      if (res && res.ok === false) {
+        setError(messages[res.message ?? "saveError"] ?? messages.saveError);
+        return;
+      }
       router.refresh();
     });
-  return { pending, run };
+  return { pending, run, error };
+}
+
+function ChildError({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <p className="mb-3 rounded-btn border border-red-300 bg-red-50 px-2.5 py-2 text-xs text-red-700" role="alert">
+      {error}
+    </p>
+  );
 }
 
 /* ---------------- Colors ---------------- */
@@ -45,17 +62,19 @@ export function ColorsManager({
   colors: BrandColor[];
 }) {
   const t = getDictionary(locale).admin.editor;
-  const { pending, run } = useRefresh();
+  const { pending, run, error } = useRefresh();
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
 
   return (
     <div className={cardCls}>
       <h2 className="mb-4 text-sm font-semibold text-ink">{t.colorsTitle}</h2>
+      <ChildError error={error} />
       <div className="space-y-2">
         {colors.length === 0 && <p className="text-sm text-tertiary">{t.noRows}</p>}
         {colors.map((c) => (
           <form
             key={c.id}
-            action={(fd) => run(() => saveColor(brandId, c.id, fd))}
+            action={(fd) => run(() => saveColor(brandId, c.id, fd), msgs)}
             className="flex flex-wrap items-end gap-2"
           >
             <input type="color" name="hex" defaultValue={c.hex} className="h-9 w-10 rounded-btn border border-border" aria-label={t.colorHex} />
@@ -63,11 +82,11 @@ export function ColorsManager({
             <input name="role" defaultValue={c.role} placeholder={t.colorRole} className={`${inputCls} w-28`} />
             <input name="sort_order" type="number" defaultValue={c.sort_order} className={`${inputCls} w-16`} aria-label={t.sort} />
             <button type="submit" disabled={pending} className={ghostBtn}>{t.save}</button>
-            <button type="button" disabled={pending} onClick={() => run(() => deleteColor(brandId, c.id))} className={delBtn}>{t.remove}</button>
+            <button type="button" disabled={pending} onClick={() => run(() => deleteColor(brandId, c.id), msgs)} className={delBtn}>{t.remove}</button>
           </form>
         ))}
       </div>
-      <form action={(fd) => run(() => saveColor(brandId, null, fd))} className="mt-4 flex flex-wrap items-end gap-2 border-t border-border pt-4">
+      <form action={(fd) => run(() => saveColor(brandId, null, fd), msgs)} className="mt-4 flex flex-wrap items-end gap-2 border-t border-border pt-4">
         <input type="color" name="hex" defaultValue="#3B5BDB" className="h-9 w-10 rounded-btn border border-border" aria-label={t.colorHex} />
         <input name="name" placeholder={t.colorName} className={`${inputCls} w-32`} />
         <input name="role" defaultValue="primary" placeholder={t.colorRole} className={`${inputCls} w-28`} />
@@ -92,17 +111,19 @@ export function AssetsManager({
   assets: BrandAsset[];
 }) {
   const t = getDictionary(locale).admin.editor;
-  const { pending, run } = useRefresh();
+  const { pending, run, error } = useRefresh();
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
 
   return (
     <div className={cardCls}>
       <h2 className="mb-4 text-sm font-semibold text-ink">{t.assetsTitle}</h2>
+      <ChildError error={error} />
       <div className="space-y-3">
         {assets.length === 0 && <p className="text-sm text-tertiary">{t.noRows}</p>}
         {assets.map((a) => (
           <form
             key={a.id}
-            action={(fd) => run(() => saveAsset(brandId, a.id, fd))}
+            action={(fd) => run(() => saveAsset(brandId, a.id, fd), msgs)}
             className="grid grid-cols-2 items-end gap-2 border-b border-border pb-3 sm:grid-cols-4"
           >
             <select name="asset_type" defaultValue={a.asset_type} className={inputCls} aria-label={t.assetType}>
@@ -121,12 +142,12 @@ export function AssetsManager({
             </label>
             <div className="col-span-2 flex gap-2 sm:col-span-4">
               <button type="submit" disabled={pending} className={ghostBtn}>{t.save}</button>
-              <button type="button" disabled={pending} onClick={() => run(() => deleteAsset(brandId, a.id))} className={delBtn}>{t.remove}</button>
+              <button type="button" disabled={pending} onClick={() => run(() => deleteAsset(brandId, a.id), msgs)} className={delBtn}>{t.remove}</button>
             </div>
           </form>
         ))}
       </div>
-      <form action={(fd) => run(() => saveAsset(brandId, null, fd))} className="mt-4 grid grid-cols-2 items-end gap-2 border-t border-border pt-4 sm:grid-cols-4">
+      <form action={(fd) => run(() => saveAsset(brandId, null, fd), msgs)} className="mt-4 grid grid-cols-2 items-end gap-2 border-t border-border pt-4 sm:grid-cols-4">
         <select name="asset_type" defaultValue="logo_primary" className={inputCls} aria-label={t.assetType}>
           {ASSET_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
         </select>
@@ -160,17 +181,19 @@ export function TimelineManager({
   entries: TimelineEntry[];
 }) {
   const t = getDictionary(locale).admin.editor;
-  const { pending, run } = useRefresh();
+  const { pending, run, error } = useRefresh();
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
 
   return (
     <div className={cardCls}>
       <h2 className="mb-4 text-sm font-semibold text-ink">{t.timelineTitle}</h2>
+      <ChildError error={error} />
       <div className="space-y-3">
         {entries.length === 0 && <p className="text-sm text-tertiary">{t.noRows}</p>}
         {entries.map((e) => (
           <form
             key={e.id}
-            action={(fd) => run(() => saveTimeline(brandId, e.id, fd))}
+            action={(fd) => run(() => saveTimeline(brandId, e.id, fd), msgs)}
             className="grid grid-cols-2 items-end gap-2 border-b border-border pb-3 sm:grid-cols-4"
           >
             <input name="year" type="number" defaultValue={e.year} placeholder={t.tlYear} className={inputCls} />
@@ -182,12 +205,12 @@ export function TimelineManager({
             <input name="sort_order" type="number" defaultValue={e.sort_order} className={inputCls} aria-label={t.tlSort} />
             <div className="col-span-2 flex gap-2 sm:col-span-4">
               <button type="submit" disabled={pending} className={ghostBtn}>{t.save}</button>
-              <button type="button" disabled={pending} onClick={() => run(() => deleteTimeline(brandId, e.id))} className={delBtn}>{t.remove}</button>
+              <button type="button" disabled={pending} onClick={() => run(() => deleteTimeline(brandId, e.id), msgs)} className={delBtn}>{t.remove}</button>
             </div>
           </form>
         ))}
       </div>
-      <form action={(fd) => run(() => saveTimeline(brandId, null, fd))} className="mt-4 grid grid-cols-2 items-end gap-2 border-t border-border pt-4 sm:grid-cols-4">
+      <form action={(fd) => run(() => saveTimeline(brandId, null, fd), msgs)} className="mt-4 grid grid-cols-2 items-end gap-2 border-t border-border pt-4 sm:grid-cols-4">
         <input name="year" type="number" defaultValue={new Date().getFullYear()} placeholder={t.tlYear} className={inputCls} />
         <input name="title_en" placeholder={t.tlTitleEn} className={inputCls} />
         <input name="title_ar" dir="rtl" placeholder={t.tlTitleAr} className={inputCls} />

@@ -120,6 +120,20 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
   return (data as unknown as Brand) ?? null;
 }
 
+export async function getBrandById(id: string): Promise<Brand | null> {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("brands")
+    .select(BRAND_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("getBrandById error:", error.message);
+    return null;
+  }
+  return (data as unknown as Brand) ?? null;
+}
+
 const ASSET_SELECT =
   "id,brand_id,asset_type,name_en,name_ar,download_policy,formats,is_archived,era,sort_order";
 

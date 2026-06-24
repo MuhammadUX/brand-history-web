@@ -36,6 +36,7 @@ export default function SubscriptionPanel({
 
   const status = subscription?.status ?? "none";
   const isProNow = status === "active" || status === "trialing";
+  const cancelsAtPeriodEnd = !!subscription?.cancel_at_period_end;
 
   function formatDate(iso: string | null): string {
     if (!iso) return "—";
@@ -112,6 +113,14 @@ export default function SubscriptionPanel({
         </div>
       )}
 
+      {isProNow && cancelsAtPeriodEnd && (
+        <div className="rounded-card border border-primary/30 bg-primary-tint px-4 py-3 text-sm text-primary">
+          {dict.accountPro.cancelsAtPeriodEnd(
+            formatDate(subscription.current_period_end)
+          )}
+        </div>
+      )}
+
       <div className="rounded-card border border-border bg-surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -182,7 +191,7 @@ export default function SubscriptionPanel({
 
         {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-5">
-          {isProNow ? (
+          {isProNow && !cancelsAtPeriodEnd ? (
             <button
               type="button"
               onClick={onCancel}

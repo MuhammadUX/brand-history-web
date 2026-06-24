@@ -143,6 +143,7 @@ export default async function BrandPage({
       return (
         <BrandKitButton
           locale={typedLocale}
+          brandId={brand!.id}
           slug={brand!.slug}
           initials={brand!.initials}
           color={brand!.primary_color}
@@ -243,6 +244,7 @@ export default async function BrandPage({
                   )}
                   <BrandKitButton
                     locale={typedLocale}
+                    brandId={brand.id}
                     slug={brand.slug}
                     initials={brand.initials}
                     color={brand.primary_color}
@@ -253,6 +255,7 @@ export default async function BrandPage({
                   />
                   <BrandKitButton
                     locale={typedLocale}
+                    brandId={brand.id}
                     slug={brand.slug}
                     initials={brand.initials}
                     color={brand.primary_color}

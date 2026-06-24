@@ -21,6 +21,7 @@ export default function NotificationList({
   const isAr = locale === "ar";
   const [items, setItems] = useState(initialNotifications);
   const [pending, startTransition] = useTransition();
+  const [toast, setToast] = useState("");
 
   const unreadCount = items.filter((n) => !n.read).length;
 
@@ -34,18 +35,31 @@ export default function NotificationList({
   }
 
   function onMarkRead(id: string) {
+    setToast("");
+    const prevItems = items;
     setItems((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-    startTransition(() => {
-      markNotificationRead(locale, id);
+    startTransition(async () => {
+      const res = await markNotificationRead(locale, id);
+      if (!res.ok) {
+        // Roll back the optimistic update and surface a toast.
+        setItems(prevItems);
+        setToast(dict.notifications.markReadError);
+      }
     });
   }
 
   function onMarkAll() {
+    setToast("");
+    const prevItems = items;
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    startTransition(() => {
-      markAllNotificationsRead(locale);
+    startTransition(async () => {
+      const res = await markAllNotificationsRead(locale);
+      if (!res.ok) {
+        setItems(prevItems);
+        setToast(dict.notifications.markReadError);
+      }
     });
   }
 
@@ -64,6 +78,17 @@ export default function NotificationList({
 
   return (
     <div>
+      <div aria-live="assertive" className="sr-only">
+        {toast}
+      </div>
+      {toast && (
+        <div
+          role="alert"
+          className="mb-4 rounded-card border border-sponsored/30 bg-sponsoredBg px-4 py-3 text-sm font-medium text-sponsored"
+        >
+          {toast}
+        </div>
+      )}
       <div className="mb-4 flex items-center justify-between">
         <p aria-live="polite" className="text-sm text-secondary">
           {unreadCount > 0

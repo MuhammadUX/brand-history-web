@@ -194,7 +194,9 @@ const en = {
     cancel: "Cancel subscription",
     canceling: "Canceling…",
     canceledNote:
-      "Canceled. For this demo, perks turned off immediately (normally they'd run until the period end).",
+      "Your subscription will cancel at the end of the current period. Your Pro perks stay active until then.",
+    cancelsAtPeriodEnd: (date: string) =>
+      `Pro until ${date} — cancels at period end.`,
     reactivate: "Reactivate",
     reactivating: "Reactivating…",
     reactivatedNote: "Reactivated — your perks are back on.",
@@ -228,6 +230,7 @@ const en = {
     successBody: "We've received it and will review it soon.",
     addAnother: "Suggest another brand",
     error: "Something went wrong. Please try again.",
+    throttled: "Please wait a moment before suggesting another.",
   },
   notFound: {
     title: "Brand not found",
@@ -263,6 +266,8 @@ const en = {
     checkInboxTitle: "Check your inbox",
     checkInboxBody:
       "We sent a confirmation link to your email. Click it to verify your account.",
+    registerNeutral:
+      "If that email is new, we've sent a verification link — check your inbox.",
     demoNote:
       "Email delivery isn't enabled in this demo. You can sign in right away with the pre-confirmed demo account: demo@brandhistory.test / Demo#12345",
     loginTitle: "Welcome back",
@@ -308,6 +313,7 @@ const en = {
     emailLocked: "Your email can't be changed here.",
     save: "Save changes",
     saved: "Profile updated.",
+    displayNameInvalid: "Display name must be between 1 and 60 characters.",
     favoritesTitle: "Favorites",
     favoritesSubtitle: "Brands you've saved.",
     favoritesEmpty: "You haven't saved any brands yet.",
@@ -399,6 +405,8 @@ const en = {
       conflict:
         "This brand changed since you opened it. Reload to get the latest, then re-apply your edits.",
       saveError: "Couldn't save. Please try again.",
+      childPublished:
+        "This brand is published. Unpublish it to edit, or edit a draft — published content can't be changed directly.",
       stateLabel: "Publication state",
       submitReview: "Submit for review",
       approve: "Approve",
@@ -475,6 +483,7 @@ const en = {
       lowFindings: "Low or no findings — you can still review what was drafted, or start over.",
       // Review workspace
       reviewBanner: "AI-drafted — needs review · nothing publishes until you approve.",
+      noFindings: "Found little for this brand — review the sparse draft below, or build it manually in the editor.",
       reviewTitle: "Draft review",
       blockOverview: "Overview",
       blockFacts: "Key facts",
@@ -593,6 +602,7 @@ const en = {
     markAllRead: "Mark all as read",
     markRead: "Mark as read",
     markReadAria: "Mark this notification as read",
+    markReadError: "Couldn't update notifications. Please try again.",
     emptyTitle: "You're all caught up",
     emptyBody: "You have no notifications right now.",
     unread: "Unread",

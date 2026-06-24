@@ -4,7 +4,6 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { getPaymentProvider } from "@/lib/payments/payment-provider";
 import {
   FULL_ENTITLEMENTS,
-  NO_ENTITLEMENTS,
   amountForPlan,
   isPlan,
   type Plan,
@@ -106,8 +105,10 @@ export async function runCheckout(
 }
 
 /**
- * Cancel: per spec, status → 'canceled'. For the demo we ALSO flip
- * entitlements off immediately (production would keep them until period end).
+ * Cancel at period end: keep status 'active' and entitlements intact, but flag
+ * cancel_at_period_end=true. The entitlement resolver (isSubscriptionPro) keeps
+ * the user Pro until current_period_end passes, then naturally resolves to free
+ * — no scheduler required.
  */
 export async function cancelSubscription(): Promise<{ ok: boolean }> {
   const supabase = await createServerSupabase();
@@ -119,8 +120,8 @@ export async function cancelSubscription(): Promise<{ ok: boolean }> {
   const { error } = await supabase
     .from("subscriptions")
     .update({
-      status: "canceled",
-      entitlements: NO_ENTITLEMENTS,
+      status: "active",
+      cancel_at_period_end: true,
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
@@ -132,12 +133,19 @@ export async function cancelSubscription(): Promise<{ ok: boolean }> {
     user_id: user.id,
     provider: "mock",
     event_type: "subscription_canceled",
-    detail: { immediate: true, note: "demo flips entitlements immediately" },
+    detail: {
+      immediate: false,
+      note: "cancels at period end; entitlements run until current_period_end",
+    },
   });
   return { ok: true };
 }
 
-/** Reactivate a canceled subscription back to active for the rest of a period. */
+/**
+ * Reactivate: clear the cancel_at_period_end flag so the subscription renews
+ * normally. If the period already lapsed (status moved to canceled), restore an
+ * active period and entitlements.
+ */
 export async function reactivateSubscription(): Promise<{ ok: boolean }> {
   const supabase = await createServerSupabase();
   const {
@@ -147,20 +155,38 @@ export async function reactivateSubscription(): Promise<{ ok: boolean }> {
 
   const { data: sub } = await supabase
     .from("subscriptions")
-    .select("plan")
+    .select("plan,status,current_period_end")
     .eq("user_id", user.id)
     .maybeSingle();
   const plan: Plan = isPlan(sub?.plan) ? sub!.plan : "monthly";
 
+  // If the period is still in the future, just clear the flag and keep the
+  // existing period/entitlements. Otherwise restore a fresh active period.
+  const endMs = sub?.current_period_end
+    ? new Date(sub.current_period_end as string).getTime()
+    : 0;
+  const stillActive =
+    (sub?.status === "active" || sub?.status === "trialing") &&
+    (!endMs || endMs > Date.now());
+
+  const update: Record<string, unknown> = stillActive
+    ? {
+        status: "active",
+        cancel_at_period_end: false,
+        updated_at: new Date().toISOString(),
+      }
+    : {
+        status: "active",
+        plan,
+        entitlements: FULL_ENTITLEMENTS,
+        current_period_end: periodEnd(plan),
+        cancel_at_period_end: false,
+        updated_at: new Date().toISOString(),
+      };
+
   const { error } = await supabase
     .from("subscriptions")
-    .update({
-      status: "active",
-      plan,
-      entitlements: FULL_ENTITLEMENTS,
-      current_period_end: periodEnd(plan),
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq("user_id", user.id);
   if (error) {
     console.error("reactivateSubscription error:", error.message);

@@ -25,6 +25,12 @@ export default function ProfileForm({
     e.preventDefault();
     setError("");
     setSaved(false);
+    // Validate display name: trimmed length must be 1–60 chars.
+    const trimmed = displayName.trim();
+    if (trimmed.length < 1 || trimmed.length > 60) {
+      setError(dict.account.displayNameInvalid);
+      return;
+    }
     setPending(true);
     try {
       const supabase = createClient();
@@ -37,7 +43,7 @@ export default function ProfileForm({
       }
       const { error: updErr } = await supabase
         .from("profiles")
-        .update({ display_name: displayName.trim() })
+        .update({ display_name: trimmed })
         .eq("id", user.id);
       if (updErr) {
         setError(updErr.message || dict.auth.genericError);
@@ -45,7 +51,7 @@ export default function ProfileForm({
       }
       // Keep auth metadata in sync for the nav greeting.
       await supabase.auth.updateUser({
-        data: { display_name: displayName.trim() },
+        data: { display_name: trimmed },
       });
       setSaved(true);
     } catch {

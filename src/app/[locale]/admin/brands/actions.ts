@@ -267,14 +267,59 @@ export async function transitionBrand(
 
 /* ---------------- child collection actions (colors / assets / timeline) ---------------- */
 
+/** Result of a child-collection mutation (colors / assets / timeline). */
+export interface ChildResult {
+  ok: boolean;
+  /** dictionary key under admin.editor for a user-facing error, when ok=false */
+  message?: "childPublished" | "saveError" | "forbidden";
+}
+
+/** States in which a brand's children may be edited directly. */
+const EDITABLE_CHILD_STATES: PublicationState[] = [
+  "draft",
+  "in_review",
+  "approved",
+  "unpublished",
+];
+
+/**
+ * State gate: a published brand's children must NOT be edited directly (it would
+ * mutate the public surface with no review). Returns the brand's current
+ * row_version on success, or null if the brand is published / missing.
+ */
+async function loadEditableBrand(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  brandId: string
+): Promise<{ ok: true; rowVersion: number } | { ok: false; reason: "childPublished" | "saveError" }> {
+  const { data: brand, error } = await supabase
+    .from("brands")
+    .select("publication_state,row_version")
+    .eq("id", brandId)
+    .maybeSingle();
+  if (error || !brand) return { ok: false, reason: "saveError" };
+  if (!EDITABLE_CHILD_STATES.includes(brand.publication_state as PublicationState)) {
+    return { ok: false, reason: "childPublished" };
+  }
+  return { ok: true, rowVersion: brand.row_version ?? 0 };
+}
+
+/**
+ * Bump the parent brand after a child mutation: increment row_version (so
+ * parent stale-detection stays correct), refresh last_updated_at and updated_by.
+ */
 async function bumpBrand(
   supabase: Awaited<ReturnType<typeof createServerSupabase>>,
   operator: Operator,
-  brandId: string
+  brandId: string,
+  currentVersion: number
 ) {
   await supabase
     .from("brands")
-    .update({ updated_by: operator.id, last_updated_at: new Date().toISOString() })
+    .update({
+      updated_by: operator.id,
+      last_updated_at: new Date().toISOString(),
+      row_version: currentVersion + 1,
+    })
     .eq("id", brandId);
 }
 
@@ -282,9 +327,11 @@ export async function saveColor(
   brandId: string,
   colorId: string | null,
   fd: FormData
-): Promise<{ ok: boolean }> {
+): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     const payload = {
       brand_id: brandId,
       name: str(fd, "name") || "Color",
@@ -297,25 +344,30 @@ export async function saveColor(
     } else {
       await supabase.from("brand_colors").insert(payload);
     }
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, colorId ? "update" : "create", "brand_color", brandId, payload);
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, colorId ? "color_updated" : "color_added", "brand", brandId, {
+      color_id: colorId,
+      ...payload,
+    });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }
 
-export async function deleteColor(brandId: string, colorId: string): Promise<{ ok: boolean }> {
+export async function deleteColor(brandId: string, colorId: string): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     await supabase.from("brand_colors").delete().eq("id", colorId);
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, "delete", "brand_color", brandId, { colorId });
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, "color_removed", "brand", brandId, { color_id: colorId });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }
 
@@ -323,9 +375,11 @@ export async function saveAsset(
   brandId: string,
   assetId: string | null,
   fd: FormData
-): Promise<{ ok: boolean }> {
+): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     const formats = str(fd, "formats")
       .split(",")
       .map((f) => f.trim())
@@ -345,27 +399,31 @@ export async function saveAsset(
     } else {
       await supabase.from("brand_assets").insert(payload);
     }
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, assetId ? "update" : "create", "brand_asset", brandId, {
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, assetId ? "asset_updated" : "asset_added", "brand", brandId, {
+      asset_id: assetId,
       name_en: payload.name_en,
+      asset_type: payload.asset_type,
     });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }
 
-export async function deleteAsset(brandId: string, assetId: string): Promise<{ ok: boolean }> {
+export async function deleteAsset(brandId: string, assetId: string): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     await supabase.from("brand_assets").delete().eq("id", assetId);
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, "delete", "brand_asset", brandId, { assetId });
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, "asset_removed", "brand", brandId, { asset_id: assetId });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }
 
@@ -373,9 +431,11 @@ export async function saveTimeline(
   brandId: string,
   entryId: string | null,
   fd: FormData
-): Promise<{ ok: boolean }> {
+): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     const payload = {
       brand_id: brandId,
       year: intOrNull(fd, "year") ?? new Date().getFullYear(),
@@ -391,26 +451,29 @@ export async function saveTimeline(
     } else {
       await supabase.from("timeline_entries").insert(payload);
     }
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, entryId ? "update" : "create", "timeline_entry", brandId, {
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, entryId ? "timeline_updated" : "timeline_added", "brand", brandId, {
+      entry_id: entryId,
       year: payload.year,
     });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }
 
-export async function deleteTimeline(brandId: string, entryId: string): Promise<{ ok: boolean }> {
+export async function deleteTimeline(brandId: string, entryId: string): Promise<ChildResult> {
   try {
     const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
     await supabase.from("timeline_entries").delete().eq("id", entryId);
-    await bumpBrand(supabase, operator, brandId);
-    await writeAudit(supabase, operator, "delete", "timeline_entry", brandId, { entryId });
+    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    await writeAudit(supabase, operator, "timeline_removed", "brand", brandId, { entry_id: entryId });
     revalidatePath("/");
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, message: "forbidden" };
   }
 }

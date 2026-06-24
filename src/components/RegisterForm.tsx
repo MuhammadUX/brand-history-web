@@ -45,7 +45,7 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
         typeof window !== "undefined"
           ? `${window.location.origin}/${locale}/verify-email`
           : undefined;
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -54,7 +54,31 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
         },
       });
       if (signUpError) {
+        // Enumeration-safe: never reveal that an email already exists. Supabase
+        // returns a "User already registered" error for existing accounts — fold
+        // that into the same neutral confirmation shown on success. Genuine
+        // validation errors (e.g. weak password) keep their distinct message.
+        const msg = signUpError.message?.toLowerCase() ?? "";
+        const isExistence =
+          msg.includes("already registered") ||
+          msg.includes("already been registered") ||
+          msg.includes("user already exists");
+        if (isExistence) {
+          setDone(true);
+          return;
+        }
         setError(signUpError.message || dict.auth.genericError);
+        return;
+      }
+      // When confirmations are enabled, Supabase returns a user with an empty
+      // `identities` array for an already-existing email (no error). Treat that
+      // as the same neutral confirmation so existence isn't revealed.
+      if (
+        data.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+      ) {
+        setDone(true);
         return;
       }
       setDone(true);
@@ -68,7 +92,7 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
   if (done) {
     return (
       <div className="flex flex-col gap-4">
-        <FormSuccess message={`${dict.auth.checkInboxTitle} — ${dict.auth.checkInboxBody}`} />
+        <FormSuccess message={dict.auth.registerNeutral} />
         <p className="rounded-card border border-border bg-page px-4 py-3 text-sm text-secondary">
           {dict.auth.demoNote}
         </p>

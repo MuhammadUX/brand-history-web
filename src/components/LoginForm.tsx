@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
-import { getDictionary } from "@/i18n";
+import { getDictionary, safeNext } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { Field, FormError, SubmitButton } from "./auth-fields";
 
@@ -12,7 +12,7 @@ export default function LoginForm({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || `/${locale}/account`;
+  const next = safeNext(params.get("next"), locale);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

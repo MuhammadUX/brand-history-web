@@ -234,6 +234,17 @@ export default function DraftReview({
         {t.reviewBanner}
       </div>
 
+      {/* No-findings notice: the provider returned little/nothing. */}
+      {draft.no_findings && (
+        <div
+          role="status"
+          className="mb-5 flex items-center gap-2 rounded-card border border-border bg-page px-4 py-3 text-sm text-secondary"
+        >
+          <span aria-hidden>{"ℹ"}</span>
+          {t.noFindings}
+        </div>
+      )}
+
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-ink">
           {t.reviewTitle}: <span className="text-secondary">{inputName}</span>

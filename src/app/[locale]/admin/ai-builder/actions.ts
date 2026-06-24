@@ -92,11 +92,17 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     redirect(`/${locale}/admin/ai-builder/${run.id}`);
   }
 
+  // The stub always produces a (possibly empty) draft, so the run is always
+  // 'draft_ready' for review. When findings are "none", flag the draft so the
+  // review screen can surface a clear "found little — build manually" notice.
+  const noFindings = findings === "none";
+  const flaggedDraft: BrandDraft = { ...draft, no_findings: noFindings };
+
   await supabase
     .from("profile_builder_runs")
     .update({
-      draft,
-      status: findings === "none" ? "draft_ready" : "draft_ready",
+      draft: flaggedDraft,
+      status: "draft_ready",
       updated_at: new Date().toISOString(),
     })
     .eq("id", run.id);

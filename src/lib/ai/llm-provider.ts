@@ -55,6 +55,12 @@ export interface BrandDraft {
   timeline: DraftTimelineEntry[];
   /** Per-field provenance/confidence used to drive gating in the review UI. */
   fields_meta: Record<string, FieldMeta>;
+  /**
+   * Set by startRun when the provider reported `findings: "none"` — an
+   * empty/low draft. The review screen surfaces a "found little — build
+   * manually" notice; the run still goes to draft_ready for operator review.
+   */
+  no_findings?: boolean;
 }
 
 export interface DraftInput {

@@ -50,7 +50,11 @@ export default function SuggestForm({ locale }: SuggestFormProps) {
     >
       {state.status === "error" && (
         <p className="rounded-btn bg-sponsoredBg px-4 py-2.5 text-sm font-medium text-sponsored">
-          {state.message === "required" ? dict.suggest.required : dict.suggest.error}
+          {state.message === "required"
+            ? dict.suggest.required
+            : state.message === "throttled"
+              ? dict.suggest.throttled
+              : dict.suggest.error}
         </p>
       )}
 

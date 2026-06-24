@@ -1,21 +1,24 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Locale } from "@/lib/types";
-import { getDictionary, otherLocale } from "@/i18n";
+import { getDictionary } from "@/i18n";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getIsPro } from "@/lib/entitlements";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import AccountMenu from "./AccountMenu";
+import LocaleToggle from "./LocaleToggle";
 
 interface TopNavProps {
   locale: Locale;
-  /** Path after the locale segment, e.g. "" for home or "search". Used by the locale toggle. */
+  /**
+   * @deprecated The locale toggle now preserves the live pathname/query via
+   * LocaleToggle (client). Retained for backward compatibility with callers.
+   */
   pathAfterLocale?: string;
 }
 
-export default async function TopNav({ locale, pathAfterLocale = "" }: TopNavProps) {
+export default async function TopNav({ locale }: TopNavProps) {
   const dict = getDictionary(locale);
-  const other = otherLocale(locale);
-  const toggleHref = `/${other}${pathAfterLocale ? `/${pathAfterLocale}` : ""}`;
 
   // Read the current session for the nav (logged-in greeting vs. Log in link).
   const supabase = await createServerSupabase();
@@ -83,13 +86,15 @@ export default async function TopNav({ locale, pathAfterLocale = "" }: TopNavPro
           >
             {dict.nav.discover}
           </Link>
-          <Link
-            href={toggleHref}
-            aria-label={dict.nav.toggleAria}
-            className="inline-flex h-9 min-w-9 items-center justify-center rounded-pill border border-border px-3 text-sm font-medium text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          <Suspense
+            fallback={
+              <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-pill border border-border px-3 text-sm font-medium text-ink">
+                {dict.nav.toggleTo}
+              </span>
+            }
           >
-            {dict.nav.toggleTo}
-          </Link>
+            <LocaleToggle locale={locale} />
+          </Suspense>
           {user ? (
             <>
               <Link
