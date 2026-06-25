@@ -323,6 +323,7 @@ export async function createDraftBrand(
           description_en: tl.description_en,
           description_ar: tl.description_ar,
           category: "identity_update",
+          change_kind: tl.change_kind ?? null,
           sort_order: i,
         }))
       );

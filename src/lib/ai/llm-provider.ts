@@ -38,6 +38,19 @@ export interface DraftTimelineEntry {
   title_ar: string;
   description_en: string;
   description_ar: string;
+  /**
+   * The identity change this entry represents — BRAND history only. One of:
+   * founding | logo | wordmark | color | refresh | rebrand | rename | identity.
+   */
+  change_kind?:
+    | "founding"
+    | "logo"
+    | "wordmark"
+    | "color"
+    | "refresh"
+    | "rebrand"
+    | "rename"
+    | "identity";
   confidence: number;
   source: string;
 }
@@ -82,6 +95,40 @@ export interface DraftResult {
 export interface LlmProvider {
   draftBrandProfile(input: DraftInput): Promise<DraftResult>;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Brand-history scope contract (system prompt for any real provider)        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * BRAND_HISTORY_GUIDANCE — the scope contract a real LLM provider MUST be given
+ * as a system instruction. "Brand History" documents a brand's VISUAL IDENTITY
+ * over time — NOT the company's corporate history. Mixing in company milestones
+ * (e.g. a Tadawul listing) is the exact failure this guards against.
+ *
+ * When wiring a real Claude/GPT/Gemini provider, prepend this to the timeline
+ * gathering prompt and post-filter any returned entry whose `change_kind` is not
+ * one of the identity kinds below.
+ */
+export const BRAND_HISTORY_GUIDANCE = `You are assembling the BRAND-IDENTITY history of a brand — NOT the company history.
+
+INCLUDE only visual-identity events:
+- Logo / symbol / wordmark changes
+- Color-palette or typography-system changes
+- Full rebrands or visual-identity refreshes
+- Name changes that change the wordmark
+- Major livery / packaging / identity-system reveals
+
+EXCLUDE all company/corporate history (never add these):
+- Corporate finance: IPOs, stock listings (e.g. Tadawul), share/secondary offerings, valuations, dividends
+- Mergers, acquisitions, ownership or stake changes
+- Leadership/board changes, earnings, revenue, contracts, partnerships
+- Product launches and operational milestones (first flight, first store, first oil, route launches, market expansion)
+- The founding ONLY counts insofar as it marks the brand's ORIGINAL logo/identity — not as a corporate-formation event.
+
+For every event set change_kind to exactly one of:
+founding | logo | wordmark | color | refresh | rebrand | rename | identity.
+If no genuine identity event can be sourced, return an EMPTY timeline — never pad it with company milestones.`;
 
 /* -------------------------------------------------------------------------- */
 /*  Deterministic dev stub                                                    */
@@ -210,13 +257,15 @@ export class DevStubLlmProvider implements LlmProvider {
       },
     ];
 
+    // Identity events ONLY (see BRAND_HISTORY_GUIDANCE) — never company/finance.
     const timeline: DraftTimelineEntry[] = [
       {
         year: founded_year,
-        title_en: "Founded",
-        title_ar: "التأسيس",
-        description_en: name + " was established.",
-        description_ar: "تأسست " + name + ".",
+        title_en: "Original identity",
+        title_ar: "الهوية الأصلية",
+        description_en: name + "'s original logo and wordmark.",
+        description_ar: "الشعار والاسم الأصلي لـ" + name + ".",
+        change_kind: "founding",
         confidence: foundedConf,
         source: "wikipedia.org",
       },
@@ -224,8 +273,9 @@ export class DevStubLlmProvider implements LlmProvider {
         year: founded_year + 20,
         title_en: "Brand refresh",
         title_ar: "تحديث الهوية",
-        description_en: "A visual identity update was introduced.",
-        description_ar: "تم تقديم تحديث للهوية البصرية.",
+        description_en: "A visual identity update — refreshed logo and colors.",
+        description_ar: "تحديث للهوية البصرية — الشعار والألوان.",
+        change_kind: "refresh",
         confidence: Math.round(c(11) * 0.6 * 100) / 100, // often Low/unsourced
         source: c(11) >= 0.55 ? siteDomain : "",
       },
