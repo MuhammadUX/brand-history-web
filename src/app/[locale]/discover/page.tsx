@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import BrandGrid from "@/components/BrandGrid";
 import LogoTile from "@/components/LogoTile";
 import AdSlot from "@/components/AdSlot";
@@ -63,7 +61,6 @@ export default async function DiscoverPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="discover" />
       <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
@@ -158,7 +155,6 @@ export default async function DiscoverPage({
           />
         </section>
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

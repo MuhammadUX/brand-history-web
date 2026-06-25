@@ -2,23 +2,371 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================================
+   CONCEPT A — Terminal / Excavation · tokens + base + motion layer
+   Monochrome archive. Paper + ink. IBM Plex Mono UI. Space Grotesk display.
+   Sharp 0px corners. 1px hairlines. Stepped, instrument-like motion only.
+   ========================================================================= */
+
 :root {
   color-scheme: light;
-  --font-inter: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-noto-arabic: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+
+  /* ── Font stacks (loaded via runtime <link> in [locale]/layout.tsx) ── */
+  --font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-arabic: "Noto Sans Arabic", "IBM Plex Mono", system-ui, sans-serif;
+
+  /* ── Color tokens ── */
+  --ink: #0a0a0a;
+  --ink-700: #2b2b2b;
+  --paper: #f4f1ea;
+  --surface: #fbfaf6;
+  --metadata: #6e6e6e;
+  --hairline: #9a9a9a;
+  --scaffold: #d8d6cf;
+  --danger: #8a1b1b;
+
+  /* ── Motion · transition durations (page-load / reveal) ── */
+  --mo-dur-fast: 140ms;
+  --mo-dur-base: 220ms;
+  --mo-dur-reveal: 260ms;
+  --mo-step-dither: steps(4); /* 4 density passes */
+  --mo-step-wipe: steps(12); /* scanline / hairline */
+  --mo-step-draw: steps(8); /* hairline draw-on */
+
+  /* ── Motion · micro-interaction durations ── */
+  --mi-fast: 90ms; /* hairline draw, stamp settle */
+  --mi-base: 120ms; /* invert / stamp */
+  --mi-max: 160ms; /* longest single transition */
+  --mi-caret: 530ms; /* terminal blink half-cycle */
 }
 
+/* ── Base ── */
 html,
 body {
-  background-color: #f7f8fa;
-  color: #16181d;
+  background-color: var(--paper);
+  color: var(--ink);
 }
 
 body {
-  font-family: var(--font-inter);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 24px;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1; /* tabular figures everywhere */
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 html[dir="rtl"] body {
-  font-family: var(--font-noto-arabic);
+  font-family: var(--font-arabic);
+}
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4 {
+  font-family: var(--font-arabic);
+}
+
+/* Focus ring: 2px ink offset 2px, square (no radius) */
+*:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 0;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* =========================================================================
+   Utilities · hairlines, labels, code chips, tabular figures
+   ========================================================================= */
+@layer utilities {
+  .hairline {
+    border-color: var(--hairline);
+    border-width: 1px;
+  }
+  .hairline-t {
+    border-top: 1px solid var(--hairline);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--hairline);
+  }
+  .hairline-s {
+    border-inline-start: 1px solid var(--hairline);
+  }
+  .hairline-e {
+    border-inline-end: 1px solid var(--hairline);
+  }
+  .rule-ink {
+    border-color: var(--ink);
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  /* mono UPPERCASE label, +8% tracking */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  .font-arabic {
+    font-family: var(--font-arabic);
+  }
+}
+
+/* =========================================================================
+   MOTION LAYER — stepped, 1-bit, instrument-like. Develop / draw / stamp.
+   Every effect is entry-only or feedback-only and collapses to instant
+   under prefers-reduced-motion (master switch at bottom).
+   ========================================================================= */
+
+/* M1 · Dither plate develop-in — coverage clip, 4 stepped passes.
+   Drives a clip-path mask so the plate exposes sparse→full. Pair with the
+   .mo-develop class + the per-cell stagger var. */
+@keyframes mo-develop {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.mo-develop {
+  animation: mo-develop var(--mo-dur-reveal) var(--mo-step-dither) both;
+  animation-delay: calc(var(--cell-index, 0) * 28ms);
+}
+html[dir="rtl"] .mo-develop {
+  animation-name: mo-develop-rtl;
+}
+@keyframes mo-develop-rtl {
+  0% {
+    clip-path: inset(0 0 0 100%);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* M2 · Hairline draw-on — scaleX/scaleY from origin, stepped like a plotter */
+@keyframes mo-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes mo-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.mo-draw-x {
+  transform-origin: left center;
+  animation: mo-draw-x var(--mo-dur-base) var(--mo-step-draw) both;
+}
+html[dir="rtl"] .mo-draw-x {
+  transform-origin: right center;
+}
+.mo-draw-y {
+  transform-origin: top center;
+  animation: mo-draw-y var(--mo-dur-base) var(--mo-step-draw) both;
+}
+
+/* M3 · Mono heading type-on — width reveal, terminal feel (driven by JS too) */
+@keyframes mo-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.mo-caret::after {
+  content: "▍";
+  display: inline-block;
+  margin-inline-start: 1px;
+  animation: mo-caret-blink 1s steps(1) infinite;
+}
+.mo-caret-done::after {
+  content: "";
+}
+
+/* M7 · Registration-tick lock blink — 1-frame invert, fires once */
+@keyframes mo-tick {
+  0%,
+  100% {
+    background: transparent;
+    color: inherit;
+  }
+  50% {
+    background: var(--ink);
+    color: var(--paper);
+  }
+}
+.mo-tick {
+  animation: mo-tick 80ms steps(1) 1;
+}
+
+/* M5 · 1-bit shimmer skeleton — cross-hatch advancing one cell-phase.
+   Background-position step, NOT a gradient sheen. Stops when data lands. */
+.mo-skeleton {
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(
+      45deg,
+      var(--scaffold) 0,
+      var(--scaffold) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  background-size: 8px 8px;
+  animation: mo-scan 720ms steps(4) infinite;
+}
+@keyframes mo-scan {
+  to {
+    background-position: 8px 0;
+  }
+}
+
+/* R1 · Scanline wipe route change — 1px ink line sweeps top→bottom, steps(12) */
+@keyframes mo-scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+.mo-scanline {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    var(--ink) 50%,
+    transparent calc(50% + 1px)
+  );
+  animation: mo-scanline var(--mo-dur-fast) var(--mo-step-wipe) 1 forwards;
+}
+
+/* Micro · ghost-button hover invert — steps(2) threshold, no grey crossfade */
+.mo-invert {
+  transition:
+    background-color var(--mi-base) steps(2),
+    color var(--mi-base) steps(2),
+    border-color var(--mi-base) steps(2);
+}
+.mo-press:active {
+  transform: translateY(1px);
+}
+
+/* Micro · underline / hairline draw on hover — clip-path, RTL-safe */
+.mo-underline {
+  position: relative;
+}
+.mo-underline::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -2px;
+  block-size: 1px;
+  inline-size: 100%;
+  background: currentColor;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--mi-max) steps(6);
+}
+.mo-underline:hover::after {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Micro · stamp (accept / favorite / verified) — opacity steps + 1px settle */
+@keyframes mo-stamp {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mo-stamp {
+  animation: mo-stamp var(--mi-base) steps(2) forwards;
+}
+
+/* Micro · strike-through draw (AI reject) — left→right rule, RTL-safe */
+@keyframes mo-strike {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.mo-strike {
+  position: relative;
+}
+.mo-strike::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  block-size: 1px;
+  inline-size: 100%;
+  background: var(--ink);
+  animation: mo-strike var(--mi-max) steps(8) forwards;
+}
+
+/* =========================================================================
+   MASTER SWITCH — prefers-reduced-motion collapses ALL motion to instant.
+   End state is always the truthful state, so no feedback is lost.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .mo-caret::after {
+    content: "▍"; /* solid, non-blinking */
+    animation: none !important;
+  }
+  .mo-skeleton {
+    animation: none !important;
+  }
 }

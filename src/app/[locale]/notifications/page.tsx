@@ -1,6 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import NotificationList from "@/components/NotificationList";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getNotifications } from "@/lib/notifications";
@@ -31,7 +29,6 @@ export default async function NotificationsPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="notifications" />
       <main id="main-content" className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
@@ -46,7 +43,6 @@ export default async function NotificationsPage({
           initialNotifications={notifications}
         />
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

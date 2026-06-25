@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import CheckoutForm from "@/components/CheckoutForm";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getIsPro } from "@/lib/entitlements";
@@ -52,7 +50,6 @@ export default async function CheckoutPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="checkout" />
       <main id="main-content" className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
         <h1 className="text-2xl font-bold tracking-tight text-ink">
           {dict.checkout.title}
@@ -98,7 +95,6 @@ export default async function CheckoutPage({
           </div>
         )}
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

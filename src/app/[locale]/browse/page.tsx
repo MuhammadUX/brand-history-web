@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import BrandCard from "@/components/BrandCard";
 import SectorChips from "@/components/SectorChips";
 import { getBrands, getSectors } from "@/lib/data";
@@ -76,7 +74,6 @@ export default async function BrowsePage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="browse" />
       <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
@@ -125,7 +122,6 @@ export default async function BrowsePage({
           </div>
         )}
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import { getDictionary, isLocale } from "@/i18n";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -41,7 +39,6 @@ export default async function UnavailablePage({
 
   return (
     <>
-      <TopNav locale={typedLocale} />
       <main
         id="main-content"
         className="mx-auto flex max-w-container flex-col items-center justify-center px-4 py-24 text-center sm:px-6"
@@ -71,7 +68,6 @@ export default async function UnavailablePage({
           </Link>
         </div>
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

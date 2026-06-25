@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import LogoTile from "@/components/LogoTile";
 import { getBrandBySlug, getTimeline } from "@/lib/data";
 import { getDictionary, isLocale } from "@/i18n";
@@ -33,7 +31,6 @@ export default async function ComparePage({
   if (timeline.length < 2) {
     return (
       <>
-        <TopNav locale={typedLocale} />
         <main id="main-content" className="mx-auto max-w-container px-4 py-16 sm:px-6">
           <div className="rounded-card border border-border bg-surface p-10 text-center">
             <h1 className="text-xl font-semibold text-ink">
@@ -50,7 +47,6 @@ export default async function ComparePage({
             </Link>
           </div>
         </main>
-        <Footer locale={typedLocale} />
       </>
     );
   }
@@ -100,7 +96,6 @@ export default async function ComparePage({
 
   return (
     <>
-      <TopNav locale={typedLocale} />
       <main className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-2">
           <Link
@@ -158,7 +153,6 @@ export default async function ComparePage({
           {renderColumn(right, dict.compare.pickRight)}
         </div>
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

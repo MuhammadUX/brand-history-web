@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import PricingToggle from "@/components/PricingToggle";
 import { getDictionary, isLocale } from "@/i18n";
 import { getIsPro } from "@/lib/entitlements";
@@ -31,7 +29,6 @@ export default async function ProPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="pro" />
       <main id="main-content" className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
         <div className="text-center">
           <span className="inline-flex rounded-pill bg-primary-tint px-3 py-1 text-xs font-semibold text-primary">
@@ -107,7 +104,6 @@ export default async function ProPage({
           </div>
         )}
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

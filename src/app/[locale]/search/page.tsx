@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
-import BrandGrid from "@/components/BrandGrid";
-import SectorChips from "@/components/SectorChips";
+import DsBrandGrid from "@/components/DsBrandGrid";
+import {
+  Shell,
+  SectionHeader,
+  MetaStrip,
+  Input,
+  Button,
+  Tag,
+  StateBlock,
+} from "@/components/ds";
 import { searchBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -47,6 +53,7 @@ export default async function SearchPage({
   if (!isLocale(locale)) notFound();
   const typedLocale = locale as Locale;
   const dict = getDictionary(typedLocale);
+  const isAr = typedLocale === "ar";
 
   const { q, sector } = await searchParams;
   const query = (q ?? "").trim();
@@ -56,66 +63,121 @@ export default async function SearchPage({
     getFavoritesContext(),
   ]);
 
+  function sectorHref(slug?: string): string {
+    const sp = new URLSearchParams();
+    if (query) sp.set("q", query);
+    if (slug) sp.set("sector", slug);
+    return `/${typedLocale}/search?${sp.toString()}`;
+  }
+
   return (
-    <>
-      <TopNav locale={typedLocale} pathAfterLocale="search" />
-      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
-        {!query ? (
-          <div className="rounded-card border border-border bg-surface p-10 text-center">
-            <h1 className="text-xl font-semibold text-ink">
-              {dict.search.promptTitle}
-            </h1>
-            <p className="mt-2 text-sm text-secondary">{dict.search.promptBody}</p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold tracking-tight text-ink">
-                {dict.search.resultsFor(query)}
-              </h1>
-              <p className="mt-1 text-sm text-secondary">
-                {dict.search.count(results.length)}
-              </p>
-            </div>
-
-            <div className="mb-8">
-              <SectorChips
-                sectors={sectors}
-                locale={typedLocale}
-                basePath="search"
-                active={sector}
-                extraParams={{ q: query }}
-                allLabel={dict.search.allSectors}
+    <main id="main-content">
+      <Shell>
+        {/* Command search */}
+        <section className="py-8">
+          <SectionHeader
+            index="00"
+            title={dict.search.promptTitle}
+            as="h1"
+            meta="QUERY"
+          />
+          <form
+            action={`/${typedLocale}/search`}
+            method="get"
+            role="search"
+            className="mt-5 flex max-w-xl items-end gap-2"
+          >
+            <div className="flex-1">
+              <label htmlFor="search-q" className="label-mono mb-1 block text-ink">
+                [ SEARCH ]
+              </label>
+              <Input
+                id="search-q"
+                type="search"
+                name="q"
+                defaultValue={query}
+                placeholder={dict.search.promptBody}
+                aria-label={dict.search.promptTitle}
               />
             </div>
+            <Button type="submit" variant="primary">
+              {dict.home.searchButton}
+            </Button>
+          </form>
+        </section>
 
-            {results.length > 0 ? (
-              <BrandGrid
-                brands={results}
-                locale={typedLocale}
-                favoriteIds={favCtx.favoriteIds}
-                isAuthed={favCtx.isAuthed}
-              />
-            ) : (
-              <div className="rounded-card border border-border bg-surface p-10 text-center">
-                <h2 className="text-lg font-semibold text-ink">
-                  {dict.search.emptyTitle}
-                </h2>
-                <p className="mt-2 text-sm text-secondary">
-                  {dict.search.emptyBody}
-                </p>
-                <Link
-                  href={`/${typedLocale}/suggest`}
-                  className="mt-5 inline-flex rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                >
-                  {dict.search.suggest}
+        {query && (
+          <section className="py-6">
+            <SectionHeader
+              title={dict.search.resultsFor(query)}
+              as="h2"
+              meta={dict.search.count(results.length)}
+            />
+
+            {/* Sector filter row */}
+            <ul className="mt-4 flex flex-wrap gap-1.5">
+              <li>
+                <Link href={sectorHref()} aria-current={!sector ? "true" : undefined}>
+                  <Tag kind="filter" className={!sector ? "border-ink" : undefined}>
+                    {dict.search.allSectors}
+                  </Tag>
                 </Link>
-              </div>
-            )}
-          </>
+              </li>
+              {sectors.map((s) => {
+                const active = sector === s.slug;
+                return (
+                  <li key={s.id}>
+                    <Link
+                      href={sectorHref(s.slug)}
+                      aria-current={active ? "true" : undefined}
+                    >
+                      <Tag
+                        kind="filter"
+                        className={active ? "border-ink bg-scaffold" : undefined}
+                      >
+                        {isAr ? s.name_ar : s.name_en}
+                      </Tag>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-6">
+              {results.length > 0 ? (
+                <DsBrandGrid
+                  brands={results}
+                  locale={typedLocale}
+                  favoriteIds={favCtx.favoriteIds}
+                  isAuthed={favCtx.isAuthed}
+                />
+              ) : (
+                <div className="mx-auto max-w-xl">
+                  <StateBlock
+                    state="empty"
+                    title={dict.search.emptyTitle}
+                    message={dict.search.emptyBody}
+                  />
+                  <div className="mt-4 flex justify-center">
+                    <Link
+                      href={`/${typedLocale}/suggest`}
+                      className="mo-invert mo-press inline-flex h-10 items-center justify-center border border-ink px-2 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
+                    >
+                      {dict.search.suggest}
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
         )}
-      </main>
-      <Footer locale={typedLocale} />
-    </>
+
+        {!query && (
+          <section className="py-6">
+            <MetaStrip items={["BH·ARCHIVE", "AWAITING QUERY"]} />
+          </section>
+        )}
+      </Shell>
+    </main>
   );
 }

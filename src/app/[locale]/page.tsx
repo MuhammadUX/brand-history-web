@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
-import BrandGrid from "@/components/BrandGrid";
+import DsBrandGrid from "@/components/DsBrandGrid";
+import { Shell, SectionHeader, MetaStrip, CodeChip, Input, Button, Tag, TypeOn } from "@/components/ds";
 import { getBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -44,78 +43,89 @@ export default async function HomePage({
   ]);
 
   return (
-    <>
-      <TopNav locale={typedLocale} />
-      <main id="main-content">
-        {/* Hero */}
-        <section className="border-b border-border bg-surface">
-          <div className="mx-auto max-w-container px-4 py-16 sm:px-6 sm:py-20">
-            <div className="mx-auto max-w-2xl text-center">
-              <h1 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-                {dict.home.heroTitle}
-              </h1>
-              <p className="mt-4 text-lg text-secondary">
-                {dict.home.heroSubtitle}
-              </p>
-              <form
-                action={`/${typedLocale}/search`}
-                method="get"
-                role="search"
-                className="mx-auto mt-8 flex max-w-xl items-center gap-2"
-              >
-                <input
-                  type="search"
-                  name="q"
-                  placeholder={dict.home.heroSearchPlaceholder}
-                  aria-label={dict.home.heroSearchPlaceholder}
-                  className="w-full rounded-btn border border-border bg-page px-5 py-3.5 text-base text-ink placeholder:text-tertiary focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 rounded-btn bg-primary px-6 py-3.5 text-base font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                >
-                  {dict.home.searchButton}
-                </button>
-              </form>
+    <main id="main-content">
+      <Shell>
+        {/* Hero — type-on headline + command-style search */}
+        <section className="py-8">
+          <MetaStrip
+            className="mb-3"
+            items={["BH·ARCHIVE", "CONCEPT A", "EST · MMXXVI"]}
+          />
+          <TypeOn
+            text={dict.home.heroTitle}
+            className="text-ink"
+            // headline runs long → renders instantly with a solid caret beat
+          />
+          <p className="mt-3 max-w-2xl font-mono text-[15px] leading-6 text-ink-700">
+            {dict.home.heroSubtitle}
+          </p>
+
+          <form
+            action={`/${typedLocale}/search`}
+            method="get"
+            role="search"
+            className="mt-6 flex max-w-xl items-end gap-2"
+          >
+            <div className="flex-1">
+              <label htmlFor="home-q" className="label-mono mb-1 block text-ink">
+                [ SEARCH ]
+              </label>
+              <Input
+                id="home-q"
+                type="search"
+                name="q"
+                placeholder={dict.home.heroSearchPlaceholder}
+                aria-label={dict.home.heroSearchPlaceholder}
+              />
             </div>
-          </div>
+            <Button type="submit" variant="primary">
+              {dict.home.searchButton}
+            </Button>
+          </form>
         </section>
 
-        {/* Sectors row */}
+        {/* Sectors — filter tags */}
         {sectors.length > 0 && (
-          <section className="mx-auto max-w-container px-4 pt-12 sm:px-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-tertiary">
-              {dict.home.sectors}
-            </h2>
-            <ul className="mt-4 flex flex-wrap gap-2">
+          <section className="py-6">
+            <SectionHeader
+              index="01"
+              title={dict.home.sectors}
+              as="h2"
+              meta={`N=${sectors.length}`}
+            />
+            <ul className="mt-4 flex flex-wrap gap-1.5">
               {sectors.map((s) => (
                 <li key={s.id}>
-                  <span className="inline-flex items-center rounded-pill border border-border bg-surface px-4 py-2 text-sm font-medium text-ink">
+                  <Tag kind="filter">
                     {typedLocale === "ar" ? s.name_ar : s.name_en}
-                  </span>
+                  </Tag>
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        {/* Discover */}
-        <section className="mx-auto max-w-container px-4 py-12 sm:px-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold tracking-tight text-ink">
-              {dict.home.discover}
-            </h2>
-            <p className="mt-1 text-sm text-secondary">{dict.home.discoverSub}</p>
-          </div>
-          <BrandGrid
-            brands={brands}
-            locale={typedLocale}
-            favoriteIds={favCtx.favoriteIds}
-            isAuthed={favCtx.isAuthed}
+        {/* Discover — index grid of specimen cards (M1 develop-in) */}
+        <section className="py-6">
+          <SectionHeader
+            index="02"
+            title={dict.home.discover}
+            as="h2"
+            meta={<CodeChip code={`N=${brands.length}`} />}
           />
+          <p className="mt-1 font-mono text-[11px] text-metadata">
+            {dict.home.discoverSub}
+          </p>
+          <div className="mt-5">
+            <DsBrandGrid
+              brands={brands}
+              locale={typedLocale}
+              favoriteIds={favCtx.favoriteIds}
+              isAuthed={favCtx.isAuthed}
+            />
+          </div>
         </section>
-      </main>
-      <Footer locale={typedLocale} />
-    </>
+      </Shell>
+    </main>
   );
 }

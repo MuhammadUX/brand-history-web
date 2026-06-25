@@ -1,6 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import AccountTabs from "@/components/AccountTabs";
 import FavoritesMerger from "@/components/FavoritesMerger";
 import { createServerSupabase } from "@/lib/supabase-server";
@@ -48,7 +46,6 @@ export default async function AccountPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="account" />
       <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
         <header className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
@@ -65,7 +62,6 @@ export default async function AccountPage({
           subscription={subscription}
         />
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }

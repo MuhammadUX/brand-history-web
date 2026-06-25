@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import TopNav from "@/components/TopNav";
-import Footer from "@/components/Footer";
 import SuggestForm from "@/components/SuggestForm";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
@@ -19,7 +17,6 @@ export default async function SuggestPage({
 
   return (
     <>
-      <TopNav locale={typedLocale} pathAfterLocale="suggest" />
       <main id="main-content" className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <header className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-ink">
@@ -29,7 +26,6 @@ export default async function SuggestPage({
         </header>
         <SuggestForm locale={typedLocale} />
       </main>
-      <Footer locale={typedLocale} />
     </>
   );
 }
