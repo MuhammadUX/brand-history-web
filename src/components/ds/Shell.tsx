@@ -82,7 +82,7 @@ export interface SectionHeaderProps {
   index?: string;
   title: string;
   meta?: React.ReactNode;
-  as?: "h2" | "h3";
+  as?: "h1" | "h2" | "h3";
 }
 
 /** `§ NN / TITLE` on the start side, optional meta on the end, hairline below. */
