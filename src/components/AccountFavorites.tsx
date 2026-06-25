@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, DitherPlate, StateBlock } from "@/components/ds";
+import { Button, StateBlock } from "@/components/ds";
+import { BrandMark } from "./BrandMark";
 import { catalogueCode } from "./DsBrandCard";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
@@ -79,11 +80,11 @@ export default function AccountFavorites({
               className="block"
               aria-label={name}
             >
-              <DitherPlate
+              <BrandMark
+                domain={brand.website}
                 initials={brand.initials}
                 size="md"
                 code={catalogueCode(brand.slug || brand.id)}
-                develop={false}
               />
             </Link>
             <Link

@@ -7,8 +7,8 @@ import {
   Shell,
   SectionHeader,
   Badge,
-  DitherPlate,
 } from "@/components/ds";
+import { BrandMark } from "@/components/BrandMark";
 import { getTrendingBrands, getRecentlyUpdatedBrands } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -89,11 +89,11 @@ export default async function DiscoverPage({
             />
             <div className="mt-5 flex flex-col gap-6 border border-hairline bg-surface p-6 sm:flex-row sm:items-start">
               <div className="shrink-0">
-                <DitherPlate
+                <BrandMark
+                  domain={featured.website}
                   initials={featured.initials}
                   size="lg"
                   code={catalogueCode(featured.slug || featured.id)}
-                  develop={false}
                 />
               </div>
               <div className="flex-1">

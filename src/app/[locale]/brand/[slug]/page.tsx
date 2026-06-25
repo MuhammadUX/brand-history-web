@@ -14,7 +14,6 @@ import {
   CodeChip,
   Badge,
   ButtonGroup,
-  DitherPlate,
   Table,
   THead,
   TRow,
@@ -22,6 +21,7 @@ import {
   ActionCell,
   StateBlock,
 } from "@/components/ds";
+import { BrandMark } from "@/components/BrandMark";
 import {
   getBrandBySlug,
   getBrandAssets,
@@ -188,7 +188,8 @@ export default async function BrandPage({
             items={[<CodeChip key="c" code={code} />, sectorName || "—", brand.region || "—"]}
           />
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <DitherPlate
+            <BrandMark
+              domain={brand.website}
               initials={brand.initials}
               size="lg"
               code={code}

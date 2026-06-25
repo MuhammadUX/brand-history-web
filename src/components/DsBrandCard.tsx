@@ -44,6 +44,7 @@ export default function DsBrandCard({
       name={name}
       meta={meta || undefined}
       initials={brand.initials}
+      domain={brand.website}
       code={catalogueCode(brand.slug || brand.id)}
       href={`/${locale}/brand/${brand.slug}`}
       verified={brand.is_verified}

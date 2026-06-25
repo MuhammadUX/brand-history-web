@@ -4,9 +4,9 @@ import {
   Shell,
   Button,
   Badge,
-  DitherPlate,
   StateBlock,
 } from "@/components/ds";
+import { BrandMark } from "@/components/BrandMark";
 import { catalogueCode } from "@/components/DsBrandCard";
 import { getBrandBySlug, getTimeline } from "@/lib/data";
 import { getDictionary, isLocale } from "@/i18n";
@@ -77,11 +77,11 @@ export default async function ComparePage({
     return (
       <div className="flex flex-col items-start gap-4 border border-hairline bg-surface p-6">
         <p className="label-mono text-metadata">{heading}</p>
-        <DitherPlate
+        <BrandMark
+          domain={brand.website}
           initials={brand.initials}
           size="lg"
           code={catalogueCode(brand.slug || brand.id)}
-          develop={false}
         />
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-display text-2xl leading-none text-ink tabular-nums">

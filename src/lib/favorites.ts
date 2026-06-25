@@ -2,7 +2,7 @@ import { createServerSupabase } from "./supabase-server";
 import type { Brand } from "./types";
 
 const BRAND_SELECT =
-  "id,slug,name_en,name_ar,sector_id,region,founded_year,summary_en,summary_ar,primary_color,initials,claim_status,publication_state,is_verified,download_count,last_updated_at,created_at,sectors(id,slug,name_en,name_ar,sort_order)";
+  "id,slug,name_en,name_ar,sector_id,website,region,founded_year,summary_en,summary_ar,primary_color,initials,claim_status,publication_state,is_verified,download_count,last_updated_at,created_at,sectors(id,slug,name_en,name_ar,sort_order)";
 
 /**
  * Returns { isAuthed, favoriteIds } in a single auth read — convenient for

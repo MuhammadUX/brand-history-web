@@ -23,6 +23,7 @@ export interface Brand {
   name_en: string;
   name_ar: string;
   sector_id: string | null;
+  website?: string | null;
   region: string | null;
   founded_year: number | null;
   summary_en: string | null;

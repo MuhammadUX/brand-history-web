@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "./cn";
-import { DitherPlate } from "./DitherPlate";
+import { BrandMark } from "../BrandMark";
 import { Badge } from "./Badge";
 
 export interface BrandCardProps {
@@ -10,6 +10,8 @@ export interface BrandCardProps {
   meta?: string;
   /** 1–3 char specimen initials for the plate. */
   initials: string;
+  /** Brand website domain — when set, BrandMark shows the real logo. */
+  domain?: string | null;
   /** Optional link target — overlays the card with a stretched Next `<Link>`. */
   href?: string;
   /** Accessible label for the stretched link (defaults to `name`). */
@@ -40,6 +42,7 @@ export function BrandCard({
   name,
   meta,
   initials,
+  domain,
   href,
   hrefLabel,
   code,
@@ -64,12 +67,12 @@ export function BrandCard({
           className="absolute inset-0 z-0"
         />
       )}
-      <DitherPlate
+      <BrandMark
+        domain={domain}
         initials={initials}
         size="md"
         code={code}
         codeOnHover
-        develop={false}
         negative={selected}
       />
       <h3 className="mt-2 font-display text-lg leading-tight text-ink">
