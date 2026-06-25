@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import AccountTabs from "@/components/AccountTabs";
 import FavoritesMerger from "@/components/FavoritesMerger";
+import { Shell } from "@/components/ds";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getFavoriteBrands } from "@/lib/favorites";
 import { getSubscription } from "@/lib/entitlements";
@@ -45,10 +46,10 @@ export default async function AccountPage({
   ]);
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
+    <main id="main-content">
+      <Shell>
         <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-[32px] leading-tight text-ink">
             {dict.account.title}
           </h1>
         </header>
@@ -61,7 +62,7 @@ export default async function AccountPage({
           favorites={favorites}
           subscription={subscription}
         />
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

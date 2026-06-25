@@ -19,13 +19,15 @@ export default async function VerifyEmailPage({
   return (
     <AuthShell locale={typedLocale} title={dict.auth.verifyTitle}>
       <div className="flex flex-col gap-5">
-        <p className="text-sm text-secondary">{dict.auth.verifyBody}</p>
-        <p className="rounded-card border border-border bg-page px-4 py-3 text-sm text-secondary">
+        <p className="font-mono text-[13px] leading-5 text-ink-700">
+          {dict.auth.verifyBody}
+        </p>
+        <p className="border border-hairline bg-surface px-4 py-3 font-mono text-[13px] leading-5 text-metadata">
           {dict.auth.demoNote}
         </p>
         <Link
           href={`/${typedLocale}/login`}
-          className="w-full rounded-btn bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="mo-invert mo-press inline-flex h-10 w-full items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
         >
           {dict.auth.goToLogin}
         </Link>

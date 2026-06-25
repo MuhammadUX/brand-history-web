@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import CheckoutForm from "@/components/CheckoutForm";
+import { Shell, Badge } from "@/components/ds";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getIsPro } from "@/lib/entitlements";
 import { getDictionary, isLocale } from "@/i18n";
@@ -8,6 +9,9 @@ import { isPlan } from "@/lib/pricing";
 import type { Locale } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+const primaryLink =
+  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700";
 
 export default async function CheckoutPage({
   params,
@@ -49,41 +53,37 @@ export default async function CheckoutPage({
   })();
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">
+    <main id="main-content">
+      <Shell>
+        <h1 className="font-display text-[32px] leading-tight text-ink">
           {dict.checkout.title}
         </h1>
 
         {isPro ? (
-          <div className="mt-6 rounded-card border border-border bg-surface p-8 text-center">
-            <span className="inline-flex rounded-pill bg-verifiedBg px-3 py-1 text-xs font-semibold text-verifiedText">
-              {dict.nav.proBadge}
-            </span>
-            <h2 className="mt-4 text-xl font-bold text-ink">
+          <div className="mt-6 border border-hairline bg-surface p-8 text-center">
+            <Badge kind="pro" />
+            <h2 className="mt-4 font-display text-2xl leading-tight text-ink">
               {dict.checkout.alreadyTitle}
             </h2>
-            <p className="mt-2 text-sm text-secondary">
+            <p className="mt-2 font-mono text-[13px] leading-5 text-ink-700">
               {dict.checkout.alreadyBody}
             </p>
-            <Link
-              href={`/${typedLocale}/account`}
-              className="mt-5 inline-flex rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              {dict.pro.manage}
-            </Link>
+            <div className="mt-5 flex justify-center">
+              <Link href={`/${typedLocale}/account`} className={primaryLink}>
+                {dict.pro.manage}
+              </Link>
+            </div>
           </div>
         ) : !isPlan(planRaw) ? (
-          <div className="mt-6 rounded-card border border-border bg-surface p-8 text-center">
-            <p className="text-base text-secondary">
+          <div className="mt-6 border border-hairline bg-surface p-8 text-center">
+            <p className="font-mono text-[15px] leading-6 text-ink-700">
               {dict.checkout.invalidPlan}
             </p>
-            <Link
-              href={`/${typedLocale}/pro`}
-              className="mt-5 inline-flex rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              {dict.checkout.choosePlan}
-            </Link>
+            <div className="mt-5 flex justify-center">
+              <Link href={`/${typedLocale}/pro`} className={primaryLink}>
+                {dict.checkout.choosePlan}
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="mt-6">
@@ -94,7 +94,7 @@ export default async function CheckoutPage({
             />
           </div>
         )}
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import type { NotificationRow } from "@/lib/notifications";
+import { Button, Badge, StateBlock } from "@/components/ds";
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -65,14 +66,11 @@ export default function NotificationList({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-card border border-border bg-surface p-10 text-center">
-        <p className="text-base font-semibold text-ink">
-          {dict.notifications.emptyTitle}
-        </p>
-        <p className="mt-1 text-sm text-secondary">
-          {dict.notifications.emptyBody}
-        </p>
-      </div>
+      <StateBlock
+        state="empty"
+        title={dict.notifications.emptyTitle}
+        message={dict.notifications.emptyBody}
+      />
     );
   }
 
@@ -84,26 +82,30 @@ export default function NotificationList({
       {toast && (
         <div
           role="alert"
-          className="mb-4 rounded-card border border-sponsored/30 bg-sponsoredBg px-4 py-3 text-sm font-medium text-sponsored"
+          className="mb-4 border border-danger bg-surface px-4 py-3 font-mono text-[13px] text-danger"
         >
+          <span aria-hidden="true" className="me-1">
+            ⚠
+          </span>
           {toast}
         </div>
       )}
       <div className="mb-4 flex items-center justify-between">
-        <p aria-live="polite" className="text-sm text-secondary">
+        <p aria-live="polite" className="font-mono text-[13px] text-metadata">
           {unreadCount > 0
             ? dict.notifications.unreadAria(unreadCount)
             : dict.notifications.emptyTitle}
         </p>
         {unreadCount > 0 && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onMarkAll}
             disabled={pending}
-            className="rounded-btn border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
           >
             {dict.notifications.markAllRead}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -114,28 +116,26 @@ export default function NotificationList({
           return (
             <li
               key={n.id}
-              className={`rounded-card border p-4 ${
+              className={`border p-4 ${
                 n.read
-                  ? "border-border bg-surface"
-                  : "border-primary/30 bg-primary-tint"
+                  ? "border-hairline bg-surface"
+                  : "border-ink bg-scaffold"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    {!n.read && (
-                      <span
-                        className="inline-flex rounded-pill bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
-                      >
-                        {dict.notifications.new}
-                      </span>
-                    )}
-                    <h2 className="text-sm font-bold text-ink">{title}</h2>
+                    {!n.read && <Badge kind="filter">{dict.notifications.new}</Badge>}
+                    <h2 className="font-display text-[15px] leading-tight text-ink">
+                      {title}
+                    </h2>
                   </div>
                   {body && (
-                    <p className="mt-1 text-sm text-secondary">{body}</p>
+                    <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+                      {body}
+                    </p>
                   )}
-                  <p className="mt-2 text-xs text-tertiary">
+                  <p className="mt-2 font-mono text-[11px] text-metadata">
                     {fmtDate(n.created_at)}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ export default function NotificationList({
                 {n.link && (
                   <Link
                     href={n.link.replace(/^\/(en|ar)\//, `/${locale}/`)}
-                    className="text-sm font-semibold text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="label-mono text-ink hover:underline"
                   >
                     {dict.notifications.view} →
                   </Link>
@@ -154,7 +154,7 @@ export default function NotificationList({
                     type="button"
                     onClick={() => onMarkRead(n.id)}
                     aria-label={dict.notifications.markReadAria}
-                    className="text-sm font-medium text-secondary hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="label-mono text-metadata hover:text-ink"
                   >
                     {dict.notifications.markRead}
                   </button>

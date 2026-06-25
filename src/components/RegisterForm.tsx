@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
+import { Checkbox } from "@/components/ds";
 import { Field, FormError, FormSuccess, SubmitButton } from "./auth-fields";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -93,12 +94,12 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
     return (
       <div className="flex flex-col gap-4">
         <FormSuccess message={dict.auth.registerNeutral} />
-        <p className="rounded-card border border-border bg-page px-4 py-3 text-sm text-secondary">
+        <p className="border border-hairline bg-surface px-4 py-3 font-mono text-[13px] leading-5 text-metadata">
           {dict.auth.demoNote}
         </p>
         <Link
           href={`/${locale}/login`}
-          className="text-sm font-semibold text-primary hover:text-primary-hover"
+          className="label-mono text-ink hover:underline"
         >
           {dict.auth.signIn}
         </Link>
@@ -139,23 +140,20 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
         placeholder={dict.auth.passwordPlaceholder}
         required
       />
-      <label className="flex items-start gap-2.5 text-sm text-secondary">
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
-        />
-        <span>{dict.auth.consent}</span>
-      </label>
+      <Checkbox
+        checked={consent}
+        onChange={(e) => setConsent(e.target.checked)}
+        label={dict.auth.consent}
+        className="items-start"
+      />
       <SubmitButton pending={pending}>
         {pending ? dict.auth.processing : dict.auth.createAccount}
       </SubmitButton>
-      <p className="text-center text-sm text-secondary">
+      <p className="text-center font-mono text-[13px] text-ink-700">
         {dict.auth.haveAccount}{" "}
         <Link
           href={`/${locale}/login`}
-          className="font-semibold text-primary hover:text-primary-hover"
+          className="text-ink underline hover:no-underline"
         >
           {dict.auth.signIn}
         </Link>

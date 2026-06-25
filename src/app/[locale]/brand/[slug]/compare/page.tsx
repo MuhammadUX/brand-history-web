@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import LogoTile from "@/components/LogoTile";
+import {
+  Shell,
+  Button,
+  Badge,
+  DitherPlate,
+  StateBlock,
+} from "@/components/ds";
+import { catalogueCode } from "@/components/DsBrandCard";
 import { getBrandBySlug, getTimeline } from "@/lib/data";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale, TimelineEntry } from "@/lib/types";
@@ -30,24 +37,24 @@ export default async function ComparePage({
   // Not enough eras -> explained disabled state.
   if (timeline.length < 2) {
     return (
-      <>
-        <main id="main-content" className="mx-auto max-w-container px-4 py-16 sm:px-6">
-          <div className="rounded-card border border-border bg-surface p-10 text-center">
-            <h1 className="text-xl font-semibold text-ink">
-              {dict.compare.notEnoughTitle}
-            </h1>
-            <p className="mt-2 text-sm text-secondary">
-              {dict.compare.notEnoughBody}
-            </p>
+      <main id="main-content">
+        <Shell>
+          <div className="flex flex-col items-start gap-6">
+            <StateBlock
+              state="empty"
+              title={dict.compare.notEnoughTitle}
+              message={dict.compare.notEnoughBody}
+              className="w-full"
+            />
             <Link
               href={`/${typedLocale}/brand/${brand.slug}`}
-              className="mt-6 inline-flex rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
             >
               {dict.compare.back}
             </Link>
           </div>
-        </main>
-      </>
+        </Shell>
+      </main>
     );
   }
 
@@ -62,61 +69,59 @@ export default async function ComparePage({
   }
 
   const selectCls =
-    "w-full rounded-btn border border-border bg-page px-3 py-2 text-sm text-ink focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "h-12 w-full rounded-none border border-hairline bg-surface px-3 font-mono text-[13px] text-ink focus:border-ink focus:outline-none";
 
   function renderColumn(entry: TimelineEntry, heading: string) {
     const title = isAr ? entry.title_ar : entry.title_en;
     const desc = isAr ? entry.description_ar : entry.description_en;
     return (
-      <div className="flex flex-col gap-4 rounded-card border border-border bg-surface p-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">
-          {heading}
-        </p>
-        <LogoTile
+      <div className="flex flex-col items-start gap-4 border border-hairline bg-surface p-6">
+        <p className="label-mono text-metadata">{heading}</p>
+        <DitherPlate
           initials={brand.initials}
-          color={brand.primary_color}
-          name={name}
           size="lg"
+          code={catalogueCode(brand.slug || brand.id)}
+          develop={false}
         />
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-2xl font-bold text-ink">{entry.year}</span>
-          {entry.category && (
-            <span className="rounded-pill bg-primary-tint px-2.5 py-0.5 text-xs font-medium text-primary">
-              {entry.category}
-            </span>
-          )}
+          <span className="font-display text-2xl leading-none text-ink tabular-nums">
+            {entry.year}
+          </span>
+          {entry.category && <Badge kind="filter">{entry.category}</Badge>}
         </div>
-        <h3 className="text-lg font-semibold text-ink">{title}</h3>
+        <h3 className="font-display text-lg leading-tight text-ink">{title}</h3>
         {desc && (
-          <p className="text-sm leading-relaxed text-secondary">{desc}</p>
+          <p className="font-mono text-[15px] leading-6 text-ink-700">{desc}</p>
         )}
       </div>
     );
   }
 
   return (
-    <>
-      <main className="mx-auto max-w-container px-4 py-10 sm:px-6">
+    <main id="main-content">
+      <Shell>
         <header className="mb-2">
           <Link
             href={`/${typedLocale}/brand/${brand.slug}`}
-            className="text-sm text-primary hover:underline"
+            className="label-mono text-metadata hover:text-ink"
           >
             ← {dict.compare.back}
           </Link>
         </header>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">
+        <h1 className="mt-2 font-display text-[32px] leading-tight text-ink">
           {dict.compare.title(name)}
         </h1>
-        <p className="mt-1 text-sm text-secondary">{dict.compare.subtitle}</p>
+        <p className="mt-3 font-mono text-[15px] leading-6 text-ink-700">
+          {dict.compare.subtitle}
+        </p>
 
         {/* Era pickers */}
         <form
           method="get"
           className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <div className="space-y-1.5">
-            <label htmlFor="a" className="block text-sm font-medium text-ink">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="a" className="label-mono text-ink">
               {dict.compare.pickLeft}
             </label>
             <select id="a" name="a" defaultValue={left.id} className={selectCls}>
@@ -127,8 +132,8 @@ export default async function ComparePage({
               ))}
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label htmlFor="b" className="block text-sm font-medium text-ink">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="b" className="label-mono text-ink">
               {dict.compare.pickRight}
             </label>
             <select id="b" name="b" defaultValue={right.id} className={selectCls}>
@@ -139,20 +144,17 @@ export default async function ComparePage({
               ))}
             </select>
           </div>
-          <button
-            type="submit"
-            className="inline-flex h-[42px] items-center justify-center rounded-btn bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
+          <Button type="submit" variant="primary" className="h-12 px-4">
             {dict.compare.update}
-          </button>
+          </Button>
         </form>
 
         {/* Side by side */}
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
           {renderColumn(left, dict.compare.pickLeft)}
           {renderColumn(right, dict.compare.pickRight)}
         </div>
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import type { InputHTMLAttributes } from "react";
-
-const inputCls =
-  "w-full rounded-btn border border-border bg-page px-4 py-2.5 text-sm text-ink placeholder:text-tertiary focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+import {
+  Field as DsField,
+  Input,
+  Button,
+} from "@/components/ds";
 
 export function Field({
   id,
@@ -11,12 +13,9 @@ export function Field({
   ...props
 }: { id: string; label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
-        {label}
-      </label>
-      <input id={id} className={inputCls} {...props} />
-    </div>
+    <DsField label={label} htmlFor={id}>
+      <Input id={id} {...props} />
+    </DsField>
   );
 }
 
@@ -28,19 +27,26 @@ export function SubmitButton({
   pending?: boolean;
 }) {
   return (
-    <button
+    <Button
       type="submit"
+      variant="primary"
       disabled={pending}
-      className="w-full rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
+      className="w-full"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
 export function FormError({ message }: { message: string }) {
   return (
-    <p role="alert" className="rounded-btn bg-red-50 px-3 py-2 text-sm text-red-700">
+    <p
+      role="alert"
+      className="border border-danger bg-surface px-3 py-2 font-mono text-[13px] text-danger"
+    >
+      <span aria-hidden="true" className="me-1">
+        ⚠
+      </span>
       {message}
     </p>
   );
@@ -50,8 +56,11 @@ export function FormSuccess({ message }: { message: string }) {
   return (
     <div
       role="status"
-      className="rounded-card border border-success/30 bg-success/5 px-4 py-3 text-sm text-success"
+      className="border border-hairline bg-surface px-4 py-3 font-mono text-[13px] text-ink"
     >
+      <span aria-hidden="true" className="me-1">
+        [ ✓ ]
+      </span>
       {message}
     </div>
   );

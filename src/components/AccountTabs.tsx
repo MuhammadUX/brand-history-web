@@ -41,7 +41,7 @@ export default function AccountTabs({
       <div
         role="tablist"
         aria-label={dict.account.title}
-        className="mb-6 flex flex-wrap gap-1 border-b border-border"
+        className="mb-6 flex flex-wrap gap-1 border-b border-hairline"
       >
         {tabs.map((t) => {
           const active = tab === t.id;
@@ -54,10 +54,10 @@ export default function AccountTabs({
               aria-controls={`panel-${t.id}`}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              className={`-mb-px border-b-2 px-4 py-2.5 font-mono text-[11px] font-medium uppercase tracking-label ${
                 active
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-ink"
+                  ? "border-ink text-ink"
+                  : "border-transparent text-metadata hover:text-ink"
               }`}
             >
               {t.label}
@@ -68,10 +68,10 @@ export default function AccountTabs({
 
       {tab === "profile" && (
         <section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile">
-          <h2 className="text-lg font-bold text-ink">
+          <h2 className="font-display text-lg leading-tight text-ink">
             {dict.account.profileTitle}
           </h2>
-          <p className="mb-5 mt-1 text-sm text-secondary">
+          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
             {dict.account.profileSubtitle}
           </p>
           <ProfileForm
@@ -79,7 +79,7 @@ export default function AccountTabs({
             email={email}
             initialDisplayName={displayName}
           />
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="mt-8 border-t border-hairline pt-6">
             <SignOutButton locale={locale} />
           </div>
         </section>
@@ -91,10 +91,10 @@ export default function AccountTabs({
           id="panel-subscription"
           aria-labelledby="tab-subscription"
         >
-          <h2 className="text-lg font-bold text-ink">
+          <h2 className="font-display text-lg leading-tight text-ink">
             {dict.accountPro.title}
           </h2>
-          <p className="mb-5 mt-1 text-sm text-secondary">
+          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
             {dict.accountPro.subtitle}
           </p>
           <SubscriptionPanel locale={locale} subscription={subscription} />
@@ -107,10 +107,10 @@ export default function AccountTabs({
           id="panel-favorites"
           aria-labelledby="tab-favorites"
         >
-          <h2 className="text-lg font-bold text-ink">
+          <h2 className="font-display text-lg leading-tight text-ink">
             {dict.account.favoritesTitle}
           </h2>
-          <p className="mb-5 mt-1 text-sm text-secondary">
+          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
             {dict.account.favoritesSubtitle}
           </p>
           <AccountFavorites locale={locale} initialBrands={favorites} />
@@ -123,10 +123,10 @@ export default function AccountTabs({
           id="panel-downloads"
           aria-labelledby="tab-downloads"
         >
-          <h2 className="text-lg font-bold text-ink">
+          <h2 className="font-display text-lg leading-tight text-ink">
             {dict.account.downloadsTitle}
           </h2>
-          <p className="mt-1 text-sm text-secondary">
+          <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
             {dict.account.downloadsBody}
           </p>
         </section>
@@ -138,8 +138,8 @@ export default function AccountTabs({
           id="panel-privacy"
           aria-labelledby="tab-privacy"
         >
-          <h2 className="text-lg font-bold text-ink">{dict.privacy.title}</h2>
-          <p className="mb-5 mt-1 text-sm text-secondary">
+          <h2 className="font-display text-lg leading-tight text-ink">{dict.privacy.title}</h2>
+          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
             {dict.privacy.subtitle}
           </p>
           <PrivacyPanel locale={locale} />

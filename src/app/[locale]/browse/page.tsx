@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import BrandCard from "@/components/BrandCard";
+import DsBrandCard from "@/components/DsBrandCard";
 import SectorChips from "@/components/SectorChips";
+import { Shell, SectionHeader, StateBlock } from "@/components/ds";
 import { getBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -73,14 +74,16 @@ export default async function BrowsePage({
   const groups = groupAlphabetically(brands, typedLocale);
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-container px-4 py-10 sm:px-6">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+    <main id="main-content">
+      <Shell>
+        <section className="pb-6">
+          <h1 className="font-display text-[32px] leading-tight text-ink">
             {dict.browse.title}
           </h1>
-          <p className="mt-1 text-sm text-secondary">{dict.browse.subtitle}</p>
-        </header>
+          <p className="mt-3 max-w-2xl font-mono text-[15px] leading-6 text-ink-700">
+            {dict.browse.subtitle}
+          </p>
+        </section>
 
         <div className="mb-4">
           <SectorChips
@@ -91,24 +94,24 @@ export default async function BrowsePage({
             allLabel={dict.browse.allSectors}
           />
         </div>
-        <p className="mb-8 text-xs text-tertiary">
+        <p className="mb-8 font-mono text-[11px] text-metadata">
           {dict.browse.count(brands.length)} · {dict.browse.regionNote}
         </p>
 
         {groups.length === 0 ? (
-          <div className="rounded-card border border-border bg-surface p-10 text-center">
-            <p className="text-sm text-secondary">{dict.browse.empty}</p>
-          </div>
+          <StateBlock state="empty" message={dict.browse.empty} />
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-8">
             {groups.map((group) => (
               <section key={group.letter}>
-                <h2 className="mb-4 text-lg font-bold text-primary">
-                  {group.letter}
-                </h2>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <SectionHeader
+                  title={group.letter}
+                  as="h2"
+                  meta={`N=${group.items.length}`}
+                />
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.items.map((brand) => (
-                    <BrandCard
+                    <DsBrandCard
                       key={brand.id}
                       brand={brand}
                       locale={typedLocale}
@@ -121,7 +124,7 @@ export default async function BrowsePage({
             ))}
           </div>
         )}
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

@@ -14,9 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function Image({
   params,
 }: {
-  params: { locale: string; slug: string };
+  params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { locale, slug } = params;
+  const { locale, slug } = await params;
   const safeLocale = isLocale(locale) ? locale : "en";
   const brand = await getBrandBySlug(slug);
 

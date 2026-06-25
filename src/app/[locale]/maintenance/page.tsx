@@ -39,24 +39,24 @@ export default async function MaintenancePage({
   return (
     <main
       id="main-content"
-      className="mx-auto flex min-h-screen max-w-container flex-col items-center justify-center px-4 py-24 text-center sm:px-6"
+      className="mx-auto flex min-h-screen w-full max-w-content flex-col items-center justify-center px-6 py-24 text-center"
     >
       <span
-        className="flex h-16 w-16 items-center justify-center rounded-card bg-primary-tint text-3xl text-primary"
+        className="flex h-16 w-16 items-center justify-center border border-ink font-display text-3xl text-ink"
         aria-hidden="true"
       >
         ⚙
       </span>
-      <p className="mt-6 text-sm font-bold uppercase tracking-wide text-primary">
-        {dict.brandName}
-      </p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">
+      <p className="label-mono mt-6 text-metadata">{dict.brandName}</p>
+      <h1 className="mt-2 font-display text-[32px] leading-tight text-ink">
         {dict.maintenance.title}
       </h1>
-      <p className="mt-3 max-w-md text-secondary">{dict.maintenance.body}</p>
+      <p className="mt-3 max-w-md font-mono text-[15px] leading-6 text-ink-700">
+        {dict.maintenance.body}
+      </p>
       <Link
         href={`/${typedLocale}`}
-        className="mt-8 rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="mo-invert mo-press mt-8 inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
       >
         {dict.maintenance.home}
       </Link>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import DsBrandGrid from "@/components/DsBrandGrid";
-import { Shell, SectionHeader, MetaStrip, CodeChip, Input, Button, Tag, TypeOn } from "@/components/ds";
+import { Shell, SectionHeader, CodeChip, Input, Button, Tag, TypeOn } from "@/components/ds";
 import { getBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
@@ -45,12 +45,9 @@ export default async function HomePage({
   return (
     <main id="main-content">
       <Shell>
-        {/* Hero — type-on headline + command-style search */}
-        <section className="py-8">
-          <MetaStrip
-            className="mb-3"
-            items={["BH·ARCHIVE", "CONCEPT A", "EST · MMXXVI"]}
-          />
+        {/* Hero — search is the single focal point. One quiet headline, then a
+            generous command-style search field. No internal jargon eyebrow. */}
+        <section className="pb-6">
           <TypeOn
             text={dict.home.heroTitle}
             className="text-ink"
@@ -64,23 +61,28 @@ export default async function HomePage({
             action={`/${typedLocale}/search`}
             method="get"
             role="search"
-            className="mt-6 flex max-w-xl items-end gap-2"
+            className="mt-6 max-w-2xl"
           >
-            <div className="flex-1">
-              <label htmlFor="home-q" className="label-mono mb-1 block text-ink">
-                [ SEARCH ]
-              </label>
+            <label htmlFor="home-q" className="label-mono mb-2 block text-ink">
+              [ SEARCH ]
+            </label>
+            <div className="flex items-stretch gap-2">
               <Input
                 id="home-q"
                 type="search"
                 name="q"
                 placeholder={dict.home.heroSearchPlaceholder}
                 aria-label={dict.home.heroSearchPlaceholder}
+                className="flex-1"
               />
+              <Button
+                type="submit"
+                variant="primary"
+                className="h-12 px-4"
+              >
+                {dict.home.searchButton}
+              </Button>
             </div>
-            <Button type="submit" variant="primary">
-              {dict.home.searchButton}
-            </Button>
           </form>
         </section>
 

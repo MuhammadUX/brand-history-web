@@ -1,14 +1,11 @@
-"use client";
-
-import React from "react";
-import { MetaStrip, Tag, TypeOn } from "@/components/ds";
-import { useDevelopIn } from "@/lib/motion";
+import { Tag } from "@/components/ds";
 import type { Locale, TimelineEntry } from "@/lib/types";
 
 /**
- * BrandTimeline (M6) — strata log. Each era is a stratum plate that develops in
- * top→down as it enters view (.mo-develop via useDevelopIn, staggered by depth).
- * The year types on (TypeOn). A citation line renders as a MetaStrip footnote.
+ * BrandTimeline (M6) — strata log. Each era is a stratum row that renders
+ * static and still (silent luxury): no year typewriter, no per-stratum
+ * develop wipe, and no redundant `STRATUM NN` caption — the year is already the
+ * large display numeral beside each layer.
  */
 export default function BrandTimeline({
   entries,
@@ -20,8 +17,8 @@ export default function BrandTimeline({
   const isAr = locale === "ar";
   return (
     <ol className="mt-5 flex flex-col">
-      {entries.map((entry, i) => (
-        <Stratum key={entry.id} entry={entry} index={i} isAr={isAr} />
+      {entries.map((entry) => (
+        <Stratum key={entry.id} entry={entry} isAr={isAr} />
       ))}
     </ol>
   );
@@ -29,34 +26,21 @@ export default function BrandTimeline({
 
 function Stratum({
   entry,
-  index,
   isAr,
 }: {
   entry: TimelineEntry;
-  index: number;
   isAr: boolean;
 }) {
-  const { ref, developed } = useDevelopIn<HTMLLIElement>();
   const title = isAr ? entry.title_ar : entry.title_en;
   const desc = isAr ? entry.description_ar : entry.description_en;
 
   return (
-    <li
-      ref={ref}
-      className={[
-        "grid grid-cols-[88px_1fr] gap-3 border-b border-scaffold py-4",
-        "last:border-b-0",
-        developed ? "mo-develop" : "",
-      ].join(" ")}
-      style={{ "--cell-index": index } as React.CSSProperties}
-    >
-      {/* Year column — types on, tabular */}
+    <li className="grid grid-cols-[88px_1fr] gap-3 border-b border-scaffold py-4 last:border-b-0">
+      {/* Year column — static, tabular */}
       <div className="border-e border-hairline pe-3 text-end">
-        <TypeOn
-          as="span"
-          text={String(entry.year)}
-          className="block font-display text-2xl leading-none text-ink tabular-nums"
-        />
+        <span className="block font-display text-2xl leading-none text-ink tabular-nums">
+          {String(entry.year)}
+        </span>
       </div>
 
       {/* Stratum body */}
@@ -72,11 +56,6 @@ function Stratum({
             {desc}
           </p>
         )}
-        {/* Citation footnote */}
-        <MetaStrip
-          className="mt-2"
-          items={[`STRATUM ${String(index + 1).padStart(2, "0")}`, `Y·${entry.year}`]}
-        />
       </div>
     </li>
   );

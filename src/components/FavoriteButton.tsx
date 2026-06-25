@@ -143,17 +143,19 @@ export default function FavoriteButton({
           disabled={busy || !resolved}
           aria-pressed={isFav}
           aria-label={ariaLabel}
-          className={`inline-flex items-center gap-2 rounded-btn border px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+          className={`mo-invert mo-press inline-flex h-10 items-center gap-2 rounded-none border px-2 font-mono text-[11px] font-medium uppercase tracking-label ${
             isFav
-              ? "border-primary bg-primary-tint text-primary"
-              : "border-border bg-surface text-ink hover:border-primary/40"
+              ? "border-ink bg-ink text-paper"
+              : "border-ink bg-transparent text-ink hover:bg-ink hover:text-paper"
           }`}
         >
           <HeartIcon filled={isFav} />
           {isFav ? dict.favorite.saved : dict.favorite.save}
         </button>
         {showDeviceNote && !authed && (
-          <p className="text-xs text-tertiary">{dict.favorite.deviceNote}</p>
+          <p className="font-mono text-[11px] text-metadata">
+            {dict.favorite.deviceNote}
+          </p>
         )}
       </div>
     );
@@ -172,10 +174,10 @@ export default function FavoriteButton({
       aria-pressed={isFav}
       aria-label={ariaLabel}
       title={ariaLabel}
-      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-pill border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+      className={`mo-invert mo-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-none border ${
         isFav
-          ? "border-primary bg-primary-tint text-primary"
-          : "border-border bg-surface text-secondary hover:border-primary/40 hover:text-primary"
+          ? "border-ink bg-ink text-paper"
+          : "border-hairline bg-surface text-ink hover:bg-ink hover:text-paper"
       }`}
     >
       <HeartIcon filled={isFav} />

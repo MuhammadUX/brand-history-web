@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
+import { Button } from "@/components/ds";
 
 export default function SignOutButton({
   locale,
@@ -27,16 +28,14 @@ export default function SignOutButton({
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
       onClick={signOut}
       disabled={pending}
-      className={
-        className ??
-        "inline-flex items-center rounded-btn border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
-      }
+      className={className}
     >
       {dict.auth.signOut}
-    </button>
+    </Button>
   );
 }

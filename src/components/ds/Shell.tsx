@@ -3,9 +3,10 @@ import { cn } from "./cn";
 
 /**
  * Shell · Concept A page scaffold primitives.
- * Monochrome "terminal/excavation" archive: hairline inset frame, L-shaped
- * registration corner ticks, bracketed mono labels, tabular figures.
- * Logical CSS props throughout so everything mirrors automatically in RTL.
+ * Monochrome "terminal/excavation" archive: a single calm centered content
+ * column with generous editorial margins — no ornamental inset frame, no
+ * corner ticks (the page chrome carries the registration language once, not
+ * every block). Logical CSS props throughout so everything mirrors in RTL.
  */
 
 /* ------------------------------------------------------------------ PageFrame */
@@ -19,33 +20,11 @@ export interface PageFrameProps {
   className?: string;
 }
 
-/** 6px L-shaped registration tick. `corner` picks which two edges draw. */
-function CornerTick({
-  corner,
-}: {
-  corner: "ss" | "se" | "es" | "ee";
-}) {
-  // ss = start/top, se = start/bottom, es = end/top, ee = end/bottom
-  const pos: Record<typeof corner, string> = {
-    ss: "start-0 top-0 border-s border-t",
-    se: "start-0 bottom-0 border-s border-b",
-    es: "end-0 top-0 border-e border-t",
-    ee: "end-0 bottom-0 border-e border-b",
-  };
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "pointer-events-none absolute h-1.5 w-1.5 border-ink",
-        pos[corner],
-      )}
-    />
-  );
-}
-
 /**
- * PageFrame — full-page template with a hairline inset frame, corner ticks and
- * a centered max-w-content slot. The primary frame rule carries `.mo-draw-x`.
+ * PageFrame — the single restrained content column. One centered
+ * `max-w-content` measure with generous gutters; no decorative inset box or
+ * corner ticks (those produced the "double-frame" look). Whitespace, not a
+ * border, separates content from the full-bleed header/footer chrome.
  */
 export function PageFrame({
   children,
@@ -54,20 +33,10 @@ export function PageFrame({
   className,
 }: PageFrameProps) {
   return (
-    <div className={cn("min-h-screen bg-paper text-ink", className)}>
-      <div className="p-6">
-        <div className="relative border border-hairline mo-draw-x">
-          <CornerTick corner="ss" />
-          <CornerTick corner="es" />
-          <CornerTick corner="se" />
-          <CornerTick corner="ee" />
-          <div className="p-6">
-            {header}
-            <div className="mx-auto w-full max-w-content">{children}</div>
-            {footer}
-          </div>
-        </div>
-      </div>
+    <div className={cn("text-ink", className)}>
+      {header}
+      <div className="mx-auto w-full max-w-content px-6 py-8">{children}</div>
+      {footer}
     </div>
   );
 }
@@ -85,7 +54,11 @@ export interface SectionHeaderProps {
   as?: "h1" | "h2" | "h3";
 }
 
-/** `§ NN / TITLE` on the start side, optional meta on the end, hairline below. */
+/**
+ * `§ NN / TITLE` on the start side, optional meta on the end, hairline below.
+ * Deliberately quiet: a faint `§ NN /` prefix in metadata tone, used sparingly
+ * as a section divider — not a loud caption on every block.
+ */
 export function SectionHeader({
   index,
   title,
@@ -94,11 +67,11 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   const Heading = as;
   return (
-    <div className="flex items-end justify-between gap-4 border-b border-hairline pb-1.5">
+    <div className="flex items-end justify-between gap-4 border-b border-hairline pb-2">
       <Heading className="flex items-baseline gap-2 font-display text-ink">
         {index ? (
-          <span className="label-mono text-metadata" dir="auto">
-            § {index}
+          <span className="label-mono font-normal text-metadata" dir="auto">
+            § {index} /
           </span>
         ) : null}
         <span>{title}</span>

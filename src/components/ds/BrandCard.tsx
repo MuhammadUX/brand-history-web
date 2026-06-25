@@ -49,7 +49,7 @@ export function BrandCard({
   className,
 }: BrandCardProps) {
   const frame = cn(
-    "relative flex flex-col items-start rounded-none border border-hairline bg-surface p-2",
+    "group relative flex flex-col items-start rounded-none border border-hairline bg-surface p-2",
     href && "mo-invert hover:border-ink",
     selected && "border-ink",
     className,
@@ -68,6 +68,8 @@ export function BrandCard({
         initials={initials}
         size="md"
         code={code}
+        codeOnHover
+        develop={false}
         negative={selected}
       />
       <h3 className="mt-2 font-display text-lg leading-tight text-ink">
@@ -76,8 +78,18 @@ export function BrandCard({
       {meta && (
         <p className="mt-1 font-mono text-[11px] text-metadata">{meta}</p>
       )}
+      {/* Label budget: at rest a card shows only name + meta. The verified
+          stamp and the favorite control reveal on hover/focus (instant opacity
+          toggle — no transition, so reduced-motion shows them immediately on
+          focus). `selected` stays visible as it is an active state. */}
       {(verified || selected || children) && (
-        <div className="relative z-10 mt-2 flex flex-wrap items-center gap-1.5">
+        <div
+          className={cn(
+            "relative z-10 mt-2 flex flex-wrap items-center gap-1.5",
+            !selected &&
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+          )}
+        >
           {verified && <Badge kind="verified" />}
           {selected && <Badge kind="filter">SELECTED</Badge>}
           {children}

@@ -7,6 +7,7 @@ import {
   exportMyData,
   requestAccountDeletion,
 } from "@/app/[locale]/account/privacy-actions";
+import { Button } from "@/components/ds";
 
 export default function PrivacyPanel({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -63,45 +64,59 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
   return (
     <div className="flex max-w-2xl flex-col gap-8">
       {/* Export */}
-      <section className="rounded-card border border-border bg-surface p-6">
-        <h3 className="text-base font-bold text-ink">
+      <section className="border border-hairline bg-surface p-6">
+        <h3 className="font-display text-[15px] leading-tight text-ink">
           {dict.privacy.exportTitle}
         </h3>
-        <p className="mt-1 text-sm text-secondary">{dict.privacy.exportBody}</p>
+        <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          {dict.privacy.exportBody}
+        </p>
         <div className="mt-4">
-          <button
+          <Button
             type="button"
+            variant="primary"
             onClick={onExport}
             disabled={pending}
-            className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
           >
             {pending ? dict.privacy.exporting : dict.privacy.exportButton}
-          </button>
+          </Button>
         </div>
         {exportMsg && (
-          <p role="status" aria-live="polite" className="mt-3 text-sm font-medium text-success">
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 font-mono text-[13px] text-ink"
+          >
+            <span aria-hidden="true" className="me-1">
+              [ ✓ ]
+            </span>
             {exportMsg}
           </p>
         )}
         {exportErr && (
-          <p role="alert" className="mt-3 text-sm font-medium text-sponsored">
+          <p role="alert" className="mt-3 font-mono text-[13px] text-danger">
+            <span aria-hidden="true" className="me-1">
+              ⚠
+            </span>
             {exportErr}
           </p>
         )}
       </section>
 
       {/* Delete */}
-      <section className="rounded-card border border-border bg-surface p-6">
-        <h3 className="text-base font-bold text-ink">
+      <section className="border border-hairline bg-surface p-6">
+        <h3 className="font-display text-[15px] leading-tight text-ink">
           {dict.privacy.deleteTitle}
         </h3>
-        <p className="mt-1 text-sm text-secondary">{dict.privacy.deleteBody}</p>
+        <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          {dict.privacy.deleteBody}
+        </p>
 
-        <div className="mt-4 rounded-card border border-border bg-page p-4">
-          <p className="text-sm font-semibold text-ink">
+        <div className="mt-4 border border-hairline bg-paper p-4">
+          <p className="label-mono text-ink">
             {dict.privacy.deleteConsequencesTitle}
           </p>
-          <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-secondary">
+          <ul className="mt-2 list-disc space-y-1 ps-5 font-mono text-[13px] text-ink-700">
             <li>{dict.privacy.deleteC1}</li>
             <li>{dict.privacy.deleteC2}</li>
             <li>{dict.privacy.deleteC3}</li>
@@ -112,51 +127,54 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
           <div
             role="status"
             aria-live="polite"
-            className="mt-4 rounded-card border border-sponsored/30 bg-sponsoredBg p-4"
+            className="mt-4 border border-danger bg-surface p-4"
           >
-            <p className="text-sm font-bold text-sponsored">
+            <p className="font-display text-[15px] leading-tight text-danger">
               {dict.privacy.deletePending}
             </p>
-            <p className="mt-1 text-sm text-ink">
+            <p className="mt-1 font-mono text-[13px] text-ink">
               {dict.privacy.deletePendingNote}
             </p>
           </div>
         ) : confirming ? (
-          <div className="mt-4 rounded-card border border-border bg-page p-4">
-            <p className="text-sm font-semibold text-ink">
+          <div className="mt-4 border border-hairline bg-paper p-4">
+            <p className="label-mono text-ink">
               {dict.privacy.deleteConfirmTitle}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Button
                 type="button"
+                variant="danger"
                 onClick={onConfirmDelete}
                 disabled={pending}
-                className="rounded-btn bg-sponsored px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
               >
                 {pending ? dict.privacy.deleting : dict.privacy.deleteConfirm}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setConfirming(false)}
-                className="rounded-btn border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {dict.privacy.deleteCancel}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
           <div className="mt-4">
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={() => setConfirming(true)}
-              className="rounded-btn border border-sponsored/40 bg-surface px-4 py-2.5 text-sm font-semibold text-sponsored transition hover:bg-sponsoredBg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {dict.privacy.deleteButton}
-            </button>
+            </Button>
           </div>
         )}
         {deleteErr && (
-          <p role="alert" className="mt-3 text-sm font-medium text-sponsored">
+          <p role="alert" className="mt-3 font-mono text-[13px] text-danger">
+            <span aria-hidden="true" className="me-1">
+              ⚠
+            </span>
             {deleteErr}
           </p>
         )}

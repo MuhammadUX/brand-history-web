@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import LogoTile from "./LogoTile";
+import { Button, DitherPlate, StateBlock } from "@/components/ds";
+import { catalogueCode } from "./DsBrandCard";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
@@ -44,11 +45,15 @@ export default function AccountFavorites({
 
   if (brands.length === 0) {
     return (
-      <div className="rounded-card border border-border bg-surface p-10 text-center">
-        <p className="text-sm text-secondary">{dict.account.favoritesEmpty}</p>
+      <div className="flex flex-col items-start gap-4">
+        <StateBlock
+          state="empty"
+          message={dict.account.favoritesEmpty}
+          className="w-full"
+        />
         <Link
           href={`/${locale}/browse`}
-          className="mt-4 inline-flex rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
         >
           {dict.account.browseBrands}
         </Link>
@@ -57,7 +62,7 @@ export default function AccountFavorites({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {brands.map((brand) => {
         const name = locale === "ar" ? brand.name_ar : brand.name_en;
         const sectorName =
@@ -67,36 +72,45 @@ export default function AccountFavorites({
         return (
           <div
             key={brand.id}
-            className="flex flex-col gap-4 rounded-card border border-border bg-surface p-5"
+            className="flex flex-col items-start border border-hairline bg-surface p-2"
           >
-            <div className="flex items-start justify-between gap-3">
-              <Link
-                href={`/${locale}/brand/${brand.slug}`}
-                className="rounded-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
-                <LogoTile
-                  initials={brand.initials}
-                  color={brand.primary_color}
-                  name={name}
-                />
-              </Link>
-              <button
+            <Link
+              href={`/${locale}/brand/${brand.slug}`}
+              className="block"
+              aria-label={name}
+            >
+              <DitherPlate
+                initials={brand.initials}
+                size="md"
+                code={catalogueCode(brand.slug || brand.id)}
+                develop={false}
+              />
+            </Link>
+            <Link
+              href={`/${locale}/brand/${brand.slug}`}
+              className="mt-2 block"
+            >
+              <h3 className="font-display text-lg leading-tight text-ink">
+                {name}
+              </h3>
+              {meta && (
+                <p className="mt-1 font-mono text-[11px] text-metadata">
+                  {meta}
+                </p>
+              )}
+            </Link>
+            <div className="mt-2">
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => remove(brand.id)}
                 disabled={removing === brand.id}
                 aria-label={dict.account.removeAria(name)}
-                className="inline-flex items-center rounded-pill border border-border px-3 py-1.5 text-xs font-medium text-secondary transition hover:border-primary/40 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
               >
                 {dict.account.remove}
-              </button>
+              </Button>
             </div>
-            <Link
-              href={`/${locale}/brand/${brand.slug}`}
-              className="flex flex-col gap-1 rounded-btn focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              <h3 className="text-base font-semibold text-ink">{name}</h3>
-              {meta && <p className="text-sm text-secondary">{meta}</p>}
-            </Link>
           </div>
         );
       })}

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import NotificationList from "@/components/NotificationList";
+import { Shell } from "@/components/ds";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getNotifications } from "@/lib/notifications";
 import { getDictionary, isLocale } from "@/i18n";
@@ -28,13 +29,13 @@ export default async function NotificationsPage({
   const notifications = await getNotifications();
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <main id="main-content">
+      <Shell>
         <header className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-[32px] leading-tight text-ink">
             {dict.notifications.title}
           </h1>
-          <p className="mt-1 text-sm text-secondary">
+          <p className="mt-3 font-mono text-[15px] leading-6 text-ink-700">
             {dict.notifications.subtitle}
           </p>
         </header>
@@ -42,7 +43,7 @@ export default async function NotificationsPage({
           locale={typedLocale}
           initialNotifications={notifications}
         />
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

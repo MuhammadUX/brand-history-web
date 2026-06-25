@@ -14,6 +14,13 @@ export interface DitherPlateProps {
   density?: number;
   /** Catalogue code shown top-left, e.g. "BH-0042". */
   code?: string;
+  /**
+   * Label-budget control: when true the code chip is hidden at rest and only
+   * revealed on hover/focus of the enclosing `group` (instant — no transition,
+   * so it is reduced-motion-safe). Used on grid cards; leave false for the
+   * single hero specimen plate where the code reads at rest.
+   */
+  codeOnHover?: boolean;
   /** Develop-in on scroll into view (M1). Default true. */
   develop?: boolean;
   /** Negative (inverted) plate — used for selected state. */
@@ -38,6 +45,7 @@ export function DitherPlate({
   size = "md",
   density = 0.55,
   code,
+  codeOnHover = false,
   develop = true,
   negative = false,
   className,
@@ -119,10 +127,15 @@ export function DitherPlate({
         </text>
       </svg>
 
-      {/* BH-#### code chip top-left */}
+      {/* BH-#### code chip top-left. On grid cards (codeOnHover) it is hidden
+          at rest and revealed instantly on group hover/focus — label budget. */}
       {code && (
         <span
-          className="label-mono absolute left-1 top-1 bg-ink px-0.5 text-paper"
+          className={cn(
+            "label-mono absolute left-1 top-1 bg-ink px-0.5 text-paper",
+            codeOnHover &&
+              "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+          )}
           style={{ color: "var(--paper)" }}
         >
           [ {code} ]

@@ -56,7 +56,7 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
         <FormSuccess message={dict.auth.resetSuccess} />
         <Link
           href={`/${locale}/login`}
-          className="text-sm font-semibold text-primary hover:text-primary-hover"
+          className="label-mono text-ink hover:underline"
         >
           {dict.auth.signIn}
         </Link>
@@ -70,7 +70,7 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
         <FormError message={dict.auth.resetInvalid} />
         <Link
           href={`/${locale}/forgot-password`}
-          className="text-sm font-semibold text-primary hover:text-primary-hover"
+          className="label-mono text-ink hover:underline"
         >
           {dict.auth.forgotTitle}
         </Link>

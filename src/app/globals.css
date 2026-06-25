@@ -30,9 +30,7 @@
   --mo-dur-fast: 140ms;
   --mo-dur-base: 220ms;
   --mo-dur-reveal: 260ms;
-  --mo-step-dither: steps(4); /* 4 density passes */
-  --mo-step-wipe: steps(12); /* scanline / hairline */
-  --mo-step-draw: steps(8); /* hairline draw-on */
+  --mo-step-dither: steps(4); /* 4 density passes (hero plate develop) */
 
   /* ── Motion · micro-interaction durations ── */
   --mi-fast: 90ms; /* hairline draw, stamp settle */
@@ -168,35 +166,6 @@ html[dir="rtl"] .mo-develop {
   }
 }
 
-/* M2 · Hairline draw-on — scaleX/scaleY from origin, stepped like a plotter */
-@keyframes mo-draw-x {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-@keyframes mo-draw-y {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-.mo-draw-x {
-  transform-origin: left center;
-  animation: mo-draw-x var(--mo-dur-base) var(--mo-step-draw) both;
-}
-html[dir="rtl"] .mo-draw-x {
-  transform-origin: right center;
-}
-.mo-draw-y {
-  transform-origin: top center;
-  animation: mo-draw-y var(--mo-dur-base) var(--mo-step-draw) both;
-}
-
 /* M3 · Mono heading type-on — width reveal, terminal feel (driven by JS too) */
 @keyframes mo-caret-blink {
   0%,
@@ -234,8 +203,8 @@ html[dir="rtl"] .mo-draw-x {
   animation: mo-tick 80ms steps(1) 1;
 }
 
-/* M5 · 1-bit shimmer skeleton — cross-hatch advancing one cell-phase.
-   Background-position step, NOT a gradient sheen. Stops when data lands. */
+/* M5 · 1-bit loading block — STATIC cross-hatch (no animation). Silent luxury:
+   loading is a still 1-bit fill, not a looping shimmer. */
 .mo-skeleton {
   background-color: var(--surface);
   background-image: repeating-linear-gradient(
@@ -246,35 +215,6 @@ html[dir="rtl"] .mo-draw-x {
       transparent 4px
     );
   background-size: 8px 8px;
-  animation: mo-scan 720ms steps(4) infinite;
-}
-@keyframes mo-scan {
-  to {
-    background-position: 8px 0;
-  }
-}
-
-/* R1 · Scanline wipe route change — 1px ink line sweeps top→bottom, steps(12) */
-@keyframes mo-scanline {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
-  }
-}
-.mo-scanline {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent calc(50% - 1px),
-    var(--ink) 50%,
-    transparent calc(50% + 1px)
-  );
-  animation: mo-scanline var(--mo-dur-fast) var(--mo-step-wipe) 1 forwards;
 }
 
 /* Micro · ghost-button hover invert — steps(2) threshold, no grey crossfade */

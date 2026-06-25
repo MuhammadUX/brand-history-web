@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button, Toggle, Badge } from "@/components/ds";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { recordConsent, type ConsentChoices } from "@/app/[locale]/consent-actions";
@@ -83,43 +84,41 @@ export default function ConsentBanner({ locale }: { locale: Locale }) {
       role="dialog"
       aria-modal="false"
       aria-label={dict.consent.title}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surface shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-ink bg-surface"
     >
-      <div className="mx-auto max-w-container px-4 py-5 sm:px-6">
+      <div className="mx-auto max-w-content px-6 py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
-            <h2 className="text-base font-bold text-ink">{dict.consent.title}</h2>
-            <p className="mt-1 text-sm text-secondary">{dict.consent.body}</p>
-            <p className="mt-1 text-xs text-tertiary">{dict.consent.policyNote}</p>
+            <h2 className="font-display text-lg leading-tight text-ink">
+              {dict.consent.title}
+            </h2>
+            <p className="mt-2 font-mono text-[13px] leading-5 text-ink-700">
+              {dict.consent.body}
+            </p>
+            <p className="mt-1 font-mono text-[11px] text-metadata">
+              {dict.consent.policyNote}
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2 lg:shrink-0">
-            <button
-              type="button"
-              onClick={rejectNonEssential}
-              className="rounded-btn border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
+          <div className="flex flex-wrap gap-1.5 lg:shrink-0">
+            <Button type="button" variant="secondary" onClick={rejectNonEssential}>
               {dict.consent.rejectNonEssential}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
-              className="rounded-btn border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {dict.consent.manage}
-            </button>
-            <button
-              type="button"
-              onClick={acceptAll}
-              className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
+            </Button>
+            <Button type="button" variant="primary" onClick={acceptAll}>
               {dict.consent.acceptAll}
-            </button>
+            </Button>
           </div>
         </div>
 
         {expanded && (
-          <div className="mt-5 border-t border-border pt-5">
+          <div className="mt-6 border-t border-hairline pt-6">
             <div className="grid gap-3 sm:grid-cols-2">
               <ToggleRow
                 label={dict.consent.essential}
@@ -149,13 +148,9 @@ export default function ConsentBanner({ locale }: { locale: Locale }) {
               />
             </div>
             <div className="mt-4">
-              <button
-                type="button"
-                onClick={saveChoices}
-                className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Button type="button" variant="secondary" onClick={saveChoices}>
                 {dict.consent.save}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -180,28 +175,22 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label
-      className={`flex items-start justify-between gap-3 rounded-card border border-border bg-page p-4 ${
-        disabled ? "opacity-90" : "cursor-pointer"
-      }`}
-    >
+    <div className="flex items-start justify-between gap-3 border border-hairline bg-surface p-4">
       <span>
-        <span className="block text-sm font-semibold text-ink">{label}</span>
-        <span className="mt-0.5 block text-xs text-secondary">{desc}</span>
+        <span className="block font-display text-[15px] leading-tight text-ink">
+          {label}
+        </span>
+        <span className="mt-1 block font-mono text-[11px] text-metadata">
+          {desc}
+        </span>
       </span>
       {disabled ? (
-        <span className="shrink-0 rounded-pill bg-verifiedBg px-2.5 py-0.5 text-xs font-semibold text-verifiedText">
-          {alwaysOnLabel}
+        <span className="shrink-0">
+          <Badge kind="filter">{alwaysOnLabel}</Badge>
         </span>
       ) : (
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          aria-label={label}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-border text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        />
+        <Toggle checked={checked} onChange={onChange} />
       )}
-    </label>
+    </div>
   );
 }

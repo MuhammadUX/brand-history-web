@@ -53,8 +53,9 @@ export default async function LocaleLayout({
         </a>
         {/*
           Concept A shared chrome: ONE DS Header (top) + DS Footer (bottom),
-          with the R1 scanline RouteTransition mounted once around the page
-          body. Pages render their own <Shell> content slot between them.
+          full-bleed paper, no decorative frame. Pages render a single calm
+          centered <Shell> content column between them. Navigation is an instant
+          cut (RouteTransition is now a transparent pass-through).
         */}
         <RouteTransition>
           <div className="mx-auto w-full max-w-content px-6 pt-6">

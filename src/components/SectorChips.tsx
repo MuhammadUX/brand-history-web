@@ -39,10 +39,10 @@ export default function SectorChips({
   allLabel,
 }: SectorChipsProps) {
   const baseCls =
-    "inline-flex items-center rounded-pill border px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
-  const activeCls = "border-primary bg-primary text-white";
+    "mo-invert inline-flex items-center border px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-label";
+  const activeCls = "border-ink bg-ink text-paper";
   const idleCls =
-    "border-border bg-surface text-ink hover:border-primary/40 hover:bg-page";
+    "border-hairline bg-surface text-ink hover:border-ink hover:bg-ink hover:text-paper";
 
   return (
     <ul className="flex flex-wrap gap-2">

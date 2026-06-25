@@ -26,30 +26,27 @@ export default async function AdSlot({
   return (
     <aside
       aria-label={dict.ad.label}
-      className={`relative overflow-hidden rounded-card border border-dashed border-border bg-page ${
-        isSidebar ? "p-5" : "p-6 sm:p-8"
+      className={`relative border border-dashed border-hairline bg-surface ${
+        isSidebar ? "p-4" : "p-6"
       }`}
     >
-      <span className="inline-flex items-center gap-1.5 rounded-pill bg-sponsoredBg px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-sponsored">
-        {dict.ad.label}
-        <span className="rounded-sm bg-sponsored/15 px-1 text-[10px]">
-          {dict.ad.tag}
-        </span>
+      <span className="label-mono inline-flex items-center gap-1.5 text-metadata">
+        [ {dict.ad.label} · {dict.ad.tag} ]
       </span>
       <p
-        className={`mt-3 font-semibold text-ink ${
-          isSidebar ? "text-base" : "text-lg"
+        className={`mt-3 font-display leading-tight text-ink ${
+          isSidebar ? "text-[15px]" : "text-lg"
         }`}
       >
         {dict.ad.body}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <span className="inline-flex rounded-btn bg-surface px-4 py-2 text-sm font-medium text-secondary">
+        <span className="label-mono inline-flex border border-hairline px-2 py-1 text-metadata">
           {dict.ad.cta}
         </span>
         <Link
           href={`/${locale}/pro`}
-          className="text-sm font-semibold text-primary hover:text-primary-hover"
+          className="label-mono text-ink hover:underline"
         >
           {dict.ad.removeAds} →
         </Link>

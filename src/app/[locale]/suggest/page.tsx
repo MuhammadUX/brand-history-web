@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import SuggestForm from "@/components/SuggestForm";
+import { Shell } from "@/components/ds";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 
@@ -16,16 +17,18 @@ export default async function SuggestPage({
   const dict = getDictionary(typedLocale);
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <main id="main-content">
+      <Shell>
         <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-[32px] leading-tight text-ink">
             {dict.suggest.title}
           </h1>
-          <p className="mt-1 text-sm text-secondary">{dict.suggest.subtitle}</p>
+          <p className="mt-3 font-mono text-[15px] leading-6 text-ink-700">
+            {dict.suggest.subtitle}
+          </p>
         </header>
         <SuggestForm locale={typedLocale} />
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }

@@ -38,36 +38,36 @@ export default async function UnavailablePage({
   const dict = getDictionary(typedLocale);
 
   return (
-    <>
-      <main
-        id="main-content"
-        className="mx-auto flex max-w-container flex-col items-center justify-center px-4 py-24 text-center sm:px-6"
+    <main
+      id="main-content"
+      className="mx-auto flex w-full max-w-content flex-col items-center justify-center px-6 py-24 text-center"
+    >
+      <span
+        className="flex h-14 w-14 items-center justify-center border border-ink font-display text-2xl text-ink"
+        aria-hidden="true"
       >
-        <span
-          className="flex h-14 w-14 items-center justify-center rounded-card bg-sponsoredBg text-2xl text-sponsored"
-          aria-hidden="true"
+        ⚑
+      </span>
+      <h1 className="mt-5 font-display text-[32px] leading-tight text-ink">
+        {dict.unavailable.title}
+      </h1>
+      <p className="mt-3 max-w-md font-mono text-[15px] leading-6 text-ink-700">
+        {dict.unavailable.body}
+      </p>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
+        <Link
+          href={`/${typedLocale}/browse`}
+          className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
         >
-          ⚑
-        </span>
-        <h1 className="mt-5 text-3xl font-bold tracking-tight text-ink">
-          {dict.unavailable.title}
-        </h1>
-        <p className="mt-3 max-w-md text-secondary">{dict.unavailable.body}</p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href={`/${typedLocale}/browse`}
-            className="rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            {dict.unavailable.browse}
-          </Link>
-          <Link
-            href={`/${typedLocale}`}
-            className="rounded-btn border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            {dict.unavailable.home}
-          </Link>
-        </div>
-      </main>
-    </>
+          {dict.unavailable.browse}
+        </Link>
+        <Link
+          href={`/${typedLocale}`}
+          className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-transparent px-4 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
+        >
+          {dict.unavailable.home}
+        </Link>
+      </div>
+    </main>
   );
 }

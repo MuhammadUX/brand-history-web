@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PricingToggle from "@/components/PricingToggle";
+import { Shell, Badge } from "@/components/ds";
 import { getDictionary, isLocale } from "@/i18n";
 import { getIsPro } from "@/lib/entitlements";
 import type { Locale } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+const primaryLink =
+  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700";
+const secondaryLink =
+  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-transparent px-4 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper";
 
 export default async function ProPage({
   params,
@@ -28,40 +34,32 @@ export default async function ProPage({
   ];
 
   return (
-    <>
-      <main id="main-content" className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+    <main id="main-content">
+      <Shell>
         <div className="text-center">
-          <span className="inline-flex rounded-pill bg-primary-tint px-3 py-1 text-xs font-semibold text-primary">
-            {dict.nav.proBadge}
-          </span>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <Badge kind="pro" />
+          <h1 className="mt-4 font-display text-[32px] leading-tight text-ink">
             {dict.pro.title}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-secondary">
+          <p className="mx-auto mt-3 max-w-2xl font-mono text-[15px] leading-6 text-ink-700">
             {dict.pro.subtitle}
           </p>
         </div>
 
         {isPro ? (
-          <div className="mx-auto mt-10 max-w-xl rounded-card border border-border bg-surface p-8 text-center">
-            <span className="inline-flex rounded-pill bg-verifiedBg px-3 py-1 text-xs font-semibold text-verifiedText">
-              {dict.nav.proBadge}
-            </span>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-ink">
+          <div className="mx-auto mt-10 max-w-xl border border-hairline bg-surface p-8 text-center">
+            <Badge kind="pro" />
+            <h2 className="mt-4 font-display text-2xl leading-tight text-ink">
               {dict.pro.alreadyTitle}
             </h2>
-            <p className="mt-2 text-base text-secondary">{dict.pro.alreadyBody}</p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href={`/${typedLocale}/account`}
-                className="inline-flex rounded-btn bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+            <p className="mt-2 font-mono text-[15px] leading-6 text-ink-700">
+              {dict.pro.alreadyBody}
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
+              <Link href={`/${typedLocale}/account`} className={primaryLink}>
                 {dict.pro.manage}
               </Link>
-              <Link
-                href={`/${typedLocale}`}
-                className="inline-flex rounded-btn border border-border bg-surface px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              >
+              <Link href={`/${typedLocale}`} className={secondaryLink}>
                 {dict.pro.back}
               </Link>
             </div>
@@ -73,17 +71,21 @@ export default async function ProPage({
               {features.map((f) => (
                 <li
                   key={f.title}
-                  className="flex gap-3 rounded-card border border-border bg-surface p-5"
+                  className="flex gap-3 border border-hairline bg-surface p-5"
                 >
                   <span
                     aria-hidden="true"
-                    className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-primary-tint text-sm font-bold text-primary"
+                    className="label-mono mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center border border-ink text-ink"
                   >
                     ✓
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-ink">{f.title}</p>
-                    <p className="mt-0.5 text-sm text-secondary">{f.body}</p>
+                    <p className="font-display text-[15px] leading-tight text-ink">
+                      {f.title}
+                    </p>
+                    <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+                      {f.body}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -95,7 +97,7 @@ export default async function ProPage({
               <div className="mt-4 text-center">
                 <Link
                   href={`/${typedLocale}`}
-                  className="text-sm font-medium text-secondary hover:text-ink"
+                  className="label-mono text-metadata hover:text-ink"
                 >
                   {dict.pro.later}
                 </Link>
@@ -103,7 +105,7 @@ export default async function ProPage({
             </div>
           </div>
         )}
-      </main>
-    </>
+      </Shell>
+    </main>
   );
 }
