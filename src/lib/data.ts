@@ -3,12 +3,15 @@ import type {
   Brand,
   BrandAsset,
   BrandColor,
+  BrandFont,
+  BrandGuideline,
+  BrandApplication,
   Sector,
   TimelineEntry,
 } from "./types";
 
 const BRAND_SELECT =
-  "id,slug,name_en,name_ar,sector_id,website,region,founded_year,summary_en,summary_ar,primary_color,initials,claim_status,publication_state,is_verified,download_count,last_updated_at,created_at,sectors(id,slug,name_en,name_ar,sort_order)";
+  "id,slug,name_en,name_ar,sector_id,website,region,founded_year,summary_en,summary_ar,primary_color,initials,claim_status,publication_state,is_verified,download_count,last_updated_at,created_at,designer_credit,agency,credit_source_url,clear_space,min_size,voice_en,voice_ar,sectors(id,slug,name_en,name_ar,sort_order)";
 
 export async function getSectors(): Promise<Sector[]> {
   const supabase = getSupabaseServerClient();
@@ -186,7 +189,7 @@ export async function getTimeline(brandId: string): Promise<TimelineEntry[]> {
   const { data, error } = await supabase
     .from("timeline_entries")
     .select(
-      "id,brand_id,year,title_en,title_ar,description_en,description_ar,category,sort_order"
+      "id,brand_id,year,title_en,title_ar,description_en,description_ar,category,logo_url,change_kind,credit,source_url,sort_order"
     )
     .eq("brand_id", brandId)
     .order("year", { ascending: true })
@@ -196,4 +199,54 @@ export async function getTimeline(brandId: string): Promise<TimelineEntry[]> {
     return [];
   }
   return (data as TimelineEntry[]) ?? [];
+}
+
+export async function getBrandFonts(brandId: string): Promise<BrandFont[]> {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("brand_fonts")
+    .select(
+      "id,brand_id,family,role,specimen_en,specimen_ar,weights,policy,license,foundry,source_url,css_stack,sort_order"
+    )
+    .eq("brand_id", brandId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getBrandFonts error:", error.message);
+    return [];
+  }
+  return (data as BrandFont[]) ?? [];
+}
+
+export async function getBrandGuidelines(
+  brandId: string
+): Promise<BrandGuideline[]> {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("brand_guidelines")
+    .select("id,brand_id,kind,text_en,text_ar,sort_order")
+    .eq("brand_id", brandId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getBrandGuidelines error:", error.message);
+    return [];
+  }
+  return (data as BrandGuideline[]) ?? [];
+}
+
+export async function getBrandApplications(
+  brandId: string
+): Promise<BrandApplication[]> {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("brand_applications")
+    .select(
+      "id,brand_id,context,image_url,caption_en,caption_ar,bg_color,sort_order"
+    )
+    .eq("brand_id", brandId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("getBrandApplications error:", error.message);
+    return [];
+  }
+  return (data as BrandApplication[]) ?? [];
 }
