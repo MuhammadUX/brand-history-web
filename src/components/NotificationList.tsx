@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import type { NotificationRow } from "@/lib/notifications";
-import { Button, Badge, StateBlock } from "@/components/ds";
+import { Button, Badge, StateBlock } from "@/components/ui";
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -68,6 +68,7 @@ export default function NotificationList({
     return (
       <StateBlock
         state="empty"
+        icon="🔔"
         title={dict.notifications.emptyTitle}
         message={dict.notifications.emptyBody}
       />
@@ -82,16 +83,14 @@ export default function NotificationList({
       {toast && (
         <div
           role="alert"
-          className="mb-4 border border-danger bg-surface px-4 py-3 font-mono text-[13px] text-danger"
+          className="mb-4 flex items-center gap-2 rounded-md border border-danger/40 bg-danger/5 px-4 py-3 text-[13px] text-danger"
         >
-          <span aria-hidden="true" className="me-1">
-            ⚠
-          </span>
+          <span aria-hidden="true">⚠</span>
           {toast}
         </div>
       )}
-      <div className="mb-4 flex items-center justify-between">
-        <p aria-live="polite" className="font-mono text-[13px] text-metadata">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <p aria-live="polite" className="text-[13px] text-muted">
           {unreadCount > 0
             ? dict.notifications.unreadAria(unreadCount)
             : dict.notifications.emptyTitle}
@@ -99,7 +98,7 @@ export default function NotificationList({
         {unreadCount > 0 && (
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="sm"
             onClick={onMarkAll}
             disabled={pending}
@@ -116,35 +115,37 @@ export default function NotificationList({
           return (
             <li
               key={n.id}
-              className={`border p-4 ${
+              className={`rounded-lg border p-4 ${
                 n.read
-                  ? "border-hairline bg-surface"
-                  : "border-ink bg-scaffold"
+                  ? "border-line bg-surface"
+                  : "border-ink/15 bg-surface-2"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    {!n.read && <Badge kind="filter">{dict.notifications.new}</Badge>}
-                    <h2 className="font-display text-[15px] leading-tight text-ink">
+                    {!n.read && (
+                      <Badge kind="pro">{dict.notifications.new}</Badge>
+                    )}
+                    <h2 className="text-[15px] font-bold leading-tight text-ink">
                       {title}
                     </h2>
                   </div>
                   {body && (
-                    <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+                    <p className="mt-1 text-[13px] leading-5 text-muted">
                       {body}
                     </p>
                   )}
-                  <p className="mt-2 font-mono text-[11px] text-metadata">
+                  <p className="mt-2 text-[11px] text-muted">
                     {fmtDate(n.created_at)}
                   </p>
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-4">
                 {n.link && (
                   <Link
                     href={n.link.replace(/^\/(en|ar)\//, `/${locale}/`)}
-                    className="label-mono text-ink hover:underline"
+                    className="text-[13px] font-semibold text-link hover:underline"
                   >
                     {dict.notifications.view} →
                   </Link>
@@ -154,7 +155,7 @@ export default function NotificationList({
                     type="button"
                     onClick={() => onMarkRead(n.id)}
                     aria-label={dict.notifications.markReadAria}
-                    className="label-mono text-metadata hover:text-ink"
+                    className="min-h-[44px] text-[13px] font-semibold text-muted hover:text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
                   >
                     {dict.notifications.markRead}
                   </button>

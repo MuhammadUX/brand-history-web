@@ -12,6 +12,9 @@ const ar: Dictionary = {
     toggleAria: "التبديل إلى الإنجليزية",
     browse: "تصفّح",
     discover: "اكتشف",
+    sectors: "القطاعات",
+    searchAria: "ابحث في العلامات",
+    account: "الحساب",
   },
   home: {
     heroTitle: "القصة وراء كل علامة تجارية.",

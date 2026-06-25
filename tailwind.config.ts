@@ -1,129 +1,127 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Concept A — Terminal / Excavation
- * Monochrome archive: paper + ink, IBM Plex Mono labels, Space Grotesk headers,
- * sharp 0px corners, 1px hairlines, ordered-Bayer dither plates.
+ * THE LIBRARY — design tokens (locked).
  *
- * NOTE: legacy color aliases (primary/page/border/secondary/...) are kept and
- * remapped onto the monochrome scale so existing screens keep compiling while
- * the page-level re-skin (next phase) migrates class usage to the new tokens.
+ * Warm, editorial, logo-forward. Brands are the content; the UI is a quiet
+ * frame. Canonical type pin: Inter (Latin/UI) + Noto Sans Arabic (RTL).
+ *
+ * Color governance: a brand's own color appears ONLY inside its own context
+ * (logo-tile tint ≤12%, 8px hero rule, color swatches) — never as a body-text
+ * background, never full-bleed. The single governed UI accent is `link` (gold).
+ *
+ * `brand` is wired to the CSS var `--brand` so a profile can scope its own
+ * accent on a container (e.g. style={{ "--brand": brand.primary_color }}).
+ *
+ * NOTE: legacy aliases from the previous concept (page/border/primary/…) are
+ * intentionally NOT carried over. ds/* still compiles because it reads CSS vars
+ * and its own utility classes; the public tokens below are the Library surface.
  */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // ── Concept A canonical tokens ───────────────────────────────
-        ink: {
-          DEFAULT: "#0A0A0A", // primary text / fills / borders / primary button
-          700: "#2B2B2B", // body text, hover ink, secondary emphasis
+        // ── Library canonical tokens ─────────────────────────────────
+        paper: "#F6F3EC", // page (warm paper)
+        surface: {
+          DEFAULT: "#FFFFFF", // cards / panels
+          2: "#FCFAF5", // insets, search field, hover wash
         },
-        paper: "#F4F1EA", // page background
-        surface: "#FBFAF6", // card / panel / input surface
-        metadata: "#6E6E6E", // meta text, captions, disabled label
-        hairline: "#9A9A9A", // 1px rules, dividers, disabled borders
-        scaffold: "#D8D6CF", // hover wash, table inner rules, active-nav fill
-        danger: "#8A1B1B", // destructive / error text + borders
-
-        // ── Legacy aliases → mapped onto the monochrome scale ────────
-        secondary: "#2B2B2B",
-        tertiary: "#6E6E6E",
-        primary: {
-          DEFAULT: "#0A0A0A",
-          hover: "#2B2B2B",
-          tint: "#D8D6CF",
+        ink: "#1A1A1A", // primary text + primary buttons
+        muted: "#6B6B63", // secondary text / labels
+        line: "#E6E0D2", // warm hairline borders
+        link: "#8A6D3B", // links / copy / "view all" (warm gold)
+        ok: "#0A7D3B", // verified / do
+        danger: "#B4232A", // don't / destructive
+        amber: {
+          DEFAULT: "#9A6B12", // archived label text
+          bg: "#FBF3E0", // archived label background
+          line: "#EAD9AE", // archived label border
         },
-        page: "#F4F1EA",
-        border: "#9A9A9A",
-        success: "#0A0A0A",
-        verifiedText: "#0A0A0A",
-        verifiedBg: "#D8D6CF",
-        sponsored: "#2B2B2B",
-        sponsoredBg: "#D8D6CF",
+        // per-brand governed accent (set via the --brand CSS var on a scope).
+        brand: "var(--brand, #8A6D3B)",
       },
       fontFamily: {
-        // display / headings
-        display: [
-          "var(--font-display)",
-          "Space Grotesk",
+        // Latin / UI — Inter (canonical). `sans` is the default body face.
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "sans-serif",
+        ],
+        // RTL / Arabic — Noto Sans Arabic, co-equal scale & weight intent.
+        arabic: [
+          "Noto Sans Arabic",
+          "Inter",
           "system-ui",
           "sans-serif",
         ],
-        // UI / data / body / labels
-        mono: [
-          "var(--font-mono)",
-          "IBM Plex Mono",
-          "ui-monospace",
-          "monospace",
-        ],
-        // Arabic
-        arabic: [
-          "var(--font-arabic)",
-          "Noto Sans Arabic",
-          "var(--font-mono)",
-          "sans-serif",
-        ],
-        // legacy alias: default body = mono
-        sans: [
-          "var(--font-mono)",
-          "IBM Plex Mono",
-          "ui-monospace",
-          "monospace",
-        ],
       },
       borderRadius: {
+        // Soft, never sharp. 10 controls/cards · 14 large cards · 999 pills.
         none: "0",
-        DEFAULT: "0",
-        // legacy aliases collapsed to sharp
-        btn: "0",
-        card: "0",
-        pill: "0",
+        DEFAULT: "10px",
+        sm: "8px",
+        md: "10px",
+        lg: "14px",
+        pill: "9999px",
+        full: "9999px",
       },
-      borderWidth: {
-        hairline: "1px",
-      },
-      spacing: {
-        // 8pt scale (Concept A · space): 4 8 12 16 24 32 48 64 96
-        "0.5": "4px",
-        "1": "8px",
-        "1.5": "12px",
-        "2": "16px",
-        "3": "24px",
-        "4": "32px",
-        "6": "48px",
-        "8": "64px",
-        "12": "96px",
+      boxShadow: {
+        // 1px hairline elevation + a whisper of lift.
+        card: "0 1px 0 rgba(0,0,0,.04)",
+        lift: "0 6px 22px -16px rgba(0,0,0,.25)",
+        modal: "0 30px 80px -30px rgba(0,0,0,.5)",
+        pop: "0 20px 60px -24px rgba(0,0,0,.4)",
       },
       maxWidth: {
-        container: "1200px",
-        content: "1200px",
-      },
-      ringColor: {
-        DEFAULT: "#0A0A0A",
-        ink: "#0A0A0A",
-      },
-      ringWidth: {
-        DEFAULT: "2px",
-      },
-      ringOffsetWidth: {
-        DEFAULT: "2px",
+        content: "1080px",
       },
       letterSpacing: {
-        label: "0.08em", // mono UPPERCASE labels +8% tracking
+        label: "0.14em", // small uppercase labels
+        display: "-0.02em", // large display headings
+        tight: "-0.01em",
       },
       fontSize: {
-        display: ["56px", { lineHeight: "60px", fontWeight: "700" }],
-        h1: ["32px", { lineHeight: "38px", fontWeight: "700" }],
-        h2: ["24px", { lineHeight: "30px", fontWeight: "500" }],
-        h3: ["18px", { lineHeight: "24px", fontWeight: "500" }],
-        body: ["15px", { lineHeight: "24px" }],
-        label: ["13px", { lineHeight: "18px" }],
-        caption: ["11px", { lineHeight: "16px" }],
-        mono: ["11px", { lineHeight: "16px", letterSpacing: "0.08em" }],
+        // Library scale: Display 40/1.05 · H2 22 · label 11 · body 14–15.
+        display: ["40px", { lineHeight: "1.05", fontWeight: "800" }],
+        h1: ["32px", { lineHeight: "1.1", fontWeight: "800" }],
+        h2: ["22px", { lineHeight: "1.2", fontWeight: "700" }],
+        h3: ["15px", { lineHeight: "1.3", fontWeight: "700" }],
+        body: ["15px", { lineHeight: "1.5" }],
+        meta: ["12px", { lineHeight: "1.4" }],
+        micro: ["11px", { lineHeight: "1.4" }],
+      },
+      keyframes: {
+        fade: {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
+      },
+      animation: {
+        fade: "fade .22s ease both",
+        "fade-in": "fadeIn .2s ease both",
+        shimmer: "shimmer 1.4s linear infinite",
+      },
+      ringColor: {
+        DEFAULT: "#8A6D3B",
+        link: "#8A6D3B",
       },
     },
   },
+  // Brand colors are injected at runtime via inline style on swatches/tiles, so
+  // safelist the dynamic utilities the components rely on.
+  safelist: ["animate-fade", "animate-fade-in", "animate-shimmer"],
   plugins: [],
 };
 

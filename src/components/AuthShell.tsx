@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/types";
+import { Card } from "@/components/ui";
 
 /**
  * Minimal centered shell for auth pages (login, register, etc.).
@@ -20,13 +21,11 @@ export default function AuthShell({
       id="main-content"
       className="mx-auto flex min-h-[60vh] max-w-md flex-col justify-center px-4 py-12 sm:px-6"
     >
-      <div className="border border-hairline bg-surface p-6 sm:p-8">
-        <h1 className="font-display text-2xl tracking-tight text-ink">{title}</h1>
-        {subtitle && (
-          <p className="mt-1.5 font-mono text-[13px] text-metadata">{subtitle}</p>
-        )}
+      <Card className="p-6 sm:p-8">
+        <h1 className="text-[22px] font-bold tracking-tight text-ink">{title}</h1>
+        {subtitle && <p className="mt-1.5 text-[13px] text-muted">{subtitle}</p>}
         <div className="mt-6">{children}</div>
-      </div>
+      </Card>
     </main>
   );
 }

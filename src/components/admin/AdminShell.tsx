@@ -6,7 +6,7 @@ type Section = "dashboard" | "brands" | "ai-builder" | "requests" | "audit";
 /**
  * AdminShell — content pass-through.
  *
- * The operator chrome (DS <OperatorSidebar> rail + identity card + main frame)
+ * The operator chrome (Library Sidebar rail + identity card + main frame)
  * now lives in `app/[locale]/admin/layout.tsx`, which wraps every admin route.
  * This component therefore only renders the page body. Its props are retained
  * so the existing admin pages compile unchanged; `locale`/`operator`/`active`

@@ -1,21 +1,31 @@
 "use client";
 
-import type { InputHTMLAttributes } from "react";
-import {
-  Field as DsField,
-  Input,
-  Button,
-} from "@/components/ds";
+import type { InputHTMLAttributes, ReactNode } from "react";
+import { Field as UiField, Input, Button } from "@/components/ui";
 
 export function Field({
   id,
   label,
+  error,
+  hint,
+  required,
   ...props
-}: { id: string; label: string } & InputHTMLAttributes<HTMLInputElement>) {
+}: {
+  id: string;
+  label: string;
+  error?: ReactNode;
+  hint?: ReactNode;
+} & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <DsField label={label} htmlFor={id}>
-      <Input id={id} {...props} />
-    </DsField>
+    <UiField
+      label={label}
+      htmlFor={id}
+      error={error}
+      hint={hint}
+      required={required}
+    >
+      <Input id={id} required={required} {...props} />
+    </UiField>
   );
 }
 
@@ -23,16 +33,11 @@ export function SubmitButton({
   children,
   pending,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   pending?: boolean;
 }) {
   return (
-    <Button
-      type="submit"
-      variant="primary"
-      disabled={pending}
-      className="w-full"
-    >
+    <Button type="submit" variant="primary" disabled={pending} className="w-full">
       {children}
     </Button>
   );
@@ -42,12 +47,10 @@ export function FormError({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="border border-danger bg-surface px-3 py-2 font-mono text-[13px] text-danger"
+      className="flex items-start gap-2 rounded-md border border-danger/40 bg-danger/5 px-3 py-2.5 text-[13px] text-danger"
     >
-      <span aria-hidden="true" className="me-1">
-        ⚠
-      </span>
-      {message}
+      <span aria-hidden="true">⚠</span>
+      <span>{message}</span>
     </p>
   );
 }
@@ -56,12 +59,12 @@ export function FormSuccess({ message }: { message: string }) {
   return (
     <div
       role="status"
-      className="border border-hairline bg-surface px-4 py-3 font-mono text-[13px] text-ink"
+      className="flex items-start gap-2 rounded-md border border-ok/40 bg-ok/5 px-4 py-3 text-[13px] text-ink"
     >
-      <span aria-hidden="true" className="me-1">
-        [ ✓ ]
+      <span aria-hidden="true" className="text-ok">
+        ✓
       </span>
-      {message}
+      <span>{message}</span>
     </div>
   );
 }

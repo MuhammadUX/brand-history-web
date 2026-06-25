@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
-import { Input } from "@/components/ds";
+import { Field as UiField, Input } from "@/components/ui";
 import { Field, FormError, SubmitButton } from "./auth-fields";
 
 export default function ProfileForm({
@@ -66,10 +66,8 @@ export default function ProfileForm({
     <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-4" noValidate>
       {error && <FormError message={error} />}
       {saved && (
-        <p role="status" className="font-mono text-[13px] text-ink">
-          <span aria-hidden="true" className="me-1">
-            [ ✓ ]
-          </span>
+        <p role="status" className="flex items-center gap-1.5 text-[13px] text-ok">
+          <span aria-hidden="true">✓</span>
           {dict.account.saved}
         </p>
       )}
@@ -84,15 +82,13 @@ export default function ProfileForm({
         }}
         autoComplete="name"
       />
-      <div className="flex flex-col gap-2">
-        <label htmlFor="email" className="label-mono text-ink">
-          {dict.account.email}
-        </label>
+      <UiField
+        htmlFor="email"
+        label={dict.account.email}
+        hint={dict.account.emailLocked}
+      >
         <Input id="email" type="email" value={email} disabled />
-        <p className="font-mono text-[11px] text-metadata">
-          {dict.account.emailLocked}
-        </p>
-      </div>
+      </UiField>
       <div>
         <SubmitButton pending={pending}>
           {pending ? dict.auth.processing : dict.account.save}

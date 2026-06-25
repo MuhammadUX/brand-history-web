@@ -1,14 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { OperatorSidebar } from "@/components/ds";
-import type { OperatorNavItem } from "@/components/ds/OperatorSidebar";
+import { Sidebar, SidebarLink } from "@/components/ui";
 
 /**
- * AdminSidebarNav — client wrapper around the DS <OperatorSidebar>. Derives the
- * active operator nav item from the live pathname (the server layout can't read
- * the current sub-route), then renders the Concept-A rail with the brand slot +
- * pinned identity card passed through from the layout.
+ * AdminSidebarNav — the operator navigation rail, rebuilt on the Library
+ * <Sidebar>/<SidebarLink>. Client component: it derives the active nav item
+ * from the live pathname (the server layout can't read the current sub-route).
+ *
+ * Active resolution: longest matching href wins, so /admin/brands beats /admin
+ * (Dashboard). Falls back to an exact Dashboard match. The brand slot and the
+ * pinned identity card are passed through from the layout.
  */
 export default function AdminSidebarNav({
   items,
@@ -39,17 +41,27 @@ export default function AdminSidebarNav({
     if (pathname === dashboard.href) activeHref = dashboard.href;
   }
 
-  const resolved: OperatorNavItem[] = items.map((item) => ({
-    ...item,
-    active: item.href === activeHref,
-  }));
-
   return (
-    <OperatorSidebar
-      items={resolved}
-      dir={dir}
-      brand={brand}
-      identity={identity}
-    />
+    <aside dir={dir} className="w-[240px] shrink-0 p-4">
+      <div className="sticky top-4 flex flex-col gap-4">
+        {brand ? <div className="px-2">{brand}</div> : null}
+        <Sidebar>
+          {items.map((item) => (
+            <SidebarLink
+              key={item.href}
+              href={item.href}
+              active={item.href === activeHref}
+            >
+              {item.label}
+            </SidebarLink>
+          ))}
+        </Sidebar>
+        {identity ? (
+          <div className="rounded-lg border border-line bg-surface p-3 shadow-card">
+            {identity}
+          </div>
+        ) : null}
+      </div>
+    </aside>
   );
 }

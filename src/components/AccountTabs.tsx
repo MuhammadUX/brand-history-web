@@ -6,6 +6,7 @@ import AccountFavorites from "./AccountFavorites";
 import SignOutButton from "./SignOutButton";
 import SubscriptionPanel from "./SubscriptionPanel";
 import PrivacyPanel from "./PrivacyPanel";
+import { Tabs } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
 import type { SubscriptionRecord } from "@/lib/entitlements";
@@ -38,40 +39,19 @@ export default function AccountTabs({
 
   return (
     <div>
-      <div
-        role="tablist"
-        aria-label={dict.account.title}
-        className="mb-6 flex flex-wrap gap-1 border-b border-hairline"
-      >
-        {tabs.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              role="tab"
-              id={`tab-${t.id}`}
-              aria-selected={active}
-              aria-controls={`panel-${t.id}`}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`-mb-px border-b-2 px-4 py-2.5 font-mono text-[11px] font-medium uppercase tracking-label ${
-                active
-                  ? "border-ink text-ink"
-                  : "border-transparent text-metadata hover:text-ink"
-              }`}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        tabs={tabs}
+        active={tab}
+        onChange={(id) => setTab(id as Tab)}
+        className="mb-6 border-b border-line pb-3"
+      />
 
       {tab === "profile" && (
-        <section role="tabpanel" id="panel-profile" aria-labelledby="tab-profile">
-          <h2 className="font-display text-lg leading-tight text-ink">
+        <section role="tabpanel" aria-label={dict.account.tabs.profile}>
+          <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
             {dict.account.profileTitle}
           </h2>
-          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          <p className="mb-5 mt-1 text-[13px] leading-5 text-muted">
             {dict.account.profileSubtitle}
           </p>
           <ProfileForm
@@ -79,22 +59,18 @@ export default function AccountTabs({
             email={email}
             initialDisplayName={displayName}
           />
-          <div className="mt-8 border-t border-hairline pt-6">
+          <div className="mt-8 border-t border-line pt-6">
             <SignOutButton locale={locale} />
           </div>
         </section>
       )}
 
       {tab === "subscription" && (
-        <section
-          role="tabpanel"
-          id="panel-subscription"
-          aria-labelledby="tab-subscription"
-        >
-          <h2 className="font-display text-lg leading-tight text-ink">
+        <section role="tabpanel" aria-label={dict.accountPro.tab}>
+          <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
             {dict.accountPro.title}
           </h2>
-          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          <p className="mb-5 mt-1 text-[13px] leading-5 text-muted">
             {dict.accountPro.subtitle}
           </p>
           <SubscriptionPanel locale={locale} subscription={subscription} />
@@ -102,15 +78,11 @@ export default function AccountTabs({
       )}
 
       {tab === "favorites" && (
-        <section
-          role="tabpanel"
-          id="panel-favorites"
-          aria-labelledby="tab-favorites"
-        >
-          <h2 className="font-display text-lg leading-tight text-ink">
+        <section role="tabpanel" aria-label={dict.account.tabs.favorites}>
+          <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
             {dict.account.favoritesTitle}
           </h2>
-          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          <p className="mb-5 mt-1 text-[13px] leading-5 text-muted">
             {dict.account.favoritesSubtitle}
           </p>
           <AccountFavorites locale={locale} initialBrands={favorites} />
@@ -118,28 +90,22 @@ export default function AccountTabs({
       )}
 
       {tab === "downloads" && (
-        <section
-          role="tabpanel"
-          id="panel-downloads"
-          aria-labelledby="tab-downloads"
-        >
-          <h2 className="font-display text-lg leading-tight text-ink">
+        <section role="tabpanel" aria-label={dict.account.tabs.downloads}>
+          <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
             {dict.account.downloadsTitle}
           </h2>
-          <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+          <p className="mt-1 text-[13px] leading-5 text-muted">
             {dict.account.downloadsBody}
           </p>
         </section>
       )}
 
       {tab === "privacy" && (
-        <section
-          role="tabpanel"
-          id="panel-privacy"
-          aria-labelledby="tab-privacy"
-        >
-          <h2 className="font-display text-lg leading-tight text-ink">{dict.privacy.title}</h2>
-          <p className="mb-5 mt-1 font-mono text-[13px] leading-5 text-ink-700">
+        <section role="tabpanel" aria-label={dict.privacy.tab}>
+          <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
+            {dict.privacy.title}
+          </h2>
+          <p className="mb-5 mt-1 text-[13px] leading-5 text-muted">
             {dict.privacy.subtitle}
           </p>
           <PrivacyPanel locale={locale} />

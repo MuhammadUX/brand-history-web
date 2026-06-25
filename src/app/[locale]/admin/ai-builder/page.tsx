@@ -5,6 +5,15 @@ import type { Locale } from "@/lib/types";
 import { requireOperator } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getSectors } from "@/lib/data";
+import {
+  Card,
+  Field,
+  Input,
+  Select,
+  Checkbox,
+  Button,
+  Badge,
+} from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import { startRun } from "./actions";
@@ -41,100 +50,89 @@ export default async function AiBuilderStart({
   const runs = runsRes.data ?? [];
   const runStatus = t.runStatus as Record<string, string>;
 
-  const inputCls =
-    "w-full rounded-btn border border-border bg-page px-3 py-2 text-sm text-ink focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
-
   const startWithLocale = startRun.bind(null, typedLocale);
 
   return (
     <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">{t.title}</h1>
-        <p className="mt-1 text-sm text-secondary">{t.subtitle}</p>
+        <h1 className="text-h2 font-bold tracking-tight text-ink">{t.title}</h1>
+        <p className="mt-1 text-[14px] text-muted">{t.subtitle}</p>
       </div>
 
-      <div className="rounded-card border border-primary/30 bg-primary-tint/40 px-4 py-3 text-sm text-ink">
+      <div className="rounded-lg border border-line bg-surface-2 px-4 py-3 text-[14px] text-ink">
         {t.calmNote}
       </div>
 
       {error === "name" && (
-        <p className="mt-4 rounded-btn border border-sponsored/40 bg-sponsoredBg px-3 py-2 text-sm text-sponsored">
+        <p className="mt-4 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
           {t.errorName}
         </p>
       )}
       {error === "create" && (
-        <p className="mt-4 rounded-btn border border-sponsored/40 bg-sponsoredBg px-3 py-2 text-sm text-sponsored">
+        <p className="mt-4 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
           {t.errorCreate}
         </p>
       )}
 
-      <form action={startWithLocale} className="mt-6 space-y-5 rounded-card border border-border bg-surface p-5">
-        <div>
-          <label htmlFor="input_name" className="mb-1.5 block text-sm font-medium text-ink">
-            {t.nameLabel}
-          </label>
-          <input id="input_name" name="input_name" required placeholder={t.namePlaceholder} className={inputCls} />
-        </div>
+      <form action={startWithLocale} className="mt-6">
+        <Card className="space-y-5">
+          <Field label={t.nameLabel} htmlFor="input_name" required>
+            <Input
+              id="input_name"
+              name="input_name"
+              required
+              placeholder={t.namePlaceholder}
+            />
+          </Field>
 
-        <fieldset className="space-y-4 border-t border-border pt-4">
-          <legend className="text-sm font-semibold text-ink">{t.hintsTitle}</legend>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="sector_slug" className="mb-1.5 block text-sm font-medium text-secondary">
-                {t.sectorLabel}
-              </label>
-              <select id="sector_slug" name="sector_slug" className={inputCls} defaultValue="">
-                <option value="">{t.sectorAny}</option>
-                {sectors.map((s) => (
-                  <option key={s.id} value={s.slug}>
-                    {typedLocale === "ar" ? s.name_ar : s.name_en}
-                  </option>
-                ))}
-              </select>
+          <fieldset className="space-y-4 border-t border-line pt-4">
+            <legend className="text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.hintsTitle}
+            </legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={t.sectorLabel} htmlFor="sector_slug">
+                <Select id="sector_slug" name="sector_slug" defaultValue="">
+                  <option value="">{t.sectorAny}</option>
+                  {sectors.map((s) => (
+                    <option key={s.id} value={s.slug}>
+                      {typedLocale === "ar" ? s.name_ar : s.name_en}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t.regionLabel} htmlFor="region">
+                <Input id="region" name="region" defaultValue="KSA" />
+              </Field>
             </div>
-            <div>
-              <label htmlFor="region" className="mb-1.5 block text-sm font-medium text-secondary">
-                {t.regionLabel}
-              </label>
-              <input id="region" name="region" defaultValue="KSA" className={inputCls} />
+            <Field label={t.urlLabel} htmlFor="url">
+              <Input id="url" name="url" type="url" placeholder="https://" />
+            </Field>
+          </fieldset>
+
+          <fieldset className="border-t border-line pt-4">
+            <legend className="mb-2 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.languagesLabel}
+            </legend>
+            <div className="flex flex-wrap gap-5">
+              <Checkbox name="lang_en" defaultChecked label={t.langEn} />
+              <Checkbox name="lang_ar" defaultChecked label={t.langAr} />
             </div>
-          </div>
-          <div>
-            <label htmlFor="url" className="mb-1.5 block text-sm font-medium text-secondary">
-              {t.urlLabel}
-            </label>
-            <input id="url" name="url" type="url" placeholder="https://" className={inputCls} />
-          </div>
-        </fieldset>
+          </fieldset>
 
-        <fieldset className="border-t border-border pt-4">
-          <legend className="mb-2 text-sm font-semibold text-ink">{t.languagesLabel}</legend>
-          <div className="flex gap-5">
-            <label className="flex items-center gap-2 text-sm text-ink">
-              <input type="checkbox" name="lang_en" defaultChecked className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
-              {t.langEn}
-            </label>
-            <label className="flex items-center gap-2 text-sm text-ink">
-              <input type="checkbox" name="lang_ar" defaultChecked className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
-              {t.langAr}
-            </label>
-          </div>
-        </fieldset>
-
-        <button
-          type="submit"
-          className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
-        >
-          {t.start}
-        </button>
+          <Button type="submit" variant="primary" size="md">
+            {t.start}
+          </Button>
+        </Card>
       </form>
 
       <div className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-ink">{t.recentRuns}</h2>
+        <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+          {t.recentRuns}
+        </h2>
         {runs.length === 0 ? (
-          <p className="text-sm text-tertiary">{t.noRuns}</p>
+          <p className="text-[14px] text-muted">{t.noRuns}</p>
         ) : (
-          <ul className="divide-y divide-border rounded-card border border-border bg-surface">
+          <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface shadow-card">
             {runs.map((r) => {
               const href =
                 r.status === "accepted" && r.brand_id
@@ -142,11 +140,14 @@ export default async function AiBuilderStart({
                   : `/${typedLocale}/admin/ai-builder/${r.id}`;
               return (
                 <li key={r.id}>
-                  <Link href={href} className="flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-page">
-                    <span className="truncate font-medium text-ink">{r.input_name}</span>
-                    <span className="shrink-0 rounded-full bg-page px-2.5 py-0.5 text-xs font-medium text-secondary">
-                      {runStatus[r.status] ?? r.status}
+                  <Link
+                    href={href}
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-[14px] transition-colors hover:bg-surface-2"
+                  >
+                    <span className="truncate font-medium text-ink">
+                      {r.input_name}
                     </span>
+                    <Badge kind="state">{runStatus[r.status] ?? r.status}</Badge>
                   </Link>
                 </li>
               );

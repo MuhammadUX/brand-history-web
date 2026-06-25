@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import AccountTabs from "@/components/AccountTabs";
 import FavoritesMerger from "@/components/FavoritesMerger";
-import { Shell } from "@/components/ds";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getFavoriteBrands } from "@/lib/favorites";
 import { getSubscription } from "@/lib/entitlements";
@@ -46,23 +45,21 @@ export default async function AccountPage({
   ]);
 
   return (
-    <main id="main-content">
-      <Shell>
-        <header className="mb-6">
-          <h1 className="font-display text-[32px] leading-tight text-ink">
-            {dict.account.title}
-          </h1>
-        </header>
-        {/* Merge any device-local favorites into the account on first load. */}
-        <FavoritesMerger locale={typedLocale} />
-        <AccountTabs
-          locale={typedLocale}
-          email={user.email ?? ""}
-          displayName={displayName}
-          favorites={favorites}
-          subscription={subscription}
-        />
-      </Shell>
+    <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+      <header className="mb-6">
+        <h1 className="text-[32px] font-extrabold leading-tight tracking-display text-ink">
+          {dict.account.title}
+        </h1>
+      </header>
+      {/* Merge any device-local favorites into the account on first load. */}
+      <FavoritesMerger locale={typedLocale} />
+      <AccountTabs
+        locale={typedLocale}
+        email={user.email ?? ""}
+        displayName={displayName}
+        favorites={favorites}
+        subscription={subscription}
+      />
     </main>
   );
 }

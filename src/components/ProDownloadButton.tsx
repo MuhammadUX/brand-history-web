@@ -1,32 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button, Badge } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import {
   requestProDownload,
   type ProDownloadPayload,
+  type ProDownloadKind,
 } from "@/app/[locale]/brand/[slug]/pro-download-actions";
 
-interface KitColor {
-  name: string;
-  hex: string;
-  role: string;
-}
-
-interface BrandKitButtonProps {
+interface ProDownloadButtonProps {
   locale: Locale;
   brandId: string;
-  slug: string;
-  initials: string;
-  color: string;
-  name: string;
-  colors: KitColor[];
   /** Client hint for the lock UI only. Authorization is the server action. */
   isPro: boolean;
-  kind: "kit" | "highres";
+  kind: ProDownloadKind;
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -41,39 +31,22 @@ function triggerDownload(blob: Blob, filename: string) {
 }
 
 /**
- * Pro-gated downloads on the brand profile.
+ * ProDownloadButton — The Library Pro-gated download. Authorization is
+ * SERVER-ENFORCED via requestProDownload(); the client `isPro` prop only drives
+ * the lock UI. Logic (server action + canvas/blob builders) is preserved from
+ * the prior BrandKitButton; re-skinned to Library primitives.
  *  - kind="highres": 1024px PNG export of the logo.
  *  - kind="kit": a combined multi-variant SVG bundle + a colors.txt.
- *
- * Authorization is SERVER-ENFORCED: the click calls requestProDownload(), which
- * checks entitlements server-side. The download is built ONLY from the server's
- * `ok:true` payload. The client `isPro` prop only drives the lock UI; on
- * `pro_required` we route to /pro.
  */
-export default function BrandKitButton({
+export default function ProDownloadButton({
   locale,
   brandId,
   isPro,
   kind,
-}: BrandKitButtonProps) {
+}: ProDownloadButtonProps) {
   const dict = getDictionary(locale);
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-
-  if (!isPro) {
-    const label = kind === "kit" ? dict.brand.downloadKit : dict.brand.downloadHighRes;
-    return (
-      <Link
-        href={`/${locale}/pro`}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-btn border border-border bg-page px-5 py-2.5 text-sm font-medium text-tertiary transition hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      >
-        <span className="rounded-pill bg-sponsoredBg px-2 py-0.5 text-xs font-semibold text-sponsored">
-          {dict.brand.proLock}
-        </span>
-        {label}
-      </Link>
-    );
-  }
 
   async function buildHighRes(payload: ProDownloadPayload) {
     const size = 1024;
@@ -103,14 +76,11 @@ export default function BrandKitButton({
   }
 
   async function buildKit(payload: ProDownloadPayload) {
-    // Combined SVG bundle: primary + monochrome placeholder logos.
     const bundle = `<!-- ${payload.name} brand kit (placeholder logos) -->\n${payload.primarySvg}\n\n${payload.monoSvg}\n`;
     triggerDownload(
       new Blob([bundle], { type: "image/svg+xml;charset=utf-8" }),
-      `${payload.slug}-brand-kit.svg`
+      `${payload.slug}-brand-kit.svg`,
     );
-
-    // colors.txt — the brand palette.
     const colorsTxt =
       `${payload.name} — brand colors\n` +
       `Primary: ${payload.primaryColor}\n` +
@@ -118,11 +88,10 @@ export default function BrandKitButton({
         .map((col) => `${col.name} (${col.role}): ${col.hex.toUpperCase()}`)
         .join("\n") +
       "\n";
-    // Slight delay so browsers don't drop the second download.
     await new Promise((r) => setTimeout(r, 250));
     triggerDownload(
       new Blob([colorsTxt], { type: "text/plain;charset=utf-8" }),
-      `${payload.slug}-colors.txt`
+      `${payload.slug}-colors.txt`,
     );
   }
 
@@ -131,39 +100,32 @@ export default function BrandKitButton({
     try {
       const res = await requestProDownload(brandId, kind);
       if (!res.ok) {
-        if (res.error === "pro_required") {
-          router.push(`/${locale}/pro`);
-        }
+        if (res.error === "pro_required") router.push(`/${locale}/pro`);
         return;
       }
-      if (kind === "kit") {
-        await buildKit(res.payload);
-      } else {
-        await buildHighRes(res.payload);
-      }
+      if (kind === "kit") await buildKit(res.payload);
+      else await buildHighRes(res.payload);
     } finally {
       setBusy(false);
     }
   }
 
   const label =
-    busy && kind === "kit"
-      ? dict.brand.kitDownloading
-      : kind === "kit"
-        ? dict.brand.downloadKit
-        : dict.brand.downloadHighRes;
+    kind === "kit" ? dict.brand.downloadKit : dict.brand.downloadHighRes;
+
+  if (!isPro) {
+    return (
+      <Button href={`/${locale}/pro`} variant="ghost" size="sm">
+        <Badge kind="pro">{dict.brand.proLock}</Badge>
+        {label}
+      </Button>
+    );
+  }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={busy}
-      className="inline-flex items-center gap-2 rounded-btn border border-primary bg-primary-tint px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60"
-    >
-      <span className="rounded-pill bg-primary px-2 py-0.5 text-xs font-bold text-white">
-        {dict.nav.proBadge}
-      </span>
-      {label}
-    </button>
+    <Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={busy}>
+      <Badge kind="pro">{dict.nav.proBadge}</Badge>
+      {busy && kind === "kit" ? dict.brand.kitDownloading : label}
+    </Button>
   );
 }

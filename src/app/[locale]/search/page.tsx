@@ -1,19 +1,21 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import DsBrandGrid from "@/components/DsBrandGrid";
 import {
-  Shell,
   SectionHeader,
-  MetaStrip,
+  Field,
   Input,
   Button,
-  Tag,
+  FacetRail,
+  FacetGroup,
+  FilterChip,
+  BrandGrid,
+  BrandCard,
   StateBlock,
-} from "@/components/ds";
+} from "@/components/ui";
+import FavoriteButton from "@/components/FavoriteButton";
 import { searchBrands, getSectors } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
-import type { Locale } from "@/lib/types";
+import type { Brand, Locale } from "@/lib/types";
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 
@@ -62,6 +64,7 @@ export default async function SearchPage({
     getSectors(),
     getFavoritesContext(),
   ]);
+  const favSet = new Set(favCtx.favoriteIds);
 
   function sectorHref(slug?: string): string {
     const sp = new URLSearchParams();
@@ -70,114 +73,135 @@ export default async function SearchPage({
     return `/${typedLocale}/search?${sp.toString()}`;
   }
 
+  function card(brand: Brand) {
+    const name = isAr ? brand.name_ar : brand.name_en;
+    const sectorName =
+      brand.sectors && (isAr ? brand.sectors.name_ar : brand.sectors.name_en);
+    const meta = [sectorName, brand.region].filter(Boolean).join(" · ");
+    return (
+      <BrandCard
+        key={brand.id}
+        name={name}
+        meta={meta || undefined}
+        initials={brand.initials}
+        domain={brand.website}
+        color={brand.primary_color}
+        href={`/${typedLocale}/brand/${brand.slug}`}
+        verified={brand.is_verified}
+      >
+        <FavoriteButton
+          brandId={brand.id}
+          brandName={name}
+          locale={typedLocale}
+          initialFavorited={favSet.has(brand.id)}
+          initialAuthed={favCtx.isAuthed}
+          variant="icon"
+        />
+      </BrandCard>
+    );
+  }
+
   return (
-    <main id="main-content">
-      <Shell>
-        {/* Command search */}
-        <section className="py-8">
-          <SectionHeader
-            index="00"
-            title={dict.search.promptTitle}
-            as="h1"
-            meta="QUERY"
-          />
-          <form
-            action={`/${typedLocale}/search`}
-            method="get"
-            role="search"
-            className="mt-5 flex max-w-xl items-end gap-2"
+    <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+      {/* ── Search field ── */}
+      <section className="pb-2">
+        <SectionHeader title={dict.search.promptTitle} as="h1" />
+        <form
+          action={`/${typedLocale}/search`}
+          method="get"
+          role="search"
+          className="flex max-w-xl items-end gap-2.5"
+        >
+          <Field
+            label={dict.search.promptTitle}
+            htmlFor="search-q"
+            className="flex-1"
           >
-            <div className="flex-1">
-              <label htmlFor="search-q" className="label-mono mb-1 block text-ink">
-                [ SEARCH ]
-              </label>
-              <Input
-                id="search-q"
-                type="search"
-                name="q"
-                defaultValue={query}
-                placeholder={dict.search.promptBody}
-                aria-label={dict.search.promptTitle}
-              />
-            </div>
-            <Button type="submit" variant="primary">
-              {dict.home.searchButton}
-            </Button>
-          </form>
-        </section>
-
-        {query && (
-          <section className="py-6">
-            <SectionHeader
-              title={dict.search.resultsFor(query)}
-              as="h2"
-              meta={dict.search.count(results.length)}
+            <Input
+              id="search-q"
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder={dict.search.promptBody}
+              aria-label={dict.search.promptTitle}
             />
+          </Field>
+          <Button type="submit" variant="primary">
+            {dict.home.searchButton}
+          </Button>
+        </form>
+      </section>
 
-            {/* Sector filter row */}
-            <ul className="mt-4 flex flex-wrap gap-1.5">
-              <li>
-                <Link href={sectorHref()} aria-current={!sector ? "true" : undefined}>
-                  <Tag kind="filter" className={!sector ? "border-ink" : undefined}>
-                    {dict.search.allSectors}
-                  </Tag>
-                </Link>
-              </li>
-              {sectors.map((s) => {
-                const active = sector === s.slug;
-                return (
-                  <li key={s.id}>
-                    <Link
+      {query ? (
+        <section className="py-6">
+          {/* Query echo + result count */}
+          <SectionHeader
+            title={dict.search.resultsFor(query)}
+            as="h2"
+            kicker={dict.search.count(results.length)}
+          />
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
+            {/* Facets (sector — the wired filter) */}
+            <FacetRail aria-label={dict.search.allSectors}>
+              <FacetGroup label={dict.nav.sectors}>
+                <FilterChip
+                  href={sectorHref()}
+                  active={!sector}
+                  aria-current={!sector ? "true" : undefined}
+                >
+                  {dict.search.allSectors}
+                </FilterChip>
+                {sectors.map((s) => {
+                  const active = sector === s.slug;
+                  return (
+                    <FilterChip
+                      key={s.id}
                       href={sectorHref(s.slug)}
+                      active={active}
                       aria-current={active ? "true" : undefined}
                     >
-                      <Tag
-                        kind="filter"
-                        className={active ? "border-ink bg-scaffold" : undefined}
-                      >
-                        {isAr ? s.name_ar : s.name_en}
-                      </Tag>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                      {isAr ? s.name_ar : s.name_en}
+                    </FilterChip>
+                  );
+                })}
+              </FacetGroup>
+            </FacetRail>
 
-            <div className="mt-6">
+            {/* Results */}
+            <div>
               {results.length > 0 ? (
-                <DsBrandGrid
-                  brands={results}
-                  locale={typedLocale}
-                  favoriteIds={favCtx.favoriteIds}
-                  isAuthed={favCtx.isAuthed}
-                />
+                <BrandGrid>{results.map(card)}</BrandGrid>
               ) : (
-                <div className="mx-auto max-w-xl">
-                  <StateBlock
-                    state="empty"
-                    title={dict.search.emptyTitle}
-                    message={dict.search.emptyBody}
-                  />
-                  <div className="mt-4 flex justify-center">
-                    <Link
+                <StateBlock
+                  state="empty"
+                  icon="🔍"
+                  title={dict.search.emptyTitle}
+                  message={dict.search.emptyBody}
+                  action={
+                    <Button
                       href={`/${typedLocale}/suggest`}
-                      className="mo-invert mo-press inline-flex h-10 items-center justify-center border border-ink px-2 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
+                      variant="ghost"
+                      size="sm"
                     >
                       {dict.search.suggest}
-                    </Link>
-                  </div>
-                </div>
+                    </Button>
+                  }
+                />
               )}
             </div>
-          </section>
-        )}
-
-        {!query && (
-          <section className="py-6">
-            <MetaStrip items={["BH·ARCHIVE", "AWAITING QUERY"]} />
-          </section>
-        )}
-      </Shell>
+          </div>
+        </section>
+      ) : (
+        <section className="py-6">
+          <StateBlock
+            state="empty"
+            icon="🔎"
+            title={dict.search.promptTitle}
+            message={dict.search.promptBody}
+          />
+        </section>
+      )}
     </main>
   );
 }

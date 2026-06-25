@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Locale, Sector, Brand } from "@/lib/types";
 import { getDictionary } from "@/i18n";
 import { slugify, CLAIM_STATUSES } from "@/lib/admin-shared";
+import { Card, Field, Input, Textarea, Select, Button } from "@/components/ui";
 import {
   createBrand,
   updateBrand,
@@ -13,10 +14,6 @@ import {
 } from "@/app/[locale]/admin/brands/actions";
 
 const initial: ActionResult = { ok: false };
-
-const inputCls =
-  "w-full rounded-btn border border-border bg-page px-3 py-2 text-sm text-ink placeholder:text-tertiary focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
-const labelCls = "mb-1 block text-xs font-medium text-secondary";
 
 export interface BrandPrefill {
   name_en?: string;
@@ -75,173 +72,154 @@ export default function BrandEditorForm({
   return (
     <div className="space-y-4">
       {state.message === "conflict" && (
-        <p className="rounded-btn border border-sponsored/40 bg-sponsoredBg px-3 py-2 text-sm text-sponsored">
+        <p className="rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
           {t.conflict}
         </p>
       )}
       {state.message === "saveError" && (
-        <p className="rounded-btn border border-border bg-page px-3 py-2 text-sm text-ink">
+        <p className="rounded-md border border-line bg-surface-2 px-3 py-2 text-[14px] text-ink">
           {t.saveError}
         </p>
       )}
       {state.ok && state.message === "saved" && (
-        <p className="rounded-btn border border-success/30 bg-verifiedBg px-3 py-2 text-sm text-success">
+        <p className="rounded-md border border-[#bfe6cd] bg-[#eef9f1] px-3 py-2 text-[14px] text-ok">
           {t.saved}
         </p>
       )}
 
-      <form
-        action={formAction}
-        className="rounded-card border border-border bg-surface p-5"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-ink">{t.sectionBasics}</h2>
-        {!isNew && <input type="hidden" name="row_version" value={rowVersion} />}
+      <form action={formAction}>
+        <Card>
+          <h2 className="mb-4 text-[13px] font-bold uppercase tracking-label text-muted">
+            {t.sectionBasics}
+          </h2>
+          {!isNew && <input type="hidden" name="row_version" value={rowVersion} />}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className={labelCls} htmlFor="name_en">{t.nameEn}</label>
-            <input
-              id="name_en"
-              name="name_en"
-              required
-              value={nameEn}
-              onChange={(e) => setNameEn(e.target.value)}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="name_ar">{t.nameAr}</label>
-            <input
-              id="name_ar"
-              name="name_ar"
-              dir="rtl"
-              defaultValue={brand?.name_ar ?? ""}
-              className={inputCls}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls} htmlFor="slug">{t.slug}</label>
-            <input
-              id="slug"
-              name="slug"
-              value={slug}
-              onChange={(e) => {
-                setSlugTouched(true);
-                setSlug(e.target.value);
-              }}
-              className={inputCls}
-            />
-            <p className="mt-1 text-xs text-tertiary">{t.slugHint}</p>
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="sector_id">{t.sector}</label>
-            <select
-              id="sector_id"
-              name="sector_id"
-              defaultValue={brand?.sector_id ?? ""}
-              className={inputCls}
-            >
-              <option value="">{t.selectSector}</option>
-              {sectors.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {locale === "ar" ? s.name_ar : s.name_en}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="region">{t.region}</label>
-            <input
-              id="region"
-              name="region"
-              defaultValue={brand?.region ?? prefill?.region ?? "KSA"}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="founded_year">{t.foundedYear}</label>
-            <input
-              id="founded_year"
-              name="founded_year"
-              type="number"
-              defaultValue={brand?.founded_year ?? ""}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="initials">{t.initials}</label>
-            <input
-              id="initials"
-              name="initials"
-              maxLength={4}
-              defaultValue={brand?.initials ?? ""}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="primary_color">{t.primaryColor}</label>
-            <div className="flex items-center gap-2">
-              <input
-                id="primary_color"
-                name="primary_color"
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-12 cursor-pointer rounded-btn border border-border bg-surface"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label={t.nameEn} htmlFor="name_en" required>
+              <Input
+                id="name_en"
+                name="name_en"
+                required
+                value={nameEn}
+                onChange={(e) => setNameEn(e.target.value)}
               />
-              <input
-                aria-label={t.primaryColor}
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className={inputCls}
+            </Field>
+            <Field label={t.nameAr} htmlFor="name_ar">
+              <Input
+                id="name_ar"
+                name="name_ar"
+                dir="rtl"
+                defaultValue={brand?.name_ar ?? ""}
               />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls} htmlFor="claim_status">{t.claimStatus}</label>
-            <select
-              id="claim_status"
-              name="claim_status"
-              defaultValue={brand?.claim_status ?? "unclaimed"}
-              className={inputCls}
+            </Field>
+            <Field
+              label={t.slug}
+              htmlFor="slug"
+              hint={t.slugHint}
+              className="sm:col-span-2"
             >
-              {CLAIM_STATUSES.map((c) => (
-                <option key={c} value={c}>{claimLabels[c]}</option>
-              ))}
-            </select>
+              <Input
+                id="slug"
+                name="slug"
+                value={slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(e.target.value);
+                }}
+              />
+            </Field>
+            <Field label={t.sector} htmlFor="sector_id">
+              <Select
+                id="sector_id"
+                name="sector_id"
+                defaultValue={brand?.sector_id ?? ""}
+              >
+                <option value="">{t.selectSector}</option>
+                {sectors.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {locale === "ar" ? s.name_ar : s.name_en}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t.region} htmlFor="region">
+              <Input
+                id="region"
+                name="region"
+                defaultValue={brand?.region ?? prefill?.region ?? "KSA"}
+              />
+            </Field>
+            <Field label={t.foundedYear} htmlFor="founded_year">
+              <Input
+                id="founded_year"
+                name="founded_year"
+                type="number"
+                defaultValue={brand?.founded_year ?? ""}
+              />
+            </Field>
+            <Field label={t.initials} htmlFor="initials">
+              <Input
+                id="initials"
+                name="initials"
+                maxLength={4}
+                defaultValue={brand?.initials ?? ""}
+              />
+            </Field>
+            <Field label={t.primaryColor} htmlFor="primary_color">
+              <div className="flex items-center gap-2">
+                <input
+                  id="primary_color"
+                  name="primary_color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-11 w-12 shrink-0 cursor-pointer rounded-md border border-line bg-surface"
+                />
+                <Input
+                  aria-label={t.primaryColor}
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                />
+              </div>
+            </Field>
+            <Field label={t.claimStatus} htmlFor="claim_status">
+              <Select
+                id="claim_status"
+                name="claim_status"
+                defaultValue={brand?.claim_status ?? "unclaimed"}
+              >
+                {CLAIM_STATUSES.map((c) => (
+                  <option key={c} value={c}>
+                    {claimLabels[c]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t.summaryEn} htmlFor="summary_en" className="sm:col-span-2">
+              <Textarea
+                id="summary_en"
+                name="summary_en"
+                rows={3}
+                defaultValue={brand?.summary_en ?? ""}
+              />
+            </Field>
+            <Field label={t.summaryAr} htmlFor="summary_ar" className="sm:col-span-2">
+              <Textarea
+                id="summary_ar"
+                name="summary_ar"
+                dir="rtl"
+                rows={3}
+                defaultValue={brand?.summary_ar ?? ""}
+              />
+            </Field>
           </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls} htmlFor="summary_en">{t.summaryEn}</label>
-            <textarea
-              id="summary_en"
-              name="summary_en"
-              rows={3}
-              defaultValue={brand?.summary_en ?? ""}
-              className={inputCls}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls} htmlFor="summary_ar">{t.summaryAr}</label>
-            <textarea
-              id="summary_ar"
-              name="summary_ar"
-              dir="rtl"
-              rows={3}
-              defaultValue={brand?.summary_ar ?? ""}
-              className={inputCls}
-            />
-          </div>
-        </div>
 
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60"
-          >
-            {pending ? t.saving : t.saveDraft}
-          </button>
-        </div>
+          <div className="mt-5 flex items-center gap-3">
+            <Button type="submit" variant="primary" size="md" disabled={pending}>
+              {pending ? t.saving : t.saveDraft}
+            </Button>
+          </div>
+        </Card>
       </form>
 
       {!isNew && (
@@ -309,23 +287,31 @@ function StateMachine({
   ];
 
   return (
-    <div className="rounded-card border border-border bg-surface p-5">
-      <h2 className="mb-1 text-sm font-semibold text-ink">{t.stateLabel}</h2>
-      <p className="mb-4 text-xs text-tertiary">
+    <Card>
+      <h2 className="mb-1 text-[13px] font-bold uppercase tracking-label text-muted">
+        {t.stateLabel}
+      </h2>
+      <p className="mb-4 text-[12px] text-muted">
         {(dict.admin.dashboard.states as Record<string, string>)[state] ?? state}
       </p>
 
       {msg === "transitionDone" && (
-        <p className="mb-3 rounded-btn bg-verifiedBg px-3 py-2 text-sm text-success">{t.transitionDone}</p>
+        <p className="mb-3 rounded-md border border-[#bfe6cd] bg-[#eef9f1] px-3 py-2 text-[14px] text-ok">
+          {t.transitionDone}
+        </p>
       )}
       {msg === "conflict" && (
-        <p className="mb-3 rounded-btn bg-sponsoredBg px-3 py-2 text-sm text-sponsored">{t.conflict}</p>
+        <p className="mb-3 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
+          {t.conflict}
+        </p>
       )}
       {(msg === "saveError" || msg === "forbidden") && (
-        <p className="mb-3 rounded-btn bg-page px-3 py-2 text-sm text-ink">{t.saveError}</p>
+        <p className="mb-3 rounded-md border border-line bg-surface-2 px-3 py-2 text-[14px] text-ink">
+          {t.saveError}
+        </p>
       )}
       {validation && validation.length > 0 && (
-        <div className="mb-3 rounded-btn border border-sponsored/40 bg-sponsoredBg px-3 py-2 text-sm text-sponsored">
+        <div className="mb-3 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
           <p className="font-medium">{t.validationTitle}</p>
           <ul className="mt-1 list-disc ps-5">
             {validation.map((v) => (
@@ -337,19 +323,20 @@ function StateMachine({
 
       <div className="flex flex-wrap gap-2">
         {buttons.filter((b) => b.show).map((b) => (
-          <button
+          <Button
             key={b.key}
             type="button"
+            variant="ghost"
+            size="md"
             onClick={() => run(b.key)}
             disabled={pending || b.disabled}
             title={b.disabled ? t.adminOnly : undefined}
-            className="rounded-btn border border-border bg-page px-4 py-2 text-sm font-medium text-ink transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
           >
             {b.label}
             {b.disabled ? ` · ${t.adminOnly}` : ""}
-          </button>
+          </Button>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

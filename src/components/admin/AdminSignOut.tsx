@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import type { Locale } from "@/lib/types";
+import { Button } from "@/components/ui";
 
+/**
+ * AdminSignOut — operator sign-out control. Supabase auth wiring is unchanged;
+ * presentation is re-skinned onto the Library ghost <Button> (44px target,
+ * gold focus). `compact` keeps the smaller rail footprint.
+ */
 export default function AdminSignOut({
   locale,
   label,
@@ -23,16 +29,14 @@ export default function AdminSignOut({
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={signOut}
-      className={
-        compact
-          ? "rounded-btn border border-border px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-page"
-          : "rounded-btn border border-border px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      }
+      className={compact ? "w-full" : undefined}
     >
       {label}
-    </button>
+    </Button>
   );
 }

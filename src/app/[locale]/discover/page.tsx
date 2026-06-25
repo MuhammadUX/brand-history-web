@@ -1,18 +1,19 @@
-import Link from "next/link";
+import React from "react";
 import { notFound } from "next/navigation";
-import DsBrandGrid from "@/components/DsBrandGrid";
-import { catalogueCode } from "@/components/DsBrandCard";
-import AdSlot from "@/components/AdSlot";
 import {
-  Shell,
   SectionHeader,
+  BrandCard,
+  BrandRail,
   Badge,
-} from "@/components/ds";
-import { BrandMark } from "@/components/BrandMark";
+  BrandMark,
+  Button,
+} from "@/components/ui";
+import FavoriteButton from "@/components/FavoriteButton";
+import AdSlot from "@/components/AdSlot";
 import { getTrendingBrands, getRecentlyUpdatedBrands } from "@/lib/data";
 import { getFavoritesContext } from "@/lib/favorites";
 import { getDictionary, isLocale } from "@/i18n";
-import type { Locale } from "@/lib/types";
+import type { Brand, Locale } from "@/lib/types";
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
 
@@ -50,129 +51,149 @@ export default async function DiscoverPage({
     getRecentlyUpdatedBrands(8),
     getFavoritesContext(),
   ]);
+  const favSet = new Set(favCtx.favoriteIds);
 
   const featured = trending[0];
-  const featuredName = featured
-    ? isAr
-      ? featured.name_ar
-      : featured.name_en
-    : "";
-  const featuredSummary = featured
-    ? isAr
-      ? featured.summary_ar
-      : featured.summary_en
-    : null;
-  const featuredSector =
-    featured?.sectors && (isAr ? featured.sectors.name_ar : featured.sectors.name_en);
+
+  function brandMeta(brand: Brand): string {
+    const sector =
+      brand.sectors && (isAr ? brand.sectors.name_ar : brand.sectors.name_en);
+    return [sector, brand.region].filter(Boolean).join(" · ");
+  }
+
+  function card(brand: Brand) {
+    const name = isAr ? brand.name_ar : brand.name_en;
+    return (
+      <BrandCard
+        key={brand.id}
+        name={name}
+        meta={brandMeta(brand)}
+        initials={brand.initials}
+        domain={brand.website}
+        color={brand.primary_color}
+        href={`/${typedLocale}/brand/${brand.slug}`}
+        verified={brand.is_verified}
+      >
+        <FavoriteButton
+          brandId={brand.id}
+          brandName={name}
+          locale={typedLocale}
+          initialFavorited={favSet.has(brand.id)}
+          initialAuthed={favCtx.isAuthed}
+          variant="icon"
+        />
+      </BrandCard>
+    );
+  }
 
   return (
-    <main id="main-content">
-      <Shell>
-        {/* Header */}
-        <section className="pb-6">
-          <h1 className="font-display text-[32px] leading-tight text-ink">
-            {dict.discover.title}
-          </h1>
-          <p className="mt-3 max-w-2xl font-mono text-[15px] leading-6 text-ink-700">
-            {dict.discover.subtitle}
-          </p>
-        </section>
+    <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+      {/* ── Header ── */}
+      <section className="pb-2">
+        <div className="label mb-3.5">{dict.discover.subtitle}</div>
+        <h1 className="text-[40px] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">
+          {dict.discover.title}
+        </h1>
+      </section>
 
-        {/* Brand of the week — single hero specimen plate + museum caption.
-            DitherPlate, DS Badge, one primary CTA. */}
-        {featured && (
-          <section className="py-6">
-            <SectionHeader
-              index="01"
-              title={dict.discover.brandOfWeek}
-              as="h2"
-            />
-            <div className="mt-5 flex flex-col gap-6 border border-hairline bg-surface p-6 sm:flex-row sm:items-start">
-              <div className="shrink-0">
-                <BrandMark
-                  domain={featured.website}
-                  initials={featured.initials}
-                  size="lg"
-                  code={catalogueCode(featured.slug || featured.id)}
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="font-display text-2xl leading-tight text-ink">
-                    {featuredName}
-                  </h3>
-                  {featured.is_verified && <Badge kind="verified" />}
-                </div>
-                {(featuredSector || featured.region) && (
-                  <p className="mt-1 font-mono text-[11px] text-metadata">
-                    {[featuredSector, featured.region].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-                {featuredSummary && (
-                  <p className="mt-3 max-w-2xl font-mono text-[15px] leading-6 text-ink-700">
-                    {featuredSummary}
-                  </p>
-                )}
-                <div className="mt-6">
-                  <Link
-                    href={`/${typedLocale}/brand/${featured.slug}`}
-                    className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
-                  >
-                    {dict.discover.viewBrand}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Trending */}
+      {/* ── Brand of the week ── */}
+      {featured && (
         <section className="py-6">
           <SectionHeader
-            index="02"
+            title={dict.discover.brandOfWeek}
+            as="h2"
+            actionHref={`/${typedLocale}/brand/${featured.slug}`}
+            actionLabel={`${dict.discover.viewBrand} →`}
+          />
+          <FeatureCard brand={featured} locale={typedLocale} isAr={isAr} dict={dict} />
+        </section>
+      )}
+
+      {/* ── Trending ── */}
+      {trending.length > 0 && (
+        <section className="py-2">
+          <SectionHeader
             title={dict.discover.trending}
+            kicker={dict.discover.trendingSub}
             as="h2"
-            meta={`N=${trending.length}`}
           />
-          <p className="mt-1 font-mono text-[11px] text-metadata">
-            {dict.discover.trendingSub}
-          </p>
-          <div className="mt-5">
-            <DsBrandGrid
-              brands={trending}
-              locale={typedLocale}
-              favoriteIds={favCtx.favoriteIds}
-              isAuthed={favCtx.isAuthed}
-            />
-          </div>
+          <BrandRail>{trending.map(card)}</BrandRail>
         </section>
+      )}
 
-        {/* Sponsored slot between rows (free users only; server-decided) */}
-        <div className="py-6">
-          <AdSlot locale={typedLocale} variant="row" />
-        </div>
+      {/* Sponsored slot between rows (free users only; server-decided) */}
+      <div className="py-6">
+        <AdSlot locale={typedLocale} variant="row" />
+      </div>
 
-        {/* Recently updated */}
-        <section className="py-6">
+      {/* ── Recently updated ── */}
+      {recent.length > 0 && (
+        <section className="py-2">
           <SectionHeader
-            index="03"
             title={dict.discover.recentlyUpdated}
+            kicker={dict.discover.recentlyUpdatedSub}
             as="h2"
-            meta={`N=${recent.length}`}
           />
-          <p className="mt-1 font-mono text-[11px] text-metadata">
-            {dict.discover.recentlyUpdatedSub}
-          </p>
-          <div className="mt-5">
-            <DsBrandGrid
-              brands={recent}
-              locale={typedLocale}
-              favoriteIds={favCtx.favoriteIds}
-              isAuthed={favCtx.isAuthed}
-            />
-          </div>
+          <BrandRail>{recent.map(card)}</BrandRail>
         </section>
-      </Shell>
+      )}
     </main>
+  );
+}
+
+function FeatureCard({
+  brand,
+  locale,
+  isAr,
+  dict,
+}: {
+  brand: Brand;
+  locale: Locale;
+  isAr: boolean;
+  dict: ReturnType<typeof getDictionary>;
+}) {
+  const name = isAr ? brand.name_ar : brand.name_en;
+  const altName = isAr ? brand.name_en : brand.name_ar;
+  const summary = isAr ? brand.summary_ar : brand.summary_en;
+  const sector =
+    brand.sectors && (isAr ? brand.sectors.name_ar : brand.sectors.name_en);
+  const metaLine = [sector, brand.region].filter(Boolean).join(" · ");
+
+  return (
+    <article
+      style={{ "--brand": brand.primary_color } as React.CSSProperties}
+      className="relative grid grid-cols-1 overflow-hidden rounded-lg border border-line bg-surface shadow-card sm:grid-cols-[200px_1fr]"
+    >
+      <div className="brand-rule absolute inset-x-0 top-0 h-2" />
+      <div className="brand-tile flex items-center justify-center self-stretch border-b border-line p-6 sm:border-b-0 sm:border-e">
+        <BrandMark
+          domain={brand.website}
+          initials={brand.initials}
+          color={brand.primary_color}
+          size="xl"
+          className="border-0 bg-transparent"
+        />
+      </div>
+      <div className="p-7">
+        {metaLine && <div className="label mb-2">{metaLine}</div>}
+        <h3 className="text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+          {name}
+        </h3>
+        {altName && (
+          <div className="font-arabic mb-3 mt-0.5 text-[16px] text-muted">
+            {altName}
+          </div>
+        )}
+        {brand.is_verified && <Badge kind="verified" />}
+        {summary && (
+          <p className="mt-3 max-w-[60ch] text-[14px] text-muted">{summary}</p>
+        )}
+        <div className="mt-5">
+          <Button href={`/${locale}/brand/${brand.slug}`} variant="primary" size="sm">
+            {dict.discover.viewBrand}
+          </Button>
+        </div>
+      </div>
+    </article>
   );
 }

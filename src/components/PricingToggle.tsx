@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { getDictionary } from "@/i18n";
 import { PRICING, ANNUAL_SAVING_PERCENT, type Plan } from "@/lib/pricing";
 import type { Locale } from "@/lib/types";
+import { Card, Button } from "@/components/ui";
 
 /**
  * Monthly/annual toggle + price + primary CTA → /checkout?plan=...
@@ -20,11 +20,11 @@ export default function PricingToggle({ locale }: { locale: Locale }) {
     plan === "monthly" ? monthlyAmount : Math.round(annualAmount / 12);
 
   return (
-    <div className="border border-hairline bg-surface p-6">
+    <Card>
       <div
         role="tablist"
         aria-label={dict.pro.title}
-        className="mx-auto flex w-full max-w-xs border border-hairline bg-paper"
+        className="mx-auto flex w-full max-w-xs gap-1 rounded-pill border border-line bg-surface-2 p-1"
       >
         {(["monthly", "annual"] as Plan[]).map((p) => {
           const active = plan === p;
@@ -35,13 +35,17 @@ export default function PricingToggle({ locale }: { locale: Locale }) {
               type="button"
               aria-selected={active}
               onClick={() => setPlan(p)}
-              className={`mo-invert relative flex-1 px-4 py-2 font-mono text-[11px] font-medium uppercase tracking-label ${
-                active ? "bg-ink text-paper" : "text-metadata hover:text-ink"
+              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-pill px-4 py-2 text-[13px] font-semibold transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link ${
+                active ? "bg-ink text-white" : "text-muted hover:text-ink"
               }`}
             >
               {p === "monthly" ? dict.pro.monthly : dict.pro.annual}
               {p === "annual" && (
-                <span className="ms-1.5 border border-current px-1 py-0.5 text-[10px]">
+                <span
+                  className={`rounded-pill px-1.5 py-0.5 text-[10px] ${
+                    active ? "bg-white/20 text-white" : "bg-ok/10 text-ok"
+                  }`}
+                >
                   {dict.pro.save(ANNUAL_SAVING_PERCENT)}
                 </span>
               )}
@@ -52,32 +56,31 @@ export default function PricingToggle({ locale }: { locale: Locale }) {
 
       <div className="mt-6 text-center">
         <div className="flex items-end justify-center gap-1">
-          <span className="font-mono text-[13px] text-metadata">
-            {dict.pro.sar}
-          </span>
-          <span className="font-display text-5xl leading-none text-ink tabular-nums">
+          <span className="text-[13px] text-muted">{dict.pro.sar}</span>
+          <span className="text-[48px] font-extrabold leading-none tracking-display text-ink tnum">
             {displayPerMonth}
           </span>
-          <span className="mb-1.5 font-mono text-[13px] text-metadata">
+          <span className="mb-1.5 text-[13px] text-muted">
             {dict.pro.perMonth}
           </span>
         </div>
         {plan === "annual" && (
-          <p className="mt-1.5 font-mono text-[13px] text-metadata">
+          <p className="mt-1.5 text-[13px] text-muted">
             {dict.pro.billedAnnually(annualAmount)}
           </p>
         )}
       </div>
 
-      <Link
+      <Button
         href={`/${locale}/checkout?plan=${plan}`}
-        className="mo-invert mo-press mt-6 inline-flex h-10 w-full items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
+        variant="primary"
+        className="mt-6 w-full"
       >
         {dict.pro.upgrade}
-      </Link>
-      <p className="mt-3 text-center font-mono text-[11px] text-metadata">
+      </Button>
+      <p className="mt-3 text-center text-[11px] text-muted">
         {dict.pro.mockNote}
       </p>
-    </div>
+    </Card>
   );
 }

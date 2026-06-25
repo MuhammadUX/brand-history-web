@@ -7,7 +7,7 @@ import {
   exportMyData,
   requestAccountDeletion,
 } from "@/app/[locale]/account/privacy-actions";
-import { Button } from "@/components/ds";
+import { Button, Card } from "@/components/ui";
 
 export default function PrivacyPanel({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -64,11 +64,11 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
   return (
     <div className="flex max-w-2xl flex-col gap-8">
       {/* Export */}
-      <section className="border border-hairline bg-surface p-6">
-        <h3 className="font-display text-[15px] leading-tight text-ink">
+      <Card>
+        <h3 className="text-[15px] font-bold leading-tight text-ink">
           {dict.privacy.exportTitle}
         </h3>
-        <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+        <p className="mt-1 text-[13px] leading-5 text-muted">
           {dict.privacy.exportBody}
         </p>
         <div className="mt-4">
@@ -85,38 +85,37 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
           <p
             role="status"
             aria-live="polite"
-            className="mt-3 font-mono text-[13px] text-ink"
+            className="mt-3 flex items-center gap-1.5 text-[13px] text-ok"
           >
-            <span aria-hidden="true" className="me-1">
-              [ ✓ ]
-            </span>
+            <span aria-hidden="true">✓</span>
             {exportMsg}
           </p>
         )}
         {exportErr && (
-          <p role="alert" className="mt-3 font-mono text-[13px] text-danger">
-            <span aria-hidden="true" className="me-1">
-              ⚠
-            </span>
+          <p
+            role="alert"
+            className="mt-3 flex items-center gap-1.5 text-[13px] text-danger"
+          >
+            <span aria-hidden="true">⚠</span>
             {exportErr}
           </p>
         )}
-      </section>
+      </Card>
 
       {/* Delete */}
-      <section className="border border-hairline bg-surface p-6">
-        <h3 className="font-display text-[15px] leading-tight text-ink">
+      <Card>
+        <h3 className="text-[15px] font-bold leading-tight text-ink">
           {dict.privacy.deleteTitle}
         </h3>
-        <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+        <p className="mt-1 text-[13px] leading-5 text-muted">
           {dict.privacy.deleteBody}
         </p>
 
-        <div className="mt-4 border border-hairline bg-paper p-4">
-          <p className="label-mono text-ink">
+        <div className="mt-4 rounded-md border border-line bg-surface-2 p-4">
+          <p className="label text-ink">
             {dict.privacy.deleteConsequencesTitle}
           </p>
-          <ul className="mt-2 list-disc space-y-1 ps-5 font-mono text-[13px] text-ink-700">
+          <ul className="mt-2 list-disc space-y-1 ps-5 text-[13px] text-muted">
             <li>{dict.privacy.deleteC1}</li>
             <li>{dict.privacy.deleteC2}</li>
             <li>{dict.privacy.deleteC3}</li>
@@ -127,21 +126,19 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
           <div
             role="status"
             aria-live="polite"
-            className="mt-4 border border-danger bg-surface p-4"
+            className="mt-4 rounded-md border border-danger/40 bg-danger/5 p-4"
           >
-            <p className="font-display text-[15px] leading-tight text-danger">
+            <p className="text-[15px] font-bold leading-tight text-danger">
               {dict.privacy.deletePending}
             </p>
-            <p className="mt-1 font-mono text-[13px] text-ink">
+            <p className="mt-1 text-[13px] text-ink">
               {dict.privacy.deletePendingNote}
             </p>
           </div>
         ) : confirming ? (
-          <div className="mt-4 border border-hairline bg-paper p-4">
-            <p className="label-mono text-ink">
-              {dict.privacy.deleteConfirmTitle}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-4 rounded-md border border-line bg-surface-2 p-4">
+            <p className="label text-ink">{dict.privacy.deleteConfirmTitle}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="danger"
@@ -152,7 +149,7 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
               </Button>
               <Button
                 type="button"
-                variant="secondary"
+                variant="ghost"
                 onClick={() => setConfirming(false)}
               >
                 {dict.privacy.deleteCancel}
@@ -171,14 +168,15 @@ export default function PrivacyPanel({ locale }: { locale: Locale }) {
           </div>
         )}
         {deleteErr && (
-          <p role="alert" className="mt-3 font-mono text-[13px] text-danger">
-            <span aria-hidden="true" className="me-1">
-              ⚠
-            </span>
+          <p
+            role="alert"
+            className="mt-3 flex items-center gap-1.5 text-[13px] text-danger"
+          >
+            <span aria-hidden="true">⚠</span>
             {deleteErr}
           </p>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
+import { Card, Button } from "@/components/ui";
 import { cancelRun } from "@/app/[locale]/admin/ai-builder/actions";
 
 /**
@@ -36,34 +37,38 @@ export default function GatheringView({
   ];
 
   return (
-    <div className="mx-auto max-w-lg">
-      <h1 className="text-xl font-bold text-ink">{t.gatheringTitle}</h1>
-      <p className="mt-1 text-sm text-secondary">{t.gatheringNote}</p>
+    <div className="mx-auto max-w-lg" role="status" aria-live="polite">
+      <h1 className="text-h2 font-bold text-ink">{t.gatheringTitle}</h1>
+      <p className="mt-1 text-[14px] text-muted">{t.gatheringNote}</p>
 
-      <ul className="mt-6 space-y-2 rounded-card border border-border bg-surface p-5">
-        {steps.map((s, i) => (
-          <li key={i} className="flex items-center gap-3 text-sm text-ink">
-            <span
-              aria-hidden
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary/40 text-xs text-primary"
-            >
-              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            </span>
-            {s}
-          </li>
-        ))}
-      </ul>
+      <Card className="mt-6">
+        <ul className="space-y-2.5">
+          {steps.map((s, i) => (
+            <li key={i} className="flex items-center gap-3 text-[14px] text-ink">
+              <span
+                aria-hidden
+                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-line text-link"
+              >
+                <span className="h-2 w-2 animate-pulse rounded-full bg-link" />
+              </span>
+              {s}
+            </li>
+          ))}
+        </ul>
+      </Card>
 
-      <p className="mt-4 text-xs text-tertiary">{t.lowFindings}</p>
+      <p className="mt-4 text-[12px] text-muted">{t.lowFindings}</p>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         disabled={pending}
         onClick={() => start(() => cancelRun(locale, runId))}
-        className="mt-4 rounded-btn border border-border px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-page disabled:opacity-60"
+        className="mt-4"
       >
         {t.cancel}
-      </button>
+      </Button>
     </div>
   );
 }

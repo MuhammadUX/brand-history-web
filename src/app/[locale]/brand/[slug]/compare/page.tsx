@@ -1,13 +1,14 @@
-import Link from "next/link";
+import React from "react";
 import { notFound } from "next/navigation";
 import {
-  Shell,
   Button,
   Badge,
+  Card,
+  Field,
+  Select,
   StateBlock,
-} from "@/components/ds";
-import { BrandMark } from "@/components/BrandMark";
-import { catalogueCode } from "@/components/DsBrandCard";
+  BrandMark,
+} from "@/components/ui";
 import { getBrandBySlug, getTimeline } from "@/lib/data";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale, TimelineEntry } from "@/lib/types";
@@ -37,23 +38,22 @@ export default async function ComparePage({
   // Not enough eras -> explained disabled state.
   if (timeline.length < 2) {
     return (
-      <main id="main-content">
-        <Shell>
-          <div className="flex flex-col items-start gap-6">
-            <StateBlock
-              state="empty"
-              title={dict.compare.notEnoughTitle}
-              message={dict.compare.notEnoughBody}
-              className="w-full"
-            />
-            <Link
+      <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+        <StateBlock
+          state="empty"
+          icon="🗓️"
+          title={dict.compare.notEnoughTitle}
+          message={dict.compare.notEnoughBody}
+          action={
+            <Button
               href={`/${typedLocale}/brand/${brand.slug}`}
-              className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
+              variant="primary"
+              size="sm"
             >
               {dict.compare.back}
-            </Link>
-          </div>
-        </Shell>
+            </Button>
+          }
+        />
       </main>
     );
   }
@@ -61,100 +61,94 @@ export default async function ComparePage({
   const { a, b } = await searchParams;
   const oldest = timeline[0];
   const newest = timeline[timeline.length - 1];
-  const left =
-    timeline.find((e) => e.id === a) ?? oldest;
+  const left = timeline.find((e) => e.id === a) ?? oldest;
   let right = timeline.find((e) => e.id === b) ?? newest;
   if (right.id === left.id) {
     right = timeline.find((e) => e.id !== left.id) ?? newest;
   }
 
-  const selectCls =
-    "h-12 w-full rounded-none border border-hairline bg-surface px-3 font-mono text-[13px] text-ink focus:border-ink focus:outline-none";
-
   function renderColumn(entry: TimelineEntry, heading: string) {
     const title = isAr ? entry.title_ar : entry.title_en;
     const desc = isAr ? entry.description_ar : entry.description_en;
     return (
-      <div className="flex flex-col items-start gap-4 border border-hairline bg-surface p-6">
-        <p className="label-mono text-metadata">{heading}</p>
+      <div
+        style={{ "--brand": brand.primary_color } as React.CSSProperties}
+        className="relative flex flex-col items-start gap-4 overflow-hidden rounded-lg border border-line bg-surface p-6 shadow-card"
+      >
+        <div className="brand-rule absolute inset-x-0 top-0 h-2" />
+        <p className="label mt-1">{heading}</p>
         <BrandMark
           domain={brand.website}
           initials={brand.initials}
+          color={brand.primary_color}
           size="lg"
-          code={catalogueCode(brand.slug || brand.id)}
         />
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-display text-2xl leading-none text-ink tabular-nums">
+          <span className="tnum text-[28px] font-extrabold leading-none tracking-[-0.02em] text-brand">
             {entry.year}
           </span>
-          {entry.category && <Badge kind="filter">{entry.category}</Badge>}
+          {entry.category && <Badge kind="neutral">{entry.category}</Badge>}
         </div>
-        <h3 className="font-display text-lg leading-tight text-ink">{title}</h3>
+        <h3 className="text-[18px] font-bold leading-tight text-ink">{title}</h3>
         {desc && (
-          <p className="font-mono text-[15px] leading-6 text-ink-700">{desc}</p>
+          <p className="text-[14px] leading-relaxed text-muted">{desc}</p>
         )}
       </div>
     );
   }
 
   return (
-    <main id="main-content">
-      <Shell>
-        <header className="mb-2">
-          <Link
-            href={`/${typedLocale}/brand/${brand.slug}`}
-            className="label-mono text-metadata hover:text-ink"
-          >
-            ← {dict.compare.back}
-          </Link>
-        </header>
-        <h1 className="mt-2 font-display text-[32px] leading-tight text-ink">
-          {dict.compare.title(name)}
-        </h1>
-        <p className="mt-3 font-mono text-[15px] leading-6 text-ink-700">
-          {dict.compare.subtitle}
-        </p>
+    <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+      <header className="mb-2">
+        <a
+          href={`/${typedLocale}/brand/${brand.slug}`}
+          className="text-[13px] font-semibold text-link hover:underline"
+        >
+          ← {dict.compare.back}
+        </a>
+      </header>
+      <h1 className="mt-2 text-[32px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+        {dict.compare.title(name)}
+      </h1>
+      <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-muted">
+        {dict.compare.subtitle}
+      </p>
 
-        {/* Era pickers */}
+      {/* Era pickers */}
+      <Card className="mt-6">
         <form
           method="get"
-          className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <div className="flex flex-col gap-2">
-            <label htmlFor="a" className="label-mono text-ink">
-              {dict.compare.pickLeft}
-            </label>
-            <select id="a" name="a" defaultValue={left.id} className={selectCls}>
+          <Field label={dict.compare.pickLeft} htmlFor="a">
+            <Select id="a" name="a" defaultValue={left.id}>
               {timeline.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.year} — {isAr ? e.title_ar : e.title_en}
                 </option>
               ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="b" className="label-mono text-ink">
-              {dict.compare.pickRight}
-            </label>
-            <select id="b" name="b" defaultValue={right.id} className={selectCls}>
+            </Select>
+          </Field>
+          <Field label={dict.compare.pickRight} htmlFor="b">
+            <Select id="b" name="b" defaultValue={right.id}>
               {timeline.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.year} — {isAr ? e.title_ar : e.title_en}
                 </option>
               ))}
-            </select>
-          </div>
-          <Button type="submit" variant="primary" className="h-12 px-4">
+            </Select>
+          </Field>
+          <Button type="submit" variant="primary">
             {dict.compare.update}
           </Button>
         </form>
+      </Card>
 
-        {/* Side by side */}
-        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {renderColumn(left, dict.compare.pickLeft)}
-          {renderColumn(right, dict.compare.pickRight)}
-        </div>
-      </Shell>
+      {/* Side by side */}
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {renderColumn(left, dict.compare.pickLeft)}
+        {renderColumn(right, dict.compare.pickRight)}
+      </div>
     </main>
   );
 }

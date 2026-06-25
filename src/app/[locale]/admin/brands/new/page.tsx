@@ -46,10 +46,13 @@ export default async function NewBrandPage({
     <AdminShell locale={typedLocale} operator={access.operator} active="brands">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{t.newTitle}</h1>
-          <p className="mt-1 text-sm text-secondary">{t.subtitleNew}</p>
+          <h1 className="text-h2 font-bold tracking-tight text-ink">{t.newTitle}</h1>
+          <p className="mt-1 text-[14px] text-muted">{t.subtitleNew}</p>
         </div>
-        <Link href={`/${typedLocale}/admin/brands`} className="text-sm font-medium text-secondary hover:text-ink">
+        <Link
+          href={`/${typedLocale}/admin/brands`}
+          className="text-[13px] font-medium text-muted hover:text-ink"
+        >
           {dict.admin.nav.brands}
         </Link>
       </div>

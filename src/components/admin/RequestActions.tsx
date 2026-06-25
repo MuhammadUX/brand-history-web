@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
+import { Button } from "@/components/ui";
 import { markRequestReviewed } from "@/app/[locale]/admin/requests/actions";
 
 export default function RequestActions({
@@ -23,8 +23,10 @@ export default function RequestActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {!reviewed && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           disabled={pending}
           onClick={() =>
             start(async () => {
@@ -32,17 +34,13 @@ export default function RequestActions({
               router.refresh();
             })
           }
-          className="rounded-btn border border-border px-3 py-1.5 text-xs font-medium text-ink transition hover:bg-page disabled:opacity-60"
         >
           {t.markReviewed}
-        </button>
+        </Button>
       )}
-      <Link
-        href={`/${locale}/admin/brands/new?from=${id}`}
-        className="rounded-btn bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-hover"
-      >
+      <Button href={`/${locale}/admin/brands/new?from=${id}`} variant="primary" size="sm">
         {t.createBrand}
-      </Link>
+      </Button>
     </div>
   );
 }

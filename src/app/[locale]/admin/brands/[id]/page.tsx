@@ -62,12 +62,15 @@ export default async function EditBrandPage({
     <AdminShell locale={typedLocale} operator={access.operator} active="brands">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="text-h2 font-bold tracking-tight text-ink">
             {typedLocale === "ar" ? brand.name_ar || brand.name_en : brand.name_en}
           </h1>
           <StateBadge state={brand.publication_state} locale={typedLocale} />
         </div>
-        <Link href={`/${typedLocale}/admin/brands`} className="text-sm font-medium text-secondary hover:text-ink">
+        <Link
+          href={`/${typedLocale}/admin/brands`}
+          className="text-[13px] font-medium text-muted hover:text-ink"
+        >
           {dict.admin.nav.brands}
         </Link>
       </div>

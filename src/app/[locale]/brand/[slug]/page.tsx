@@ -1,27 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import CopyHexButton from "@/components/CopyHexButton";
-import BrandDownloadModal from "@/components/BrandDownloadModal";
-import BrandKitButton from "@/components/BrandKitButton";
+import {
+  Hero,
+  Card,
+  SectionHeader,
+  AssetTile,
+  ColorChip,
+  Badge,
+  Button,
+  StateBlock,
+} from "@/components/ui";
+import BrandDownloadButton from "@/components/BrandDownloadButton";
+import ProDownloadButton from "@/components/ProDownloadButton";
 import BrandTimeline from "@/components/BrandTimeline";
 import FavoriteButton from "@/components/FavoriteButton";
 import AdSlot from "@/components/AdSlot";
-import { catalogueCode } from "@/components/DsBrandCard";
-import {
-  Shell,
-  SectionHeader,
-  MetaStrip,
-  CodeChip,
-  Badge,
-  ButtonGroup,
-  Table,
-  THead,
-  TRow,
-  TCell,
-  ActionCell,
-  StateBlock,
-} from "@/components/ds";
-import { BrandMark } from "@/components/BrandMark";
 import {
   getBrandBySlug,
   getBrandAssets,
@@ -110,9 +103,9 @@ export default async function BrandPage({
   const sectorName =
     brand.sectors && (isAr ? brand.sectors.name_ar : brand.sectors.name_en);
   const summary = isAr ? brand.summary_ar : brand.summary_en;
-  const code = catalogueCode(brand.slug || brand.id);
+  const isVerified = brand.claim_status === "verified" || brand.is_verified;
 
-  const metaParts = [
+  const metaChips = [
     sectorName,
     brand.region,
     brand.founded_year ? `${dict.brand.founded} ${brand.founded_year}` : null,
@@ -126,14 +119,11 @@ export default async function BrandPage({
       }).format(new Date(brand.last_updated_at))
     : null;
 
-  const isVerified = brand.claim_status === "verified" || brand.is_verified;
-
-  // Asset-cell action (host download / link-out / pro), preserving the policy
-  // and Pro-gating logic — re-skinned to DS controls.
+  // Per-asset action — preserves the host / link-out / Pro policy + Pro gating.
   function assetAction(asset: BrandAsset) {
     if (asset.download_policy === "host") {
       return (
-        <BrandDownloadModal
+        <BrandDownloadButton
           slug={brand!.slug}
           initials={brand!.initials}
           color={brand!.primary_color}
@@ -141,305 +131,203 @@ export default async function BrandPage({
           label={dict.brand.policyHost}
           pngLabel={dict.brand.downloadPng}
           svgLabel={dict.brand.downloadSvg}
-          code={code}
           triggerVariant="ghost"
         />
       );
     }
     if (asset.download_policy === "link_out") {
       return (
-        <span className="label-mono text-metadata">
+        <span className="text-[11px] font-semibold text-muted">
           {dict.brand.policyLinkOut}
         </span>
       );
     }
-    if (isProUser) {
-      return (
-        <BrandKitButton
-          locale={typedLocale}
-          brandId={brand!.id}
-          slug={brand!.slug}
-          initials={brand!.initials}
-          color={brand!.primary_color}
-          name={name}
-          colors={colors}
-          isPro
-          kind="highres"
-        />
-      );
-    }
     return (
-      <Link
-        href={`/${typedLocale}/pro`}
-        className="label-mono mo-invert inline-flex items-center gap-1 border border-ink px-1 py-0.5 text-ink hover:bg-ink hover:text-paper"
-      >
-        [ {dict.brand.policyPro} ] {dict.brand.proLink}
-      </Link>
+      <ProDownloadButton
+        locale={typedLocale}
+        brandId={brand!.id}
+        isPro={isProUser}
+        kind="highres"
+      />
     );
   }
 
   return (
-    <main id="main-content">
-      <Shell>
-        {/* ── Hero ── */}
-        <section className="py-8">
-          <MetaStrip
-            className="mb-3"
-            items={[<CodeChip key="c" code={code} />, sectorName || "—", brand.region || "—"]}
-          />
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            <BrandMark
-              domain={brand.website}
+    <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
+      {/* ── Hero ── */}
+      <Hero
+        name={name}
+        arName={altName}
+        initials={brand.initials}
+        domain={brand.website}
+        color={brand.primary_color}
+        verified={isVerified}
+        meta={metaChips}
+        actions={
+          <>
+            <BrandDownloadButton
+              slug={brand.slug}
               initials={brand.initials}
-              size="lg"
-              code={code}
-              aria-label={`${name} specimen plate`}
+              color={brand.primary_color}
+              name={name}
+              label={dict.brand.downloadKit}
+              pngLabel={dict.brand.downloadPng}
+              svgLabel={dict.brand.downloadSvg}
             />
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-display text-[32px] leading-tight text-ink">
-                  {name}
-                </h1>
-                {isVerified ? (
-                  <Badge kind="verified" />
-                ) : (
-                  <Badge kind="filter">◆ {dict.brand.curated}</Badge>
-                )}
-              </div>
-              <p
-                className="mt-1 font-arabic text-lg text-ink-700"
-                dir={isAr ? "ltr" : "rtl"}
+            <FavoriteButton
+              brandId={brand.id}
+              brandName={name}
+              locale={typedLocale}
+              initialFavorited={isFavorited}
+              initialAuthed={favCtx.isAuthed}
+              variant="button"
+            />
+            {timeline.length >= 2 && (
+              <Button
+                href={`/${typedLocale}/brand/${brand.slug}/compare`}
+                variant="ghost"
+                size="sm"
               >
-                {altName}
-              </p>
-              {metaParts.length > 0 && (
-                <MetaStrip className="mt-3" items={metaParts} />
-              )}
-              {summary && (
-                <p className="mt-4 max-w-2xl font-mono text-[15px] leading-6 text-ink">
-                  {summary}
-                </p>
-              )}
-              {lastUpdated && (
-                <p className="mt-3 label-mono text-metadata">
-                  {dict.brand.lastUpdated}: {lastUpdated}
-                </p>
-              )}
+                {dict.brand.compare}
+              </Button>
+            )}
+            <ProDownloadButton
+              locale={typedLocale}
+              brandId={brand.id}
+              isPro={isProUser}
+              kind="kit"
+            />
+          </>
+        }
+      />
 
-              {/* Actions — one primary (Download), rest secondary/ghost */}
-              <div className="mt-6">
-                <ButtonGroup className="flex-wrap">
-                  <BrandDownloadModal
-                    slug={brand.slug}
-                    initials={brand.initials}
-                    color={brand.primary_color}
-                    name={name}
-                    label={dict.brand.downloadLogo}
-                    pngLabel={dict.brand.downloadPng}
-                    svgLabel={dict.brand.downloadSvg}
-                    code={code}
-                  />
-                  <CopyHexButton
-                    value={brand.primary_color}
-                    label={`${dict.brand.copyColor} (${brand.primary_color})`}
-                    copiedLabel={isAr ? "تم النسخ" : "COPIED"}
-                    className="mo-invert mo-press inline-flex h-10 items-center justify-center border border-ink px-2 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
-                  />
-                  <FavoriteButton
-                    brandId={brand.id}
-                    brandName={name}
-                    locale={typedLocale}
-                    initialFavorited={isFavorited}
-                    initialAuthed={favCtx.isAuthed}
-                    variant="button"
-                  />
-                  {timeline.length >= 2 && (
-                    <Link
-                      href={`/${typedLocale}/brand/${brand.slug}/compare`}
-                      className="mo-invert mo-press inline-flex h-10 items-center justify-center border border-ink px-2 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
-                    >
-                      {dict.brand.compare}
-                    </Link>
-                  )}
-                  <BrandKitButton
-                    locale={typedLocale}
-                    brandId={brand.id}
-                    slug={brand.slug}
-                    initials={brand.initials}
-                    color={brand.primary_color}
-                    name={name}
-                    colors={colors}
-                    isPro={isProUser}
-                    kind="kit"
-                  />
-                </ButtonGroup>
-              </div>
-            </div>
-          </div>
-        </section>
+      {summary && (
+        <p className="mt-5 max-w-[68ch] text-[15px] leading-relaxed text-ink">
+          {summary}
+        </p>
+      )}
+      {lastUpdated && (
+        <p className="label mt-3">
+          {dict.brand.lastUpdated}: {lastUpdated}
+        </p>
+      )}
 
-        {/* ── Assets ledger ── */}
-        <section id="assets" className="scroll-mt-24 py-6">
-          <SectionHeader index="01" title={dict.brand.assetsTitle} as="h2" meta={`N=${assets.length}`} />
+      <div className="mt-6 grid grid-cols-1 gap-[18px] lg:grid-cols-[1.4fr_1fr]">
+        {/* ── Logos & assets ── */}
+        <Card title={dict.brand.assetsTitle}>
           {assets.length === 0 ? (
-            <div className="mt-5 max-w-md">
-              <StateBlock state="empty" message={dict.brand.noAssets} />
-            </div>
+            <StateBlock state="empty" icon="📭" message={dict.brand.noAssets} />
           ) : (
-            <div className="mt-5">
-              <Table>
-                <THead>
-                  <TCell head>TYPE</TCell>
-                  <TCell head>NAME</TCell>
-                  <TCell head>FORMATS</TCell>
-                  <TCell head align="end">ACTION</TCell>
-                </THead>
-                <tbody>
-                  {assets.map((asset) => {
-                    const typeLabel =
-                      ASSET_TYPE_LABELS[asset.asset_type]?.[isAr ? "ar" : "en"] ??
-                      asset.asset_type;
-                    return (
-                      <TRow key={asset.id}>
-                        <TCell>{typeLabel}</TCell>
-                        <TCell>{isAr ? asset.name_ar : asset.name_en}</TCell>
-                        <TCell>
-                          {asset.formats && asset.formats.length > 0
-                            ? asset.formats.map((f) => f.toUpperCase()).join(" · ")
-                            : "—"}
-                        </TCell>
-                        <ActionCell>{assetAction(asset)}</ActionCell>
-                      </TRow>
-                    );
-                  })}
-                </tbody>
-              </Table>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {assets.map((asset) => {
+                const typeLabel =
+                  ASSET_TYPE_LABELS[asset.asset_type]?.[isAr ? "ar" : "en"] ??
+                  asset.asset_type;
+                const fmt = asset.formats?.[0]?.toUpperCase();
+                return (
+                  <AssetTile
+                    key={asset.id}
+                    name={isAr ? asset.name_ar : asset.name_en || typeLabel}
+                    format={fmt}
+                    domain={brand.website}
+                    initials={brand.initials}
+                    color={brand.primary_color}
+                    ground="light"
+                    action={assetAction(asset)}
+                  />
+                );
+              })}
             </div>
           )}
-        </section>
+        </Card>
 
-        {/* Sponsored slot (free users only; server-decided) */}
-        <div className="py-2">
-          <AdSlot locale={typedLocale} variant="sidebar" />
-        </div>
-
-        {/* ── Guidelines (colors) ledger ── */}
-        <section id="guidelines" className="scroll-mt-24 py-6">
-          <SectionHeader index="02" title={dict.brand.guidelinesTitle} as="h2" meta={`N=${colors.length}`} />
+        {/* ── Colors ── */}
+        <Card title={dict.brand.guidelinesTitle}>
           {colors.length === 0 ? (
-            <div className="mt-5 max-w-md">
-              <StateBlock state="empty" message={dict.brand.noColors} />
-            </div>
+            <StateBlock state="empty" icon="🎨" message={dict.brand.noColors} />
           ) : (
-            <div className="mt-5">
-              <Table>
-                <THead>
-                  <TCell head>SWATCH</TCell>
-                  <TCell head>NAME</TCell>
-                  <TCell head>ROLE</TCell>
-                  <TCell head align="end">HEX</TCell>
-                </THead>
-                <tbody>
-                  {colors.map((color) => (
-                    <TRow key={color.id}>
-                      <TCell>
-                        <span
-                          className="inline-block h-5 w-5 border border-hairline align-middle"
-                          style={{ backgroundColor: color.hex }}
-                          aria-hidden="true"
-                        />
-                      </TCell>
-                      <TCell>{color.name}</TCell>
-                      <TCell className="uppercase text-metadata">{color.role}</TCell>
-                      <ActionCell>
-                        <CopyHexButton
-                          value={color.hex}
-                          label={color.hex.toUpperCase()}
-                          copiedLabel={isAr ? "تم النسخ" : `COPIED ${color.hex.toUpperCase()}`}
-                          className="mo-invert mo-press inline-flex items-center justify-center border border-hairline bg-paper px-2 py-1 font-mono text-[11px] tabular-nums text-ink hover:border-ink hover:bg-ink hover:text-paper"
-                        />
-                      </ActionCell>
-                    </TRow>
-                  ))}
-                </tbody>
-              </Table>
-              <p className="mt-2 label-mono text-metadata">{dict.brand.copyHex}</p>
+            <div className="flex flex-col gap-2.5">
+              {colors.map((color) => (
+                <ColorChip
+                  key={color.id}
+                  name={color.name}
+                  hex={color.hex}
+                  role={color.role}
+                  copyLabel={isAr ? "نسخ" : "COPY"}
+                  copiedLabel={isAr ? "تم النسخ" : "COPIED"}
+                />
+              ))}
+              <p className="label mt-1">{dict.brand.copyHex}</p>
             </div>
           )}
-        </section>
+        </Card>
+      </div>
 
-        {/* ── Timeline strata ── */}
-        <section id="timeline" className="scroll-mt-24 py-6">
-          <SectionHeader
-            index="03"
-            title={dict.brand.timelineTitle}
-            as="h2"
-            meta={
-              timeline.length >= 2 ? (
-                <Link
-                  href={`/${typedLocale}/brand/${brand.slug}/compare`}
-                  className="label-mono text-ink mo-underline"
-                >
-                  {dict.brand.compare} →
-                </Link>
-              ) : (
-                `N=${timeline.length}`
-              )
-            }
-          />
-          {timeline.length === 0 ? (
-            <div className="mt-5 max-w-md">
-              <StateBlock state="empty" message={dict.brand.noTimeline} />
-            </div>
-          ) : (
-            <BrandTimeline entries={timeline} locale={typedLocale} />
-          )}
-        </section>
+      {/* Sponsored slot (free users only; server-decided) */}
+      <div className="mt-6">
+        <AdSlot locale={typedLocale} variant="row" />
+      </div>
 
-        {/* ── Archive ledger ── */}
-        <section id="archive" className="scroll-mt-24 py-6">
-          <SectionHeader
-            index="04"
-            title={dict.brand.archiveTitle}
-            as="h2"
-            meta={`N=${archivedAssets.length}`}
-          />
-          <p className="mt-1 label-mono text-metadata">{dict.brand.archiveNote}</p>
-          {archivedAssets.length === 0 ? (
-            <div className="mt-5 max-w-md">
-              <StateBlock state="empty" message={dict.brand.noArchive} />
-            </div>
-          ) : (
-            <div className="mt-5">
-              <Table>
-                <THead>
-                  <TCell head>TYPE</TCell>
-                  <TCell head>ERA</TCell>
-                  <TCell head>NAME</TCell>
-                  <TCell head align="end">STATUS</TCell>
-                </THead>
-                <tbody>
-                  {archivedAssets.map((asset) => {
-                    const typeLabel =
-                      ASSET_TYPE_LABELS[asset.asset_type]?.[isAr ? "ar" : "en"] ??
-                      asset.asset_type;
-                    return (
-                      <TRow key={asset.id}>
-                        <TCell>{typeLabel}</TCell>
-                        <TCell>{asset.era ?? "—"}</TCell>
-                        <TCell>{isAr ? asset.name_ar : asset.name_en}</TCell>
-                        <ActionCell>
-                          <Badge kind="unpublished">ARCHIVED</Badge>
-                        </ActionCell>
-                      </TRow>
-                    );
-                  })}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </section>
-      </Shell>
+      {/* ── Timeline preview ── */}
+      <section id="timeline" className="mt-6 scroll-mt-24">
+        <SectionHeader
+          title={dict.brand.timelineTitle}
+          action={
+            timeline.length >= 2 ? (
+              <Link
+                href={`/${typedLocale}/brand/${brand.slug}/compare`}
+                className="text-[13px] font-semibold text-link hover:underline"
+              >
+                {dict.brand.compare} →
+              </Link>
+            ) : undefined
+          }
+        />
+        {timeline.length === 0 ? (
+          <StateBlock state="empty" icon="🗓️" message={dict.brand.noTimeline} />
+        ) : (
+          <Card>
+            <BrandTimeline
+              entries={timeline}
+              locale={typedLocale}
+              color={brand.primary_color}
+            />
+          </Card>
+        )}
+      </section>
+
+      {/* ── Archive ── */}
+      <section id="archive" className="mt-6 scroll-mt-24">
+        <SectionHeader title={dict.brand.archiveTitle} />
+        <p className="label mb-3">
+          <Badge kind="archived" className="me-2" />
+          {dict.brand.archiveNote}
+        </p>
+        {archivedAssets.length === 0 ? (
+          <StateBlock state="empty" icon="🗄️" message={dict.brand.noArchive} />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {archivedAssets.map((asset) => {
+              const typeLabel =
+                ASSET_TYPE_LABELS[asset.asset_type]?.[isAr ? "ar" : "en"] ??
+                asset.asset_type;
+              return (
+                <AssetTile
+                  key={asset.id}
+                  name={`${isAr ? asset.name_ar : asset.name_en || typeLabel}${
+                    asset.era ? ` · ${asset.era}` : ""
+                  }`}
+                  domain={brand.website}
+                  initials={brand.initials}
+                  color={brand.primary_color}
+                  ground="brand"
+                  archived
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

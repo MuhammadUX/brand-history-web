@@ -1,10 +1,11 @@
-import { BrandCard as DsCard } from "@/components/ds";
+import { BrandCard } from "@/components/ui";
 import FavoriteButton from "./FavoriteButton";
 import type { Brand, Locale } from "@/lib/types";
 
 /**
- * Stable catalogue code (BH-####) derived from the brand id/slug so every
- * specimen plate carries a deterministic archive code without a schema change.
+ * Stable catalogue code (BH-####) derived from the brand id/slug. Kept for any
+ * remaining importers; The Library BrandCard does not render it, but the export
+ * signature is preserved so callers continue to compile.
  */
 export function catalogueCode(seed: string): string {
   let h = 0;
@@ -22,10 +23,9 @@ interface DsBrandCardProps {
 }
 
 /**
- * DsBrandCard — maps a Supabase Brand onto the Concept A DS BrandCard
- * (DitherPlate specimen + display name + mono meta + verified Badge). The
- * favorite control rides the card's children slot. Plate `develop` (M1) is on
- * by default in the DS component, so cards develop-in as they enter view.
+ * DsBrandCard — thin wrapper over The Library `@/components/ui` BrandCard.
+ * Maps a Supabase Brand onto BrandCard (name + meta + verified) and rides the
+ * FavoriteButton in the card's overlay slot. Existing prop signature preserved.
  */
 export default function DsBrandCard({
   brand,
@@ -40,12 +40,12 @@ export default function DsBrandCard({
   const meta = [sectorName, brand.region].filter(Boolean).join(" · ");
 
   return (
-    <DsCard
+    <BrandCard
       name={name}
       meta={meta || undefined}
       initials={brand.initials}
       domain={brand.website}
-      code={catalogueCode(brand.slug || brand.id)}
+      color={brand.primary_color}
       href={`/${locale}/brand/${brand.slug}`}
       verified={brand.is_verified}
     >
@@ -57,6 +57,6 @@ export default function DsBrandCard({
         initialAuthed={isAuthed}
         variant="icon"
       />
-    </DsCard>
+    </BrandCard>
   );
 }

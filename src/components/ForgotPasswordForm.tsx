@@ -40,7 +40,7 @@ export default function ForgotPasswordForm({ locale }: { locale: Locale }) {
         <FormSuccess message={dict.auth.forgotSent} />
         <Link
           href={`/${locale}/login`}
-          className="label-mono text-ink hover:underline"
+          className="text-[13px] font-semibold text-link hover:underline"
         >
           {dict.auth.backToLogin}
         </Link>
@@ -63,10 +63,10 @@ export default function ForgotPasswordForm({ locale }: { locale: Locale }) {
       <SubmitButton pending={pending}>
         {pending ? dict.auth.processing : dict.auth.sendResetLink}
       </SubmitButton>
-      <p className="text-center font-mono text-[13px] text-ink-700">
+      <p className="text-center text-[13px] text-muted">
         <Link
           href={`/${locale}/login`}
-          className="text-ink underline hover:no-underline"
+          className="font-semibold text-link hover:underline"
         >
           {dict.auth.backToLogin}
         </Link>

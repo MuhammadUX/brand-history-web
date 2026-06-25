@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
+import { Button, cn } from "@/components/ui";
 import type { Locale } from "@/lib/types";
 
 const LS_KEY = "bh_favorites";
@@ -136,26 +137,21 @@ export default function FavoriteButton({
 
   if (variant === "button") {
     return (
-      <div className="flex flex-col items-start gap-1">
-        <button
+      <div className="flex flex-col items-start gap-1.5">
+        <Button
           type="button"
+          variant={isFav ? "primary" : "ghost"}
+          size="sm"
           onClick={toggle}
           disabled={busy || !resolved}
           aria-pressed={isFav}
           aria-label={ariaLabel}
-          className={`mo-invert mo-press inline-flex h-10 items-center gap-2 rounded-none border px-2 font-mono text-[11px] font-medium uppercase tracking-label ${
-            isFav
-              ? "border-ink bg-ink text-paper"
-              : "border-ink bg-transparent text-ink hover:bg-ink hover:text-paper"
-          }`}
         >
           <HeartIcon filled={isFav} />
           {isFav ? dict.favorite.saved : dict.favorite.save}
-        </button>
+        </Button>
         {showDeviceNote && !authed && (
-          <p className="font-mono text-[11px] text-metadata">
-            {dict.favorite.deviceNote}
-          </p>
+          <p className="text-[12px] text-muted">{dict.favorite.deviceNote}</p>
         )}
       </div>
     );
@@ -174,11 +170,12 @@ export default function FavoriteButton({
       aria-pressed={isFav}
       aria-label={ariaLabel}
       title={ariaLabel}
-      className={`mo-invert mo-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-none border ${
+      className={cn(
+        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border transition-colors duration-150 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link disabled:cursor-not-allowed disabled:opacity-60",
         isFav
-          ? "border-ink bg-ink text-paper"
-          : "border-hairline bg-surface text-ink hover:bg-ink hover:text-paper"
-      }`}
+          ? "border-transparent bg-ink text-white hover:bg-black"
+          : "border-line bg-surface text-muted hover:border-muted hover:text-ink",
+      )}
     >
       <HeartIcon filled={isFav} />
     </button>

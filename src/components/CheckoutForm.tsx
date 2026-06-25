@@ -1,18 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import { PRICING, type Plan } from "@/lib/pricing";
 import type { Locale } from "@/lib/types";
 import { runCheckout } from "@/app/[locale]/checkout/actions";
-import { Button, Checkbox, Badge } from "@/components/ds";
-
-const primaryLink =
-  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700";
-const secondaryLink =
-  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-transparent px-4 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper";
+import { Button, Checkbox, Badge, Card } from "@/components/ui";
 
 type View = "form" | "success" | "declined";
 
@@ -71,92 +65,95 @@ export default function CheckoutForm({
 
   if (view === "success") {
     return (
-      <div className="border border-hairline bg-surface p-8 text-center">
-        <Badge kind="pro" />
-        <h2 className="mt-4 font-display text-2xl leading-tight text-ink">
+      <Card className="p-8 text-center">
+        <span className="inline-flex">
+          <Badge kind="pro" />
+        </span>
+        <h2 className="mt-4 text-[22px] font-bold leading-tight tracking-tight text-ink">
           {dict.checkout.successTitle}
         </h2>
-        <p className="mt-2 font-mono text-[15px] leading-6 text-ink-700">
+        <p className="mx-auto mt-2 max-w-[46ch] text-[15px] leading-6 text-muted">
           {dict.checkout.successBody}
         </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-          <Link href={`/${locale}/account`} className={primaryLink}>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Button href={`/${locale}/account`} variant="primary">
             {dict.checkout.goAccount}
-          </Link>
-          <Link href={`/${locale}/discover`} className={secondaryLink}>
+          </Button>
+          <Button href={`/${locale}/discover`} variant="ghost">
             {dict.checkout.explore}
-          </Link>
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (view === "declined") {
     return (
-      <div className="border border-danger bg-surface p-8 text-center">
+      <Card className="border-danger/40 p-8 text-center">
         <span
-          className="inline-flex h-8 w-8 items-center justify-center border border-danger font-display text-danger"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-pill border border-danger/40 text-[16px] text-danger"
           aria-hidden="true"
         >
           ✕
         </span>
-        <h2 className="mt-4 font-display text-2xl leading-tight text-ink">
+        <h2 className="mt-4 text-[22px] font-bold leading-tight tracking-tight text-ink">
           {dict.checkout.declinedTitle}
         </h2>
-        <p className="mt-2 font-mono text-[15px] leading-6 text-ink-700">
+        <p className="mx-auto mt-2 max-w-[46ch] text-[15px] leading-6 text-muted">
           {dict.checkout.declinedBody}
         </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-          <button
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Button
             type="button"
+            variant="primary"
             onClick={() => {
               setSimulateDeclined(false);
               setView("form");
             }}
-            className={primaryLink}
           >
             {dict.checkout.retry}
-          </button>
-          <Link href={`/${locale}/pro`} className={secondaryLink}>
+          </Button>
+          <Button href={`/${locale}/pro`} variant="ghost">
             {dict.pro.back}
-          </Link>
+          </Button>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
       {/* Payment */}
-      <div className="border border-hairline bg-surface p-6">
-        <h2 className="font-display text-lg leading-tight text-ink">
+      <Card>
+        <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
           {dict.checkout.methods}
         </h2>
         <div className="mt-4 flex flex-wrap gap-2">
           {methods.map((m) => (
             <span
               key={m.id}
-              className={`label-mono inline-flex items-center gap-1.5 border px-3 py-2 ${
+              className={`inline-flex items-center gap-1.5 rounded-pill border px-3 py-2 text-[12px] font-semibold ${
                 m.primary
-                  ? "border-ink bg-ink text-paper"
-                  : "border-hairline text-ink"
+                  ? "border-transparent bg-ink text-white"
+                  : "border-line text-ink"
               }`}
             >
               {m.label}
-              {m.primary && <span aria-hidden="true">★</span>}
+              {m.primary && (
+                <span aria-hidden="true" className="text-link">
+                  ★
+                </span>
+              )}
             </span>
           ))}
         </div>
-        <p className="mt-2 font-mono text-[11px] text-metadata">
-          {dict.checkout.methodsNote}
-        </p>
+        <p className="mt-2 text-[11px] text-muted">{dict.checkout.methodsNote}</p>
 
         <div className="mt-6">
           <Checkbox
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
             label={dict.checkout.consent}
-            className="items-start"
           />
         </div>
 
@@ -171,11 +168,9 @@ export default function CheckoutForm({
         {error && (
           <p
             role="alert"
-            className="mt-4 border border-danger bg-surface px-3 py-2 font-mono text-[13px] text-danger"
+            className="mt-4 flex items-start gap-2 rounded-md border border-danger/40 bg-danger/5 px-3 py-2.5 text-[13px] text-danger"
           >
-            <span aria-hidden="true" className="me-1">
-              ⚠
-            </span>
+            <span aria-hidden="true">⚠</span>
             {error}
           </p>
         )}
@@ -189,32 +184,27 @@ export default function CheckoutForm({
         >
           {pending ? dict.checkout.paying : dict.checkout.pay(amount)}
         </Button>
-        <p className="mt-3 text-center font-mono text-[11px] text-metadata">
+        <p className="mt-3 text-center text-[11px] text-muted">
           {dict.checkout.mockNote}
         </p>
-      </div>
+      </Card>
 
       {/* Summary */}
-      <aside className="border border-hairline bg-surface p-6 lg:sticky lg:top-24">
-        <h2 className="label-mono text-metadata">{dict.checkout.summary}</h2>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-mono text-[13px] text-metadata">
-            {dict.checkout.plan}
-          </span>
-          <span className="font-mono text-[13px] text-ink">{planLabel}</span>
+      <Card className="lg:sticky lg:top-24" title={dict.checkout.summary}>
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] text-muted">{dict.checkout.plan}</span>
+          <span className="text-[13px] text-ink">{planLabel}</span>
         </div>
         <div className="mt-2 flex items-center justify-between">
-          <span className="font-mono text-[13px] text-metadata">
-            {dict.checkout.total}
-          </span>
-          <span className="font-display text-lg leading-none text-ink tabular-nums">
+          <span className="text-[13px] text-muted">{dict.checkout.total}</span>
+          <span className="text-[18px] font-bold leading-none text-ink tnum">
             {dict.checkout.sar} {amount}
           </span>
         </div>
-        <p className="mt-3 border-t border-hairline pt-3 font-mono text-[11px] text-metadata">
+        <p className="mt-3 border-t border-line pt-3 text-[11px] text-muted">
           {dict.checkout.renews(renewDate)}
         </p>
-      </aside>
+      </Card>
     </div>
   );
 }

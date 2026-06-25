@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary, safeNext } from "@/i18n";
 import type { Locale } from "@/lib/types";
-import { Input } from "@/components/ds";
+import { Field as UiField, Input } from "@/components/ui";
 import { Field, FormError, SubmitButton } from "./auth-fields";
 
 export default function LoginForm({ locale }: { locale: Locale }) {
@@ -61,18 +61,20 @@ export default function LoginForm({ locale }: { locale: Locale }) {
         placeholder={dict.auth.emailPlaceholder}
         required
       />
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="label-mono text-ink">
-            {dict.auth.password}
-          </label>
-          <Link
-            href={`/${locale}/forgot-password`}
-            className="label-mono text-metadata hover:text-ink"
-          >
-            {dict.auth.forgotPassword}
-          </Link>
-        </div>
+      <UiField
+        htmlFor="password"
+        label={
+          <span className="flex items-center justify-between gap-3">
+            <span>{dict.auth.password}</span>
+            <Link
+              href={`/${locale}/forgot-password`}
+              className="font-semibold normal-case tracking-normal text-link hover:underline"
+            >
+              {dict.auth.forgotPassword}
+            </Link>
+          </span>
+        }
+      >
         <Input
           id="password"
           type="password"
@@ -81,18 +83,16 @@ export default function LoginForm({ locale }: { locale: Locale }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-      </div>
+      </UiField>
       <SubmitButton pending={pending}>
         {pending ? dict.auth.signingIn : dict.auth.signIn}
       </SubmitButton>
-      <p className="text-center font-mono text-[11px] text-metadata">
-        {dict.auth.demoHint}
-      </p>
-      <p className="text-center font-mono text-[13px] text-ink-700">
+      <p className="text-center text-[11px] text-muted">{dict.auth.demoHint}</p>
+      <p className="text-center text-[13px] text-muted">
         {dict.auth.noAccount}{" "}
         <Link
           href={`/${locale}/register`}
-          className="text-ink underline hover:no-underline"
+          className="font-semibold text-link hover:underline"
         >
           {dict.auth.register}
         </Link>

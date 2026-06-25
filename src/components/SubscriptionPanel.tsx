@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
@@ -13,10 +12,7 @@ import {
   cancelSubscription,
   reactivateSubscription,
 } from "@/app/[locale]/checkout/actions";
-import { Button, Badge } from "@/components/ds";
-
-const primaryLink =
-  "mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700";
+import { Button, Badge, Card, type BadgeKind } from "@/components/ui";
 
 const ENT_KEYS: (keyof Entitlements)[] = [
   "ad_free",
@@ -82,17 +78,17 @@ export default function SubscriptionPanel({
   // Free / no subscription.
   if (!subscription || status === "none") {
     return (
-      <div className="border border-hairline bg-surface p-6">
-        <h3 className="font-display text-[15px] leading-tight text-ink">
+      <Card>
+        <h3 className="text-[15px] font-bold leading-tight text-ink">
           {dict.accountPro.freeTitle}
         </h3>
-        <p className="mt-1 font-mono text-[13px] leading-5 text-ink-700">
+        <p className="mt-1 text-[13px] leading-5 text-muted">
           {dict.accountPro.freeBody}
         </p>
-        <Link href={`/${locale}/pro`} className={`mt-4 ${primaryLink}`}>
+        <Button href={`/${locale}/pro`} variant="primary" className="mt-4">
           {dict.accountPro.getPro}
-        </Link>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
@@ -101,84 +97,79 @@ export default function SubscriptionPanel({
     ? dict.accountPro.planValue[subscription.plan]
     : "—";
 
-  const statusBadgeKind =
+  const statusBadgeKind: BadgeKind =
     status === "active" || status === "trialing"
-      ? "approved"
+      ? "verified"
       : status === "past_due"
-        ? "draft"
-        : "unpublished";
+        ? "archived"
+        : "state";
 
   return (
     <div className="space-y-5">
       {status === "past_due" && (
-        <div className="border border-danger bg-surface px-4 py-3 font-mono text-[13px] text-danger">
-          <span aria-hidden="true" className="me-1">
-            ⚠
-          </span>
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-md border border-danger/40 bg-danger/5 px-4 py-3 text-[13px] text-danger"
+        >
+          <span aria-hidden="true">⚠</span>
           {dict.accountPro.pastDueBanner}
         </div>
       )}
 
       {isProNow && cancelsAtPeriodEnd && (
-        <div className="border border-hairline bg-scaffold px-4 py-3 font-mono text-[13px] text-ink">
+        <div className="rounded-md border border-line bg-surface-2 px-4 py-3 text-[13px] text-ink">
           {dict.accountPro.cancelsAtPeriodEnd(
             formatDate(subscription.current_period_end)
           )}
         </div>
       )}
 
-      <div className="border border-hairline bg-surface p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="label-mono text-metadata">
-              {dict.accountPro.statusLabel}
-            </p>
-            <span className="mt-1 inline-flex">
+            <p className="label">{dict.accountPro.statusLabel}</p>
+            <span className="mt-1.5 inline-flex">
               <Badge kind={statusBadgeKind}>{statusLabel}</Badge>
             </span>
           </div>
           <div>
-            <p className="label-mono text-metadata">
-              {dict.accountPro.planLabel}
-            </p>
-            <p className="mt-1 font-mono text-[13px] text-ink">{planLabel}</p>
+            <p className="label">{dict.accountPro.planLabel}</p>
+            <p className="mt-1.5 text-[13px] text-ink">{planLabel}</p>
           </div>
           <div>
-            <p className="label-mono text-metadata">
+            <p className="label">
               {status === "canceled"
                 ? dict.accountPro.canceledRenewal
                 : dict.accountPro.renewalLabel}
             </p>
-            <p className="mt-1 font-mono text-[13px] text-ink tabular-nums">
+            <p className="mt-1.5 text-[13px] text-ink tnum">
               {formatDate(subscription.current_period_end)}
             </p>
           </div>
         </div>
 
         {/* Entitlements */}
-        <div className="mt-6 border-t border-hairline pt-5">
-          <p className="label-mono text-ink">
-            {dict.accountPro.entitlementsTitle}
-          </p>
+        <div className="mt-6 border-t border-line pt-5">
+          <p className="label text-ink">{dict.accountPro.entitlementsTitle}</p>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {ENT_KEYS.map((key) => {
               const on = subscription.entitlements[key];
               return (
                 <li
                   key={key}
-                  className="flex items-center gap-2 font-mono text-[13px] text-ink"
+                  className="flex items-center gap-2 text-[13px] text-ink"
                 >
                   <span
                     aria-hidden="true"
-                    className={`inline-flex h-5 w-5 items-center justify-center border text-[11px] ${
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-md border text-[11px] ${
                       on
-                        ? "border-ink bg-ink text-paper"
-                        : "border-hairline text-metadata"
+                        ? "border-ok/40 bg-ok/10 text-ok"
+                        : "border-line text-muted"
                     }`}
                   >
                     {on ? "✓" : "—"}
                   </span>
-                  <span className={on ? "" : "text-metadata line-through"}>
+                  <span className={on ? "" : "text-muted line-through"}>
                     {dict.accountPro.ent[key]}
                   </span>
                 </li>
@@ -188,20 +179,20 @@ export default function SubscriptionPanel({
         </div>
 
         {note && (
-          <p className="mt-5 border border-hairline bg-surface px-3 py-2 font-mono text-[13px] text-ink">
-            <span aria-hidden="true" className="me-1">
-              [ ✓ ]
+          <p className="mt-5 flex items-center gap-1.5 rounded-md border border-ok/40 bg-ok/5 px-3 py-2 text-[13px] text-ink">
+            <span aria-hidden="true" className="text-ok">
+              ✓
             </span>
             {note}
           </p>
         )}
 
         {/* Actions */}
-        <div className="mt-6 flex flex-wrap gap-3 border-t border-hairline pt-5">
+        <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-5">
           {isProNow && !cancelsAtPeriodEnd ? (
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               onClick={onCancel}
               disabled={pending}
             >
@@ -220,10 +211,8 @@ export default function SubscriptionPanel({
             </Button>
           )}
         </div>
-        <p className="mt-3 font-mono text-[11px] text-metadata">
-          {dict.accountPro.mockNote}
-        </p>
-      </div>
+        <p className="mt-3 text-[11px] text-muted">{dict.accountPro.mockNote}</p>
+      </Card>
     </div>
   );
 }

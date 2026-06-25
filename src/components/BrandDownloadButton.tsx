@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Button, ButtonGroup, Modal } from "@/components/ds";
-import type { ButtonType } from "@/components/ds";
+import { Button, Modal } from "@/components/ui";
 import { buildLogoSvg } from "@/lib/logo";
 
-interface BrandDownloadModalProps {
+interface BrandDownloadButtonProps {
   slug: string;
   initials: string;
   color: string;
@@ -14,11 +13,8 @@ interface BrandDownloadModalProps {
   label: string;
   pngLabel: string;
   svgLabel: string;
-  /** Mono eyebrow / archive code, e.g. "BH-0042". */
-  code?: string;
-  /** Visual treatment of the trigger. Use `ghost` for in-table rows so the
-   *  hero keeps the page's single `primary`. Default `primary`. */
-  triggerVariant?: ButtonType;
+  /** Visual treatment of the trigger. Default "primary". */
+  triggerVariant?: "primary" | "ghost";
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -33,12 +29,12 @@ function triggerDownload(blob: Blob, filename: string) {
 }
 
 /**
- * BrandDownloadModal — the brand profile's single primary action. Opens the
- * centered DS <Modal> with SVG / PNG export choices. The export logic is lifted
- * verbatim from the legacy DownloadLogoButton (buildLogoSvg + canvas raster),
- * so download behaviour is preserved; only the chrome is re-skinned.
+ * BrandDownloadButton — The Library asset download control. Opens a centered
+ * Modal with SVG / PNG export choices. The export logic (buildLogoSvg + canvas
+ * raster) is preserved verbatim from the prior implementation; only the chrome
+ * is re-skinned to Library primitives.
  */
-export default function BrandDownloadModal({
+export default function BrandDownloadButton({
   slug,
   initials,
   color,
@@ -46,9 +42,8 @@ export default function BrandDownloadModal({
   label,
   pngLabel,
   svgLabel,
-  code,
   triggerVariant = "primary",
-}: BrandDownloadModalProps) {
+}: BrandDownloadButtonProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -109,15 +104,16 @@ export default function BrandDownloadModal({
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        eyebrow={code ? `[ ${code} ]` : "[ EXPORT ]"}
+        eyebrow="Export"
         title={label}
         footer={
-          <ButtonGroup align="end">
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              CLOSE
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              {svgLabel === pngLabel ? "Close" : "Close"}
             </Button>
             <Button
-              variant="secondary"
+              variant="ghost"
+              size="sm"
               onClick={downloadSvg}
               aria-label={`${name} — ${svgLabel}`}
             >
@@ -125,17 +121,18 @@ export default function BrandDownloadModal({
             </Button>
             <Button
               variant="primary"
+              size="sm"
               onClick={downloadPng}
               disabled={busy}
               aria-label={`${name} — ${pngLabel}`}
             >
               {pngLabel}
             </Button>
-          </ButtonGroup>
+          </div>
         }
       >
-        <p>
-          {name} — specimen mark. Choose a format to extract from the archive.
+        <p className="text-[14px] text-muted">
+          {name} — choose a format to download.
         </p>
       </Modal>
     </>

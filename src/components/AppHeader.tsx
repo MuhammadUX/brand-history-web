@@ -5,15 +5,15 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { getIsPro } from "@/lib/entitlements";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import AccountMenu from "./AccountMenu";
-import HeaderShell from "./HeaderShell";
+import HeaderBar from "./HeaderBar";
 
 /**
- * AppHeader · Concept A shared top chrome (server).
+ * AppHeader · The Library shared top chrome (server).
  *
- * Lifts the auth/Pro/notifications lookup that previously lived in TopNav and
- * feeds the DS <Header> (rendered by the client HeaderShell so the EN/ع toggle
- * can preserve the live pathname/query). Renders ONCE in the locale layout —
- * pages no longer mount their own header.
+ * Keeps the existing auth / Pro / notifications lookup and feeds the client
+ * HeaderBar (so the persistent search + EN/عربي toggle can read the live
+ * pathname). Renders ONCE in the locale layout — pages do not mount their own
+ * header.
  */
 export default async function AppHeader({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -41,77 +41,50 @@ export default async function AppHeader({ locale }: { locale: Locale }) {
   const isPro = user ? await getIsPro() : false;
   const unread = user ? await getUnreadNotificationCount() : 0;
 
-  const navLinkCls =
-    "label-mono text-metadata mo-underline hover:text-ink hidden md:inline-flex";
+  const proPill =
+    "inline-flex h-[42px] shrink-0 items-center rounded-pill bg-ink px-[18px] text-[13.5px] font-semibold text-white transition-colors duration-150 hover:bg-black";
+  const signInCls =
+    "hidden h-[42px] shrink-0 items-center rounded-pill border border-line bg-surface px-3.5 text-[13.5px] font-semibold text-ink transition-colors duration-150 hover:bg-surface-2 sm:inline-flex";
 
-  const authSlot = (
-    <div className="flex items-center gap-3">
-      <Link href={`/${locale}/browse`} className={navLinkCls}>
-        {dict.nav.browse}
+  const authSlot = user ? (
+    <>
+      <Link
+        href={`/${locale}/notifications`}
+        aria-label={
+          unread > 0
+            ? dict.notifications.unreadAria(unread)
+            : dict.notifications.bellAria
+        }
+        className="relative hidden h-[42px] items-center rounded-pill border border-line bg-surface px-3.5 text-[13px] font-semibold text-ink hover:bg-surface-2 md:inline-flex"
+      >
+        {dict.notifications.title}
+        {unread > 0 && (
+          <span className="ms-1.5 inline-flex min-w-[18px] items-center justify-center rounded-pill bg-ink px-1 text-[10px] tabular-nums text-white">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
       </Link>
-      <Link href={`/${locale}/discover`} className={navLinkCls}>
-        {dict.nav.discover}
-      </Link>
-      {user ? (
-        <>
-          <Link
-            href={`/${locale}/notifications`}
-            aria-label={
-              unread > 0
-                ? dict.notifications.unreadAria(unread)
-                : dict.notifications.bellAria
-            }
-            className="label-mono relative inline-flex items-center text-ink mo-underline"
-          >
-            {dict.notifications.title}
-            {unread > 0 && (
-              <span className="ms-1 inline-flex min-w-[1.1rem] items-center justify-center bg-ink px-0.5 text-[10px] text-paper tabular-nums">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
-          </Link>
-          <AccountMenu locale={locale} displayName={displayName} role={role} />
-          {isPro ? (
-            <Link
-              href={`/${locale}/account`}
-              className="label-mono inline-flex items-center gap-1 border border-ink bg-ink px-1 py-0.5 text-paper mo-invert"
-            >
-              [ {dict.nav.proBadge} ]
-            </Link>
-          ) : (
-            <Link
-              href={`/${locale}/pro`}
-              className="label-mono inline-flex items-center border border-ink px-1 py-0.5 text-ink mo-invert hover:bg-ink hover:text-paper"
-            >
-              {dict.nav.getPro}
-            </Link>
-          )}
-        </>
+      <AccountMenu locale={locale} displayName={displayName} role={role} />
+      {isPro ? (
+        <Link href={`/${locale}/account`} className={proPill}>
+          {dict.nav.proBadge}
+        </Link>
       ) : (
-        <>
-          <Link
-            href={`/${locale}/login`}
-            className="label-mono inline-flex items-center text-ink mo-underline"
-          >
-            {dict.nav.login}
-          </Link>
-          <Link
-            href={`/${locale}/pro`}
-            className="label-mono inline-flex items-center border border-ink px-1 py-0.5 text-ink mo-invert hover:bg-ink hover:text-paper"
-          >
-            {dict.nav.getPro}
-          </Link>
-        </>
+        <Link href={`/${locale}/pro`} className={proPill}>
+          {dict.nav.getPro}
+        </Link>
       )}
-    </div>
+    </>
+  ) : (
+    <>
+      <Link href={`/${locale}/login`} className={signInCls}>
+        {dict.nav.login}
+      </Link>
+      <Link href={`/${locale}/pro`} className={proPill}>
+        {dict.nav.getPro}
+      </Link>
+    </>
   );
 
-  return (
-    <HeaderShell
-      locale={locale}
-      wordmark={dict.brandName.toUpperCase()}
-      systemLine="ARCHIVE · v1"
-      authSlot={authSlot}
-    />
-  );
+  return <HeaderBar locale={locale} authSlot={authSlot} />;
 }

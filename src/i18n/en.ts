@@ -10,6 +10,9 @@ const en = {
     toggleAria: "Switch to Arabic",
     browse: "Browse",
     discover: "Discover",
+    sectors: "Sectors",
+    searchAria: "Search brands",
+    account: "Account",
   },
   home: {
     heroTitle: "The history behind every brand.",

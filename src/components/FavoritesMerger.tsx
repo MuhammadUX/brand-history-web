@@ -80,8 +80,11 @@ export default function FavoritesMerger({ locale }: { locale: Locale }) {
     <div
       role="status"
       aria-live="polite"
-      className="mb-6 rounded-card border border-primary/30 bg-primary-tint px-4 py-3 text-sm font-medium text-primary"
+      className="mb-6 flex items-center gap-2 rounded-md border border-ok/40 bg-ok/5 px-4 py-3 text-[14px] font-medium text-ink"
     >
+      <span aria-hidden="true" className="text-ok">
+        ✓
+      </span>
       {dict.favorite.merged(mergedCount)}
     </div>
   );

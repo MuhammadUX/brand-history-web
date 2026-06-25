@@ -4,6 +4,14 @@ import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { requireOperator, PUBLICATION_STATES } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase-server";
+import {
+  Button,
+  FilterChip,
+  Table,
+  THead,
+  TRow,
+  TCell,
+} from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import StateBadge from "@/components/admin/StateBadge";
@@ -47,93 +55,106 @@ export default async function AdminBrandsPage({
     <AdminShell locale={typedLocale} operator={access.operator} active="brands">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{t.title}</h1>
-          <p className="mt-1 text-sm text-secondary">{t.subtitle}</p>
+          <h1 className="text-h2 font-bold tracking-tight text-ink">{t.title}</h1>
+          <p className="mt-1 text-[14px] text-muted">{t.subtitle}</p>
         </div>
-        <Link
-          href={`/${typedLocale}/admin/brands/new`}
-          className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
-        >
+        <Button href={`/${typedLocale}/admin/brands/new`} variant="primary" size="md">
           {t.newBrand}
-        </Link>
+        </Button>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
-        <Link
+        <FilterChip
           href={`/${typedLocale}/admin/brands`}
-          className={
-            "rounded-pill px-3 py-1.5 text-sm font-medium transition " +
-            (!filterState ? "bg-primary text-white" : "border border-border text-secondary hover:bg-page")
-          }
+          active={!filterState}
+          aria-current={!filterState ? "page" : undefined}
         >
           {t.filterAll}
-        </Link>
+        </FilterChip>
         {PUBLICATION_STATES.map((s) => (
-          <Link
+          <FilterChip
             key={s}
             href={`/${typedLocale}/admin/brands?state=${s}`}
-            className={
-              "rounded-pill px-3 py-1.5 text-sm font-medium transition " +
-              (filterState === s ? "bg-primary text-white" : "border border-border text-secondary hover:bg-page")
-            }
+            active={filterState === s}
+            aria-current={filterState === s ? "page" : undefined}
           >
             {(dict.admin.dashboard.states as Record<string, string>)[s]}
-          </Link>
+          </FilterChip>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-card border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-page text-start text-xs uppercase tracking-wide text-tertiary">
+      <Table>
+        <THead>
+          <TCell head>{t.colName}</TCell>
+          <TCell head>{t.colState}</TCell>
+          <TCell head className="hidden sm:table-cell">
+            {t.colClaim}
+          </TCell>
+          <TCell head className="hidden md:table-cell">
+            {t.colSector}
+          </TCell>
+          <TCell head className="hidden lg:table-cell">
+            {t.colUpdated}
+          </TCell>
+        </THead>
+        <tbody>
+          {!brands || brands.length === 0 ? (
             <tr>
-              <th className="px-4 py-3 text-start font-medium">{t.colName}</th>
-              <th className="px-4 py-3 text-start font-medium">{t.colState}</th>
-              <th className="hidden px-4 py-3 text-start font-medium sm:table-cell">{t.colClaim}</th>
-              <th className="hidden px-4 py-3 text-start font-medium md:table-cell">{t.colSector}</th>
-              <th className="hidden px-4 py-3 text-start font-medium lg:table-cell">{t.colUpdated}</th>
+              <td
+                colSpan={5}
+                className="px-4 py-10 text-center text-[14px] text-muted"
+              >
+                {t.empty}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {!brands || brands.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-tertiary">{t.empty}</td>
-              </tr>
-            ) : (
-              brands.map((b) => {
-                const sector = b.sectors as { name_en?: string; name_ar?: string } | null;
-                const sectorLabel = sector
-                  ? typedLocale === "ar"
-                    ? sector.name_ar
-                    : sector.name_en
-                  : t.dash;
-                return (
-                  <tr key={b.id} className="border-b border-border last:border-0 hover:bg-page">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/${typedLocale}/admin/brands/${b.id}`}
-                        className="font-medium text-ink hover:text-primary"
-                      >
-                        {typedLocale === "ar" ? b.name_ar || b.name_en : b.name_en}
-                      </Link>
-                      <span className="block text-xs text-tertiary">{b.slug}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StateBadge state={b.publication_state} locale={typedLocale} />
-                    </td>
-                    <td className="hidden px-4 py-3 text-secondary sm:table-cell">
-                      {claimLabels[b.claim_status] ?? b.claim_status}
-                    </td>
-                    <td className="hidden px-4 py-3 text-secondary md:table-cell">{sectorLabel}</td>
-                    <td className="hidden px-4 py-3 text-tertiary lg:table-cell">
-                      {b.last_updated_at ? new Date(b.last_updated_at).toLocaleDateString(typedLocale) : t.dash}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+          ) : (
+            brands.map((b) => {
+              const sector = b.sectors as
+                | { name_en?: string; name_ar?: string }
+                | null;
+              const sectorLabel = sector
+                ? typedLocale === "ar"
+                  ? sector.name_ar
+                  : sector.name_en
+                : t.dash;
+              return (
+                <TRow key={b.id}>
+                  <TCell>
+                    <Link
+                      href={`/${typedLocale}/admin/brands/${b.id}`}
+                      className="font-medium text-ink hover:text-link"
+                    >
+                      {typedLocale === "ar"
+                        ? b.name_ar || b.name_en
+                        : b.name_en}
+                    </Link>
+                    <span className="block text-[12px] text-muted">{b.slug}</span>
+                  </TCell>
+                  <TCell>
+                    <StateBadge
+                      state={b.publication_state}
+                      locale={typedLocale}
+                    />
+                  </TCell>
+                  <TCell className="hidden text-muted sm:table-cell">
+                    {claimLabels[b.claim_status] ?? b.claim_status}
+                  </TCell>
+                  <TCell className="hidden text-muted md:table-cell">
+                    {sectorLabel}
+                  </TCell>
+                  <TCell className="hidden text-muted lg:table-cell">
+                    {b.last_updated_at
+                      ? new Date(b.last_updated_at).toLocaleDateString(
+                          typedLocale,
+                        )
+                      : t.dash}
+                  </TCell>
+                </TRow>
+              );
+            })
+          )}
+        </tbody>
+      </Table>
     </AdminShell>
   );
 }

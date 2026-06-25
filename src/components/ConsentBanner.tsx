@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Toggle, Badge } from "@/components/ds";
+import { Button, Toggle, Badge } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { recordConsent, type ConsentChoices } from "@/app/[locale]/consent-actions";
@@ -38,6 +38,11 @@ function getAnonId(): string {
   }
 }
 
+/**
+ * ConsentBanner — The Library PDPL/GDPR consent control (client). Same cookie /
+ * server-log / granular-toggle logic as before; re-skinned to Library tokens:
+ * a soft floating card, never pre-ticked.
+ */
 export default function ConsentBanner({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
   const [open, setOpen] = useState(false);
@@ -84,77 +89,72 @@ export default function ConsentBanner({ locale }: { locale: Locale }) {
       role="dialog"
       aria-modal="false"
       aria-label={dict.consent.title}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-ink bg-surface"
+      className="fixed inset-x-4 bottom-4 z-[70] mx-auto max-w-[640px] rounded-lg border border-line bg-surface p-5 shadow-pop"
     >
-      <div className="mx-auto max-w-content px-6 py-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-lg leading-tight text-ink">
-              {dict.consent.title}
-            </h2>
-            <p className="mt-2 font-mono text-[13px] leading-5 text-ink-700">
-              {dict.consent.body}
-            </p>
-            <p className="mt-1 font-mono text-[11px] text-metadata">
-              {dict.consent.policyNote}
-            </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl">
+          <h2 className="text-[18px] font-bold leading-tight text-ink">
+            {dict.consent.title}
+          </h2>
+          <p className="mt-2 text-[13px] leading-5 text-ink">{dict.consent.body}</p>
+          <p className="mt-1 text-[11px] text-muted">{dict.consent.policyNote}</p>
+        </div>
+        <div className="flex flex-wrap gap-2 lg:shrink-0">
+          <Button type="button" variant="ghost" size="sm" onClick={rejectNonEssential}>
+            {dict.consent.rejectNonEssential}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+          >
+            {dict.consent.manage}
+          </Button>
+          <Button type="button" variant="primary" size="sm" onClick={acceptAll}>
+            {dict.consent.acceptAll}
+          </Button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="mt-6 border-t border-line pt-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ToggleRow
+              label={dict.consent.essential}
+              desc={dict.consent.essentialDesc}
+              checked
+              disabled
+              alwaysOnLabel={dict.consent.alwaysOn}
+              onChange={() => {}}
+            />
+            <ToggleRow
+              label={dict.consent.analytics}
+              desc={dict.consent.analyticsDesc}
+              checked={analytics}
+              onChange={setAnalytics}
+            />
+            <ToggleRow
+              label={dict.consent.ads}
+              desc={dict.consent.adsDesc}
+              checked={ads}
+              onChange={setAds}
+            />
+            <ToggleRow
+              label={dict.consent.personalization}
+              desc={dict.consent.personalizationDesc}
+              checked={personalization}
+              onChange={setPersonalization}
+            />
           </div>
-          <div className="flex flex-wrap gap-1.5 lg:shrink-0">
-            <Button type="button" variant="secondary" onClick={rejectNonEssential}>
-              {dict.consent.rejectNonEssential}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-            >
-              {dict.consent.manage}
-            </Button>
-            <Button type="button" variant="primary" onClick={acceptAll}>
-              {dict.consent.acceptAll}
+          <div className="mt-4">
+            <Button type="button" variant="ghost" size="sm" onClick={saveChoices}>
+              {dict.consent.save}
             </Button>
           </div>
         </div>
-
-        {expanded && (
-          <div className="mt-6 border-t border-hairline pt-6">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ToggleRow
-                label={dict.consent.essential}
-                desc={dict.consent.essentialDesc}
-                checked
-                disabled
-                alwaysOnLabel={dict.consent.alwaysOn}
-                onChange={() => {}}
-              />
-              <ToggleRow
-                label={dict.consent.analytics}
-                desc={dict.consent.analyticsDesc}
-                checked={analytics}
-                onChange={setAnalytics}
-              />
-              <ToggleRow
-                label={dict.consent.ads}
-                desc={dict.consent.adsDesc}
-                checked={ads}
-                onChange={setAds}
-              />
-              <ToggleRow
-                label={dict.consent.personalization}
-                desc={dict.consent.personalizationDesc}
-                checked={personalization}
-                onChange={setPersonalization}
-              />
-            </div>
-            <div className="mt-4">
-              <Button type="button" variant="secondary" onClick={saveChoices}>
-                {dict.consent.save}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -175,21 +175,19 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 border border-hairline bg-surface p-4">
+    <div className="flex items-start justify-between gap-3 rounded-md border border-line bg-surface-2 p-4">
       <span>
-        <span className="block font-display text-[15px] leading-tight text-ink">
+        <span className="block text-[15px] font-semibold leading-tight text-ink">
           {label}
         </span>
-        <span className="mt-1 block font-mono text-[11px] text-metadata">
-          {desc}
-        </span>
+        <span className="mt-1 block text-[11px] text-muted">{desc}</span>
       </span>
       {disabled ? (
         <span className="shrink-0">
-          <Badge kind="filter">{alwaysOnLabel}</Badge>
+          <Badge kind="neutral">{alwaysOnLabel}</Badge>
         </span>
       ) : (
-        <Toggle checked={checked} onChange={onChange} />
+        <Toggle checked={checked} onChange={onChange} aria-label={label} />
       )}
     </div>
   );

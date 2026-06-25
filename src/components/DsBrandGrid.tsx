@@ -1,3 +1,4 @@
+import { BrandGrid } from "@/components/ui";
 import DsBrandCard from "./DsBrandCard";
 import type { Brand, Locale } from "@/lib/types";
 
@@ -9,8 +10,8 @@ interface DsBrandGridProps {
 }
 
 /**
- * DsBrandGrid — Concept A index grid of specimen cards. Same data contract as
- * the legacy BrandGrid; swaps the visual layer for DS BrandCard / DitherPlate.
+ * DsBrandGrid — thin wrapper over The Library `@/components/ui` BrandGrid.
+ * Same data contract as before; maps each Brand through DsBrandCard.
  */
 export default function DsBrandGrid({
   brands,
@@ -20,7 +21,7 @@ export default function DsBrandGrid({
 }: DsBrandGridProps) {
   const favSet = new Set(favoriteIds);
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <BrandGrid>
       {brands.map((brand) => (
         <DsBrandCard
           key={brand.id}
@@ -30,6 +31,6 @@ export default function DsBrandGrid({
           isAuthed={isAuthed}
         />
       ))}
-    </div>
+    </BrandGrid>
   );
 }

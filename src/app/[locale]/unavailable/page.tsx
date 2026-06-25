@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, isLocale } from "@/i18n";
 import { buildMetadata } from "@/lib/seo";
+import { Button } from "@/components/ui";
 import type { Metadata } from "next";
 import type { Locale } from "@/lib/types";
 
@@ -40,33 +40,25 @@ export default async function UnavailablePage({
   return (
     <main
       id="main-content"
-      className="mx-auto flex w-full max-w-content flex-col items-center justify-center px-6 py-24 text-center"
+      className="mx-auto flex min-h-[60vh] w-full max-w-content flex-col items-center justify-center px-6 py-24 text-center"
     >
       <span
-        className="flex h-14 w-14 items-center justify-center border border-ink font-display text-2xl text-ink"
+        className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface text-2xl shadow-card"
         aria-hidden="true"
       >
         ⚑
       </span>
-      <h1 className="mt-5 font-display text-[32px] leading-tight text-ink">
+      <h1 className="mt-5 text-[30px] font-bold leading-tight tracking-tight text-ink">
         {dict.unavailable.title}
       </h1>
-      <p className="mt-3 max-w-md font-mono text-[15px] leading-6 text-ink-700">
+      <p className="mt-3 max-w-md text-[15px] leading-7 text-muted">
         {dict.unavailable.body}
       </p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-1.5">
-        <Link
-          href={`/${typedLocale}/browse`}
-          className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
-        >
-          {dict.unavailable.browse}
-        </Link>
-        <Link
-          href={`/${typedLocale}`}
-          className="mo-invert mo-press inline-flex h-10 items-center justify-center whitespace-nowrap border border-ink bg-transparent px-4 font-mono text-[11px] font-medium uppercase tracking-label text-ink hover:bg-ink hover:text-paper"
-        >
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <Button href={`/${typedLocale}/browse`}>{dict.unavailable.browse}</Button>
+        <Button href={`/${typedLocale}`} variant="ghost">
           {dict.unavailable.home}
-        </Link>
+        </Button>
       </div>
     </main>
   );

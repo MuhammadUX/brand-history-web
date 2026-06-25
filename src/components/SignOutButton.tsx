@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
-import { Button } from "@/components/ds";
+import { Button } from "@/components/ui";
 
 export default function SignOutButton({
   locale,
@@ -30,7 +30,7 @@ export default function SignOutButton({
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant="ghost"
       onClick={signOut}
       disabled={pending}
       className={className}

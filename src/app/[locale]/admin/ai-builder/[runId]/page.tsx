@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale, Sector } from "@/lib/types";
 import { requireOperator } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getSectors } from "@/lib/data";
+import { StateBlock, Button } from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import type { BrandDraft } from "@/lib/ai/llm-provider";
@@ -54,11 +54,16 @@ export default async function AiBuilderRun({
   if (run.status === "discarded") {
     return (
       <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
-        <div className="mx-auto max-w-md rounded-card border border-border bg-surface p-6 text-center">
-          <p className="text-sm text-secondary">{t.discarded}</p>
-          <Link href={`/${typedLocale}/admin/ai-builder`} className="mt-4 inline-block rounded-btn bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
-            {t.title}
-          </Link>
+        <div className="mx-auto max-w-md">
+          <StateBlock
+            state="empty"
+            message={t.discarded}
+            action={
+              <Button href={`/${typedLocale}/admin/ai-builder`} variant="primary">
+                {t.title}
+              </Button>
+            }
+          />
         </div>
       </AdminShell>
     );
@@ -67,11 +72,19 @@ export default async function AiBuilderRun({
   if (run.status === "accepted" && run.brand_id) {
     return (
       <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
-        <div className="mx-auto max-w-md rounded-card border border-border bg-surface p-6 text-center">
-          <p className="text-sm text-secondary">{t.createdNote}</p>
-          <Link href={`/${typedLocale}/admin/brands/${run.brand_id}`} className="mt-4 inline-block rounded-btn bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
-            {t.goToEditor}
-          </Link>
+        <div className="mx-auto max-w-md">
+          <StateBlock
+            state="empty"
+            message={t.createdNote}
+            action={
+              <Button
+                href={`/${typedLocale}/admin/brands/${run.brand_id}`}
+                variant="primary"
+              >
+                {t.goToEditor}
+              </Button>
+            }
+          />
         </div>
       </AdminShell>
     );
@@ -81,11 +94,16 @@ export default async function AiBuilderRun({
   if (!draft || run.status === "failed") {
     return (
       <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
-        <div className="mx-auto max-w-md rounded-card border border-border bg-surface p-6 text-center">
-          <p className="text-sm text-secondary">{t.noDraft}</p>
-          <Link href={`/${typedLocale}/admin/ai-builder`} className="mt-4 inline-block rounded-btn bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
-            {t.title}
-          </Link>
+        <div className="mx-auto max-w-md">
+          <StateBlock
+            state="error"
+            message={t.noDraft}
+            action={
+              <Button href={`/${typedLocale}/admin/ai-builder`} variant="primary">
+                {t.title}
+              </Button>
+            }
+          />
         </div>
       </AdminShell>
     );

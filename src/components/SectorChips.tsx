@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { FilterChip } from "@/components/ui";
 import type { Locale, Sector } from "@/lib/types";
 
 interface SectorChipsProps {
@@ -17,7 +17,7 @@ function buildHref(
   locale: Locale,
   basePath: string,
   sectorSlug: string | undefined,
-  extraParams?: Record<string, string>
+  extraParams?: Record<string, string>,
 ): string {
   const params = new URLSearchParams();
   if (extraParams) {
@@ -30,6 +30,10 @@ function buildHref(
   return `/${locale}/${basePath}${qs ? `?${qs}` : ""}`;
 }
 
+/**
+ * SectorChips — The Library facet row of sector filters. Same data contract
+ * and href logic as before; rendered with the Library FilterChip.
+ */
 export default function SectorChips({
   sectors,
   locale,
@@ -38,34 +42,28 @@ export default function SectorChips({
   extraParams,
   allLabel,
 }: SectorChipsProps) {
-  const baseCls =
-    "mo-invert inline-flex items-center border px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-label";
-  const activeCls = "border-ink bg-ink text-paper";
-  const idleCls =
-    "border-hairline bg-surface text-ink hover:border-ink hover:bg-ink hover:text-paper";
-
   return (
     <ul className="flex flex-wrap gap-2">
       <li>
-        <Link
+        <FilterChip
           href={buildHref(locale, basePath, undefined, extraParams)}
-          className={`${baseCls} ${!active ? activeCls : idleCls}`}
+          active={!active}
           aria-current={!active ? "true" : undefined}
         >
           {allLabel}
-        </Link>
+        </FilterChip>
       </li>
       {sectors.map((s) => {
         const isActive = active === s.slug;
         return (
           <li key={s.id}>
-            <Link
+            <FilterChip
               href={buildHref(locale, basePath, s.slug, extraParams)}
-              className={`${baseCls} ${isActive ? activeCls : idleCls}`}
+              active={isActive}
               aria-current={isActive ? "true" : undefined}
             >
               {locale === "ar" ? s.name_ar : s.name_en}
-            </Link>
+            </FilterChip>
           </li>
         );
       })}

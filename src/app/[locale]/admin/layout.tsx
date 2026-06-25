@@ -9,9 +9,9 @@ import AdminSignOut from "@/components/admin/AdminSignOut";
 export const dynamic = "force-dynamic";
 
 /**
- * Admin (operator) layout · Concept A operator chrome.
+ * Admin (operator) layout · Library operator chrome.
  *
- * Renders the DS <OperatorSidebar> (240px rail, operator nav, identity card) +
+ * Renders the Library Sidebar rail (240px, operator nav, identity card) +
  * a main content area for the whole `admin/` subtree, replacing the public
  * marketing Header/Footer (which suppress themselves on `/admin` paths). RTL is
  * respected via the dictionary `dir`.
@@ -61,23 +61,23 @@ export default async function AdminLayout({
   );
 
   const identity = (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <div>
-        <p className="label-mono text-metadata">{t.signedInAs}</p>
+        <p className="label">{t.signedInAs}</p>
         <p
-          className="truncate text-sm font-medium text-ink"
+          className="mt-0.5 truncate text-[14px] font-medium text-ink"
           title={operator.email}
         >
           {operator.displayName || operator.email}
         </p>
-        <p className="label-mono mt-0.5 text-metadata">
+        <p className="mt-0.5 text-[12px] text-muted">
           {operator.role === "admin" ? t.role.admin : t.role.editor}
         </p>
       </div>
-      <AdminSignOut locale={typedLocale} label={t.signOut} />
+      <AdminSignOut locale={typedLocale} label={t.signOut} compact />
       <Link
         href={`/${typedLocale}`}
-        className="label-mono text-metadata mo-underline hover:text-ink"
+        className="text-[12px] font-medium text-muted hover:text-ink hover:underline"
       >
         {t.backToSite}
       </Link>

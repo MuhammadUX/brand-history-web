@@ -3,6 +3,14 @@ import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { requireOperator } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase-server";
+import {
+  Badge,
+  Table,
+  THead,
+  TRow,
+  TCell,
+  ActionCell,
+} from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import RequestActions from "@/components/admin/RequestActions";
@@ -32,61 +40,80 @@ export default async function RequestsPage({
   return (
     <AdminShell locale={typedLocale} operator={access.operator} active="requests">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">{t.title}</h1>
-        <p className="mt-1 text-sm text-secondary">{t.subtitle}</p>
+        <h1 className="text-h2 font-bold tracking-tight text-ink">{t.title}</h1>
+        <p className="mt-1 text-[14px] text-muted">{t.subtitle}</p>
       </div>
 
-      <div className="overflow-hidden rounded-card border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-page text-xs uppercase tracking-wide text-tertiary">
+      <Table>
+        <THead>
+          <TCell head>{t.colName}</TCell>
+          <TCell head className="hidden sm:table-cell">
+            {t.colSector}
+          </TCell>
+          <TCell head className="hidden md:table-cell">
+            {t.colRegion}
+          </TCell>
+          <TCell head>{t.colStatus}</TCell>
+          <TCell head align="end">
+            {" "}
+          </TCell>
+        </THead>
+        <tbody>
+          {!requests || requests.length === 0 ? (
             <tr>
-              <th className="px-4 py-3 text-start font-medium">{t.colName}</th>
-              <th className="hidden px-4 py-3 text-start font-medium sm:table-cell">{t.colSector}</th>
-              <th className="hidden px-4 py-3 text-start font-medium md:table-cell">{t.colRegion}</th>
-              <th className="px-4 py-3 text-start font-medium">{t.colStatus}</th>
-              <th className="px-4 py-3 text-end font-medium"> </th>
+              <td
+                colSpan={5}
+                className="px-4 py-10 text-center text-[14px] text-muted"
+              >
+                {t.empty}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {!requests || requests.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-tertiary">{t.empty}</td>
-              </tr>
-            ) : (
-              requests.map((r) => {
-                const reviewed = r.status === "reviewed";
-                return (
-                  <tr key={r.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-ink">{r.name}</span>
-                      <span className="block text-xs text-tertiary">
-                        {r.created_at ? new Date(r.created_at).toLocaleDateString(typedLocale) : ""}
-                      </span>
-                    </td>
-                    <td className="hidden px-4 py-3 text-secondary sm:table-cell">{r.sector ?? "—"}</td>
-                    <td className="hidden px-4 py-3 text-secondary md:table-cell">{r.region ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={
-                          "inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium " +
-                          (reviewed ? "bg-verifiedBg text-verifiedText" : "bg-sponsoredBg text-sponsored")
-                        }
-                      >
-                        {reviewed ? t.statusReviewed : t.statusNew}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="flex justify-end">
-                        <RequestActions locale={typedLocale} id={r.id} reviewed={reviewed} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+          ) : (
+            requests.map((r) => {
+              const reviewed = r.status === "reviewed";
+              return (
+                <TRow key={r.id}>
+                  <TCell>
+                    <span className="font-medium text-ink">{r.name}</span>
+                    <span className="block text-[12px] text-muted">
+                      {r.created_at
+                        ? new Date(r.created_at).toLocaleDateString(typedLocale)
+                        : ""}
+                    </span>
+                  </TCell>
+                  <TCell className="hidden text-muted sm:table-cell">
+                    {r.sector ?? "—"}
+                  </TCell>
+                  <TCell className="hidden text-muted md:table-cell">
+                    {r.region ?? "—"}
+                  </TCell>
+                  <TCell>
+                    <Badge
+                      kind="state"
+                      className={
+                        reviewed
+                          ? "text-ok border-[#bfe6cd] bg-[#eef9f1]"
+                          : "text-amber border-amber-line bg-amber-bg"
+                      }
+                    >
+                      {reviewed ? t.statusReviewed : t.statusNew}
+                    </Badge>
+                  </TCell>
+                  <ActionCell>
+                    <div className="flex justify-end">
+                      <RequestActions
+                        locale={typedLocale}
+                        id={r.id}
+                        reviewed={reviewed}
+                      />
+                    </div>
+                  </ActionCell>
+                </TRow>
+              );
+            })
+          )}
+        </tbody>
+      </Table>
     </AdminShell>
   );
 }

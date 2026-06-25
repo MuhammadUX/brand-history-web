@@ -3,82 +3,77 @@
 @tailwind utilities;
 
 /* =========================================================================
-   CONCEPT A — Terminal / Excavation · tokens + base + motion layer
-   Monochrome archive. Paper + ink. IBM Plex Mono UI. Space Grotesk display.
-   Sharp 0px corners. 1px hairlines. Stepped, instrument-like motion only.
+   THE LIBRARY — tokens + base + motion (locked)
+   Warm paper canvas, white surfaces, ink text, one governed gold accent.
+   Type: Inter (Latin/UI) + Noto Sans Arabic (RTL). Soft radius, quick fades,
+   full prefers-reduced-motion path.
    ========================================================================= */
 
 :root {
   color-scheme: light;
 
   /* ── Font stacks (loaded via runtime <link> in [locale]/layout.tsx) ── */
-  --font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
-  --font-arabic: "Noto Sans Arabic", "IBM Plex Mono", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
 
-  /* ── Color tokens ── */
-  --ink: #0a0a0a;
-  --ink-700: #2b2b2b;
-  --paper: #f4f1ea;
-  --surface: #fbfaf6;
-  --metadata: #6e6e6e;
-  --hairline: #9a9a9a;
-  --scaffold: #d8d6cf;
-  --danger: #8a1b1b;
+  /* ── Color tokens (mirror tailwind.config.ts) ── */
+  --paper: #f6f3ec;
+  --surface: #ffffff;
+  --surface-2: #fcfaf5;
+  --ink: #1a1a1a;
+  --muted: #6b6b63;
+  --line: #e6e0d2;
+  --link: #8a6d3b;
+  --ok: #0a7d3b;
+  --danger: #b4232a;
+  --amber: #9a6b12;
+  --amber-bg: #fbf3e0;
+  --amber-line: #ead9ae;
 
-  /* ── Motion · transition durations (page-load / reveal) ── */
-  --mo-dur-fast: 140ms;
-  --mo-dur-base: 220ms;
-  --mo-dur-reveal: 260ms;
-  --mo-step-dither: steps(4); /* 4 density passes (hero plate develop) */
+  /* Per-brand governed accent. Components/pages override on a scope via
+     style={{ "--brand": brand.primary_color }}. Defaults to the gold link. */
+  --brand: #8a6d3b;
 
-  /* ── Motion · micro-interaction durations ── */
-  --mi-fast: 90ms; /* hairline draw, stamp settle */
-  --mi-base: 120ms; /* invert / stamp */
-  --mi-max: 160ms; /* longest single transition */
-  --mi-caret: 530ms; /* terminal blink half-cycle */
+  /* ── Radius / elevation / type ── */
+  --radius: 10px;
+  --radius-lg: 14px;
+  --label-ls: 0.14em;
+
+  /* ── Motion (soft, quick: 150–250ms) ── */
+  --mo-fast: 150ms;
+  --mo-base: 200ms;
+  --mo-slow: 250ms;
 }
 
 /* ── Base ── */
+* {
+  box-sizing: border-box;
+}
 html,
 body {
+  margin: 0;
   background-color: var(--paper);
   color: var(--ink);
 }
-
 body {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 24px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "tnum" 1; /* tabular figures everywhere */
-  font-variant-numeric: tabular-nums;
 }
-
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
 html[dir="rtl"] body {
   font-family: var(--font-arabic);
 }
-html[dir="rtl"] h1,
-html[dir="rtl"] h2,
-html[dir="rtl"] h3,
-html[dir="rtl"] h4 {
-  font-family: var(--font-arabic);
+
+img {
+  display: block;
 }
 
-/* Focus ring: 2px ink offset 2px, square (no radius) */
+/* Focus ring: gold, soft-cornered. */
 *:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2.5px solid var(--link);
   outline-offset: 2px;
-  border-radius: 0;
+  border-radius: 6px;
 }
 
 ::selection {
@@ -87,226 +82,97 @@ html[dir="rtl"] h4 {
 }
 
 /* =========================================================================
-   Utilities · hairlines, labels, code chips, tabular figures
+   Utilities — labels, tabular numerals, brand-tinted grounds
    ========================================================================= */
 @layer utilities {
-  .hairline {
-    border-color: var(--hairline);
-    border-width: 1px;
-  }
-  .hairline-t {
-    border-top: 1px solid var(--hairline);
-  }
-  .hairline-b {
-    border-bottom: 1px solid var(--hairline);
-  }
-  .hairline-s {
-    border-inline-start: 1px solid var(--hairline);
-  }
-  .hairline-e {
-    border-inline-end: 1px solid var(--hairline);
-  }
-  .rule-ink {
-    border-color: var(--ink);
+  /* Small uppercase editorial label. */
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: var(--label-ls);
+    text-transform: uppercase;
+    color: var(--muted);
   }
   .tnum {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-  /* mono UPPERCASE label, +8% tracking */
-  .label-mono {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    font-size: 11px;
-    line-height: 16px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .font-display {
-    font-family: var(--font-display);
-  }
-  .font-mono {
-    font-family: var(--font-mono);
   }
   .font-arabic {
     font-family: var(--font-arabic);
   }
+  /* Governed brand-tint ground for a logo tile (≤12% of the brand color
+     over white). Scope must set --brand. */
+  .brand-tile {
+    background-color: color-mix(in srgb, var(--brand) 11%, #fff);
+  }
+  /* Thin 8px hero accent rule — the only full-width brand color allowed. */
+  .brand-rule {
+    background-color: var(--brand);
+  }
 }
 
 /* =========================================================================
-   MOTION LAYER — stepped, 1-bit, instrument-like. Develop / draw / stamp.
-   Every effect is entry-only or feedback-only and collapses to instant
-   under prefers-reduced-motion (master switch at bottom).
+   Motion — entry fade + shimmer skeleton. Reduced-motion → opacity only.
    ========================================================================= */
-
-/* M1 · Dither plate develop-in — coverage clip, 4 stepped passes.
-   Drives a clip-path mask so the plate exposes sparse→full. Pair with the
-   .mo-develop class + the per-cell stagger var. */
-@keyframes mo-develop {
-  0% {
-    clip-path: inset(0 100% 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-.mo-develop {
-  animation: mo-develop var(--mo-dur-reveal) var(--mo-step-dither) both;
-  animation-delay: calc(var(--cell-index, 0) * 28ms);
-}
-html[dir="rtl"] .mo-develop {
-  animation-name: mo-develop-rtl;
-}
-@keyframes mo-develop-rtl {
-  0% {
-    clip-path: inset(0 0 0 100%);
-  }
-  100% {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-/* M3 · Mono heading type-on — width reveal, terminal feel (driven by JS too) */
-@keyframes mo-caret-blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-.mo-caret::after {
-  content: "▍";
-  display: inline-block;
-  margin-inline-start: 1px;
-  animation: mo-caret-blink 1s steps(1) infinite;
-}
-.mo-caret-done::after {
-  content: "";
-}
-
-/* M7 · Registration-tick lock blink — 1-frame invert, fires once */
-@keyframes mo-tick {
-  0%,
-  100% {
-    background: transparent;
-    color: inherit;
-  }
-  50% {
-    background: var(--ink);
-    color: var(--paper);
-  }
-}
-.mo-tick {
-  animation: mo-tick 80ms steps(1) 1;
-}
-
-/* M5 · 1-bit loading block — STATIC cross-hatch (no animation). Silent luxury:
-   loading is a still 1-bit fill, not a looping shimmer. */
-.mo-skeleton {
-  background-color: var(--surface);
-  background-image: repeating-linear-gradient(
-      45deg,
-      var(--scaffold) 0,
-      var(--scaffold) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-  background-size: 8px 8px;
-}
-
-/* Micro · ghost-button hover invert — steps(2) threshold, no grey crossfade */
-.mo-invert {
-  transition:
-    background-color var(--mi-base) steps(2),
-    color var(--mi-base) steps(2),
-    border-color var(--mi-base) steps(2);
-}
-.mo-press:active {
-  transform: translateY(1px);
-}
-
-/* Micro · underline / hairline draw on hover — clip-path, RTL-safe */
-.mo-underline {
-  position: relative;
-}
-.mo-underline::after {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  bottom: -2px;
-  block-size: 1px;
-  inline-size: 100%;
-  background: currentColor;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path var(--mi-max) steps(6);
-}
-.mo-underline:hover::after {
-  clip-path: inset(0 0 0 0);
-}
-
-/* Micro · stamp (accept / favorite / verified) — opacity steps + 1px settle */
-@keyframes mo-stamp {
-  0% {
-    opacity: 0;
-    transform: translateY(-1px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.mo-stamp {
-  animation: mo-stamp var(--mi-base) steps(2) forwards;
-}
-
-/* Micro · strike-through draw (AI reject) — left→right rule, RTL-safe */
-@keyframes mo-strike {
+@keyframes fade {
   from {
-    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translateY(4px);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: none;
   }
 }
-.mo-strike {
-  position: relative;
+@keyframes fade-opacity {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-.mo-strike::after {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  top: 50%;
-  block-size: 1px;
-  inline-size: 100%;
-  background: var(--ink);
-  animation: mo-strike var(--mi-max) steps(8) forwards;
+.lib-fade {
+  animation: fade var(--mo-base) ease both;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.lib-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2),
+    #efeadf,
+    var(--surface-2)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 8px;
 }
 
 /* =========================================================================
-   MASTER SWITCH — prefers-reduced-motion collapses ALL motion to instant.
-   End state is always the truthful state, so no feedback is lost.
+   MASTER SWITCH — prefers-reduced-motion: opacity-only, no transforms/loops.
+   End state is always the truthful state.
    ========================================================================= */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
-    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
-  .mo-caret::after {
-    content: "▍"; /* solid, non-blinking */
-    animation: none !important;
+  .lib-fade {
+    animation: fade-opacity var(--mo-base) ease both;
   }
-  .mo-skeleton {
+  .lib-skeleton {
     animation: none !important;
+    background: var(--surface-2);
   }
 }

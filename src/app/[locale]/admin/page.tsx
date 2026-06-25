@@ -4,6 +4,7 @@ import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 import { requireOperator } from "@/lib/admin";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { Card, Button, SectionHeader } from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 
@@ -55,24 +56,18 @@ export default async function AdminDashboard({
 
   return (
     <AdminShell locale={typedLocale} operator={access.operator} active="dashboard">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">{t.title}</h1>
-          <p className="mt-1 text-sm text-secondary">{t.subtitle}</p>
+          <h1 className="text-h2 font-bold tracking-tight text-ink">{t.title}</h1>
+          <p className="mt-1 text-[14px] text-muted">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/${typedLocale}/admin/ai-builder`}
-            className="rounded-btn border border-primary/40 bg-primary-tint/40 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary-tint"
-          >
+          <Button href={`/${typedLocale}/admin/ai-builder`} variant="ghost" size="md">
             {t.runAiBuilder}
-          </Link>
-          <Link
-            href={`/${typedLocale}/admin/brands/new`}
-            className="rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
-          >
+          </Button>
+          <Button href={`/${typedLocale}/admin/brands/new`} variant="primary" size="md">
             {t.newBrand}
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -81,10 +76,10 @@ export default async function AdminDashboard({
           <Link
             key={s}
             href={`/${typedLocale}/admin/brands?state=${s}`}
-            className="rounded-card border border-border bg-surface p-4 transition hover:border-primary/40"
+            className="rounded-lg border border-line bg-surface p-4 shadow-card transition-colors hover:bg-surface-2"
           >
-            <p className="text-2xl font-bold text-ink">{counts[s]}</p>
-            <p className="mt-1 text-xs font-medium text-secondary">{stateLabels[s]}</p>
+            <p className="tnum text-[26px] font-bold text-ink">{counts[s]}</p>
+            <p className="mt-1 text-[12px] font-medium text-muted">{stateLabels[s]}</p>
           </Link>
         ))}
       </div>
@@ -92,35 +87,39 @@ export default async function AdminDashboard({
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Link
           href={`/${typedLocale}/admin/requests`}
-          className="rounded-card border border-border bg-surface p-4 transition hover:border-primary/40"
+          className="rounded-lg border border-line bg-surface p-4 shadow-card transition-colors hover:bg-surface-2"
         >
-          <p className="text-2xl font-bold text-ink">{pendingRequests ?? 0}</p>
-          <p className="mt-1 text-xs font-medium text-secondary">{t.pendingRequests}</p>
+          <p className="tnum text-[26px] font-bold text-ink">{pendingRequests ?? 0}</p>
+          <p className="mt-1 text-[12px] font-medium text-muted">{t.pendingRequests}</p>
         </Link>
 
-        <div className="rounded-card border border-border bg-surface p-4 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-ink">{t.recentActivity}</h2>
-            <Link href={`/${typedLocale}/admin/audit`} className="text-xs font-medium text-primary hover:underline">
-              {t.viewAll}
-            </Link>
-          </div>
+        <Card className="lg:col-span-2">
+          <SectionHeader
+            title={t.recentActivity}
+            actionHref={`/${typedLocale}/admin/audit`}
+            actionLabel={t.viewAll}
+          />
           {!audit || audit.length === 0 ? (
-            <p className="text-sm text-tertiary">{t.noActivity}</p>
+            <p className="text-[14px] text-muted">{t.noActivity}</p>
           ) : (
             <ul className="space-y-2">
               {audit.map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between gap-2 text-[14px]"
+                >
                   <span className="truncate text-ink">
                     <span className="font-medium">{a.action}</span>{" "}
-                    <span className="text-tertiary">{a.entity}</span>
+                    <span className="text-muted">{a.entity}</span>
                   </span>
-                  <span className="shrink-0 text-xs text-tertiary">{a.actor_email}</span>
+                  <span className="shrink-0 text-[12px] text-muted">
+                    {a.actor_email}
+                  </span>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
       </div>
     </AdminShell>
   );

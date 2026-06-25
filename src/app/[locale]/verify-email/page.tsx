@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import AuthShell from "@/components/AuthShell";
+import { Button } from "@/components/ui";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 
@@ -19,18 +19,17 @@ export default async function VerifyEmailPage({
   return (
     <AuthShell locale={typedLocale} title={dict.auth.verifyTitle}>
       <div className="flex flex-col gap-5">
-        <p className="font-mono text-[13px] leading-5 text-ink-700">
-          {dict.auth.verifyBody}
-        </p>
-        <p className="border border-hairline bg-surface px-4 py-3 font-mono text-[13px] leading-5 text-metadata">
+        <p className="text-[13px] leading-5 text-muted">{dict.auth.verifyBody}</p>
+        <p className="rounded-md border border-line bg-surface-2 px-4 py-3 text-[13px] leading-5 text-muted">
           {dict.auth.demoNote}
         </p>
-        <Link
+        <Button
           href={`/${typedLocale}/login`}
-          className="mo-invert mo-press inline-flex h-10 w-full items-center justify-center whitespace-nowrap border border-ink bg-ink px-4 font-mono text-[11px] font-medium uppercase tracking-label text-paper hover:border-ink-700 hover:bg-ink-700"
+          variant="primary"
+          className="w-full"
         >
           {dict.auth.goToLogin}
-        </Link>
+        </Button>
       </div>
     </AuthShell>
   );

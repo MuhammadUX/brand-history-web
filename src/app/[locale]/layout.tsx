@@ -4,7 +4,6 @@ import { getDictionary, isLocale } from "@/i18n";
 import ConsentBanner from "@/components/ConsentBanner";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
-import { RouteTransition } from "@/components/ds";
 import type { Locale } from "@/lib/types";
 
 export function generateStaticParams() {
@@ -29,9 +28,9 @@ export default async function LocaleLayout({
     <html lang={typedLocale} dir={dict.dir}>
       <head>
         {/*
-          Concept A fonts loaded via runtime <link> (avoids a build-time fetch
-          to Google Fonts; works on Vercel). Space Grotesk (display) + IBM Plex
-          Mono (UI/body/labels) + Noto Sans Arabic. CSS vars in globals.css.
+          The Library fonts loaded via runtime <link> (avoids a build-time fetch
+          to Google Fonts; works on Vercel). Canonical type pin: Inter
+          (Latin/UI) + Noto Sans Arabic (RTL). No other faces, no serif.
         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -40,32 +39,27 @@ export default async function LocaleLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="min-h-screen bg-paper text-ink antialiased">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[60] focus:bg-ink focus:px-2 focus:py-1 focus:font-mono focus:text-[11px] focus:uppercase focus:tracking-label focus:text-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+          className="sr-only rounded-pill focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[60] focus:bg-ink focus:px-4 focus:py-2 focus:text-[13px] focus:font-semibold focus:text-white focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
         >
           {dict.a11y.skipToContent}
         </a>
-        {/*
-          Concept A shared chrome: ONE DS Header (top) + DS Footer (bottom),
-          full-bleed paper, no decorative frame. Pages render a single calm
-          centered <Shell> content column between them. Navigation is an instant
-          cut (RouteTransition is now a transparent pass-through).
-        */}
-        <RouteTransition>
-          <div className="mx-auto w-full max-w-content px-6 pt-6">
-            <AppHeader locale={typedLocale} />
-          </div>
-          {children}
-          <div className="mx-auto w-full max-w-content px-6 pb-6">
-            <AppFooter locale={typedLocale} />
-          </div>
-        </RouteTransition>
+
+        {/* Shared chrome: one Library header (own inner max-width + sticky) and
+            one footer, with the page content centered between them. Navigation
+            is a plain cut — no route-transition wrapper. */}
+        <AppHeader locale={typedLocale} />
+        {children}
+        <div className="mx-auto w-full max-w-content px-6">
+          <AppFooter locale={typedLocale} />
+        </div>
+
         <ConsentBanner locale={typedLocale} />
       </body>
     </html>

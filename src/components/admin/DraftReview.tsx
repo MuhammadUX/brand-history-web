@@ -10,61 +10,53 @@ import {
   type ConfidenceBand,
   type FieldMeta,
 } from "@/lib/ai/llm-provider";
+import {
+  Card,
+  Button,
+  Textarea,
+  Select,
+  Input,
+  AIReviewBlock,
+} from "@/components/ui";
+import type { ConfidencePillProps } from "@/components/ui";
 import { createDraftBrand } from "@/app/[locale]/admin/ai-builder/actions";
 
 type Decision = "accepted" | "rejected" | "pending";
 
-const inputCls =
-  "w-full rounded-btn border border-border bg-page px-2.5 py-1.5 text-sm text-ink focus:border-primary focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+// Map the provider's confidence band (H/M/L) onto the Library AIReviewBlock's
+// confidence scale (high/medium/low) — the band stays the source of truth.
+const BAND_TO_CONFIDENCE: Record<ConfidenceBand, ConfidencePillProps["confidence"]> = {
+  H: "high",
+  M: "medium",
+  L: "low",
+};
 
-/** Confidence indicator: text + shape + colour (never colour alone). */
-function ConfBadge({ band, t }: { band: ConfidenceBand; t: Record<string, string> }) {
-  const map: Record<ConfidenceBand, { label: string; shape: string; cls: string }> = {
-    H: { label: t.confHigh, shape: "▲", cls: "bg-green-50 text-green-700 border-green-300" },
-    M: { label: t.confMed, shape: "■", cls: "bg-amber-50 text-amber-700 border-amber-300" },
-    L: { label: t.confLow, shape: "●", cls: "bg-red-50 text-red-700 border-red-300" },
-  };
-  const c = map[band];
-  return (
-    <span
-      className={"inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium " + c.cls}
-      title={c.label}
-    >
-      <span aria-hidden>{c.shape}</span>
-      {c.label}
-    </span>
-  );
-}
-
-function SourceChip({ meta, t }: { meta: FieldMeta | undefined; t: Record<string, string> }) {
+/** Source slot: a domain link / non-URL label, or an honest "no source" note. */
+function sourceNode(
+  meta: FieldMeta | undefined,
+  t: Record<string, string>,
+): React.ReactNode {
   if (!meta || meta.sources.length === 0) {
-    return (
-      <span className="inline-flex items-center rounded-full border border-border bg-page px-2 py-0.5 text-xs text-tertiary">
-        {t.noSource}
-      </span>
-    );
+    return <span className="text-muted">{t.noSource}</span>;
   }
   const dom = meta.sources[0].domain;
   const isUrl = dom.includes(".");
-  return (
-    <span className="inline-flex items-center gap-1 text-xs">
-      <span className="text-tertiary">{t.source}:</span>
-      {isUrl ? (
-        <a
-          href={"https://" + dom}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full border border-border bg-page px-2 py-0.5 font-medium text-primary hover:underline"
-        >
-          {dom}
-        </a>
-      ) : (
-        <span className="rounded-full border border-border bg-page px-2 py-0.5 text-secondary">{dom}</span>
-      )}
-    </span>
-  );
+  if (isUrl) {
+    return (
+      <a
+        href={"https://" + dom}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-link hover:underline"
+      >
+        {dom}
+      </a>
+    );
+  }
+  return <span className="text-muted">{dom}</span>;
 }
 
+/** Accept / reject toggle pair, surfaced in the AIReviewBlock footer. */
 function DecisionButtons({
   decision,
   onAccept,
@@ -78,32 +70,24 @@ function DecisionButtons({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <button
+      <Button
         type="button"
+        variant={decision === "accepted" ? "primary" : "ghost"}
+        size="sm"
         onClick={onAccept}
         aria-pressed={decision === "accepted"}
-        className={
-          "rounded-btn border px-2.5 py-1 text-xs font-medium transition " +
-          (decision === "accepted"
-            ? "border-green-400 bg-green-50 text-green-700"
-            : "border-border text-ink hover:bg-page")
-        }
       >
         {decision === "accepted" ? t.accepted : t.accept}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant={decision === "rejected" ? "danger" : "ghost"}
+        size="sm"
         onClick={onReject}
         aria-pressed={decision === "rejected"}
-        className={
-          "rounded-btn border px-2.5 py-1 text-xs font-medium transition " +
-          (decision === "rejected"
-            ? "border-red-400 bg-red-50 text-red-700"
-            : "border-border text-ink hover:bg-page")
-        }
       >
         {decision === "rejected" ? t.rejected : t.reject}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -160,7 +144,7 @@ export default function DraftReview({
   const excludedCount = useMemo(
     () => allKeys.filter((k) => !isHighConfidenceSourced(meta[k])).length,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draft]
+    [draft],
   );
 
   // Bulk: accept all H+sourced; leave the rest for individual review.
@@ -220,15 +204,29 @@ export default function DraftReview({
     });
   };
 
-  const cardCls = "rounded-card border border-border bg-surface p-5";
-  const blockHeadCls = "mb-3 flex items-center justify-between gap-2";
+  // Shared per-item review props for the AIReviewBlock.
+  const reviewProps = (key: string, band: ConfidenceBand | undefined, conflict = false) => ({
+    confidence: BAND_TO_CONFIDENCE[band ?? "L"],
+    source: sourceNode(meta[key], t),
+    conflict,
+    accepted: decisionOf(key) === "accepted",
+    rejected: decisionOf(key) === "rejected",
+    actions: (
+      <DecisionButtons
+        decision={decisionOf(key)}
+        onAccept={() => setDecision(key, "accepted")}
+        onReject={() => setDecision(key, "rejected")}
+        t={t}
+      />
+    ),
+  });
 
   return (
     <div>
-      {/* Persistent banner */}
+      {/* Persistent review banner */}
       <div
         role="status"
-        className="mb-5 flex items-center gap-2 rounded-card border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800"
+        className="mb-5 flex items-center gap-2 rounded-lg border border-amber-line bg-amber-bg px-4 py-3 text-[14px] font-medium text-amber"
       >
         <span aria-hidden>{"⚠"}</span>
         {t.reviewBanner}
@@ -238,7 +236,7 @@ export default function DraftReview({
       {draft.no_findings && (
         <div
           role="status"
-          className="mb-5 flex items-center gap-2 rounded-card border border-border bg-page px-4 py-3 text-sm text-secondary"
+          className="mb-5 flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-4 py-3 text-[14px] text-muted"
         >
           <span aria-hidden>{"ℹ"}</span>
           {t.noFindings}
@@ -246,250 +244,198 @@ export default function DraftReview({
       )}
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">
-          {t.reviewTitle}: <span className="text-secondary">{inputName}</span>
+        <h1 className="text-h2 font-bold tracking-tight text-ink">
+          {t.reviewTitle}: <span className="text-muted">{inputName}</span>
         </h1>
-        <button
-          type="button"
-          onClick={acceptAllHigh}
-          className="rounded-btn border border-primary/40 bg-primary-tint/40 px-3 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary-tint"
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={acceptAllHigh}>
           {t.acceptAllHigh}
-          <span className="ms-1 font-normal text-secondary">
+          <span className="ms-1 font-normal text-muted">
             {"(" + t.acceptAllHighNote.replace("{n}", String(excludedCount)) + ")"}
           </span>
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
         <div className="space-y-4">
           {/* Overview */}
-          <section className={cardCls}>
-            <div className={blockHeadCls}>
-              <h2 className="text-sm font-semibold text-ink">{t.blockOverview}</h2>
-              <div className="flex items-center gap-2">
-                <ConfBadge band={(meta.overview?.band ?? "L") as ConfidenceBand} t={t} />
-                <SourceChip meta={meta.overview} t={t} />
-                <DecisionButtons
-                  decision={decisionOf("overview")}
-                  onAccept={() => setDecision("overview", "accepted")}
-                  onReject={() => setDecision("overview", "rejected")}
-                  t={t}
-                />
-              </div>
+          <AIReviewBlock title={t.blockOverview} {...reviewProps("overview", meta.overview?.band as ConfidenceBand)}>
+            <div className="space-y-3">
+              {showEn && (
+                <label className="block">
+                  <span className="mb-1 block text-[12px] text-muted">{t.overviewEn}</span>
+                  <Textarea
+                    rows={2}
+                    value={fields.overview_en}
+                    onChange={(e) => setFields((p) => ({ ...p, overview_en: e.target.value }))}
+                  />
+                </label>
+              )}
+              {showAr && (
+                <label className="block" dir="rtl">
+                  <span className="mb-1 block text-[12px] text-muted">{t.overviewAr}</span>
+                  <Textarea
+                    rows={2}
+                    value={fields.overview_ar}
+                    onChange={(e) => setFields((p) => ({ ...p, overview_ar: e.target.value }))}
+                  />
+                </label>
+              )}
             </div>
-            {showEn && (
-              <label className="mb-2 block">
-                <span className="mb-1 block text-xs text-secondary">{t.overviewEn}</span>
-                <textarea
-                  rows={2}
-                  className={inputCls}
-                  value={fields.overview_en}
-                  onChange={(e) => setFields((p) => ({ ...p, overview_en: e.target.value }))}
-                />
-              </label>
-            )}
-            {showAr && (
-              <label className="block" dir="rtl">
-                <span className="mb-1 block text-xs text-secondary">{t.overviewAr}</span>
-                <textarea
-                  rows={2}
-                  className={inputCls}
-                  value={fields.overview_ar}
-                  onChange={(e) => setFields((p) => ({ ...p, overview_ar: e.target.value }))}
-                />
-              </label>
-            )}
-          </section>
+          </AIReviewBlock>
 
           {/* Key facts */}
-          <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-ink">{t.blockFacts}</h2>
+          <Card>
+            <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.blockFacts}
+            </h2>
 
-            <div className="mb-4 border-b border-border pb-4">
-              <div className={blockHeadCls}>
-                <span className="text-xs font-medium text-secondary">{t.sector}</span>
-                <div className="flex items-center gap-2">
-                  <ConfBadge band={(meta.sector?.band ?? "L") as ConfidenceBand} t={t} />
-                  <SourceChip meta={meta.sector} t={t} />
-                  <DecisionButtons
-                    decision={decisionOf("sector")}
-                    onAccept={() => setDecision("sector", "accepted")}
-                    onReject={() => setDecision("sector", "rejected")}
-                    t={t}
-                  />
-                </div>
-              </div>
-              <select
-                className={inputCls}
-                value={fields.sector_slug}
-                onChange={(e) => setFields((p) => ({ ...p, sector_slug: e.target.value }))}
+            <div className="space-y-3">
+              <AIReviewBlock title={t.sector} {...reviewProps("sector", meta.sector?.band as ConfidenceBand)}>
+                <Select
+                  value={fields.sector_slug}
+                  onChange={(e) => setFields((p) => ({ ...p, sector_slug: e.target.value }))}
+                >
+                  <option value="">{"—"}</option>
+                  {sectors.map((s) => (
+                    <option key={s.id} value={s.slug}>
+                      {locale === "ar" ? s.name_ar : s.name_en}
+                    </option>
+                  ))}
+                </Select>
+              </AIReviewBlock>
+
+              <AIReviewBlock
+                title={t.foundedYear}
+                {...reviewProps(
+                  "founded_year",
+                  meta.founded_year?.band as ConfidenceBand,
+                  Boolean(meta.founded_year?.conflict),
+                )}
               >
-                <option value="">{"—"}</option>
-                {sectors.map((s) => (
-                  <option key={s.id} value={s.slug}>
-                    {locale === "ar" ? s.name_ar : s.name_en}
-                  </option>
-                ))}
-              </select>
+                <Input
+                  type="number"
+                  className="w-32"
+                  value={fields.founded_year}
+                  onChange={(e) => setFields((p) => ({ ...p, founded_year: e.target.value }))}
+                />
+              </AIReviewBlock>
             </div>
-
-            <div>
-              <div className={blockHeadCls}>
-                <span className="text-xs font-medium text-secondary">{t.foundedYear}</span>
-                <div className="flex items-center gap-2">
-                  {meta.founded_year?.conflict && (
-                    <span className="rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-xs text-red-700">
-                      {t.conflictFlag}
-                    </span>
-                  )}
-                  <ConfBadge band={(meta.founded_year?.band ?? "L") as ConfidenceBand} t={t} />
-                  <SourceChip meta={meta.founded_year} t={t} />
-                  <DecisionButtons
-                    decision={decisionOf("founded_year")}
-                    onAccept={() => setDecision("founded_year", "accepted")}
-                    onReject={() => setDecision("founded_year", "rejected")}
-                    t={t}
-                  />
-                </div>
-              </div>
-              <input
-                type="number"
-                className={inputCls + " w-32"}
-                value={fields.founded_year}
-                onChange={(e) => setFields((p) => ({ ...p, founded_year: e.target.value }))}
-              />
-            </div>
-          </section>
+          </Card>
 
           {/* Colors */}
-          <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-ink">{t.blockColors}</h2>
-            <div className="space-y-2">
+          <Card>
+            <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.blockColors}
+            </h2>
+            <div className="space-y-3">
               {draft.colors.map((c, i) => {
                 const key = "color:" + i;
                 return (
-                  <div key={key} className="flex flex-wrap items-center justify-between gap-2 rounded-btn border border-border px-2.5 py-2">
+                  <AIReviewBlock key={key} title={c.name} {...reviewProps(key, meta[key]?.band as ConfidenceBand)}>
                     <div className="flex items-center gap-2">
-                      <span className="h-6 w-6 rounded border border-border" style={{ backgroundColor: c.hex }} aria-hidden />
-                      <span className="text-sm font-medium text-ink">{c.name}</span>
-                      <span className="text-xs text-tertiary">{c.hex}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ConfBadge band={(meta[key]?.band ?? "L") as ConfidenceBand} t={t} />
-                      <SourceChip meta={meta[key]} t={t} />
-                      <DecisionButtons
-                        decision={decisionOf(key)}
-                        onAccept={() => setDecision(key, "accepted")}
-                        onReject={() => setDecision(key, "rejected")}
-                        t={t}
+                      <span
+                        className="h-6 w-6 rounded border border-line"
+                        style={{ backgroundColor: c.hex }}
+                        aria-hidden
                       />
+                      <span className="font-medium text-ink">{c.name}</span>
+                      <span className="text-[12px] text-muted">{c.hex}</span>
                     </div>
-                  </div>
+                  </AIReviewBlock>
                 );
               })}
             </div>
-          </section>
+          </Card>
 
           {/* Assets */}
-          <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-ink">{t.blockAssets}</h2>
-            <div className="space-y-2">
+          <Card>
+            <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.blockAssets}
+            </h2>
+            <div className="space-y-3">
               {draft.assets.map((a, i) => {
                 const key = "asset:" + i;
                 return (
-                  <div key={key} className="flex flex-wrap items-center justify-between gap-2 rounded-btn border border-border px-2.5 py-2">
-                    <div className="text-sm">
+                  <AIReviewBlock key={key} title={a.name_en} {...reviewProps(key, meta[key]?.band as ConfidenceBand)}>
+                    <div className="text-[14px]">
                       <span className="font-medium text-ink">{a.name_en}</span>
-                      <span className="ms-2 text-xs text-tertiary">{a.asset_type}</span>
+                      <span className="ms-2 text-[12px] text-muted">{a.asset_type}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <ConfBadge band={(meta[key]?.band ?? "L") as ConfidenceBand} t={t} />
-                      <SourceChip meta={meta[key]} t={t} />
-                      <DecisionButtons
-                        decision={decisionOf(key)}
-                        onAccept={() => setDecision(key, "accepted")}
-                        onReject={() => setDecision(key, "rejected")}
-                        t={t}
-                      />
-                    </div>
-                  </div>
+                  </AIReviewBlock>
                 );
               })}
             </div>
-          </section>
+          </Card>
 
           {/* Timeline */}
-          <section className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-ink">{t.blockTimeline}</h2>
-            <div className="space-y-2">
+          <Card>
+            <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.blockTimeline}
+            </h2>
+            <div className="space-y-3">
               {draft.timeline.map((tl, i) => {
                 const key = "timeline:" + i;
                 return (
-                  <div key={key} className="flex flex-wrap items-center justify-between gap-2 rounded-btn border border-border px-2.5 py-2">
-                    <div className="text-sm">
+                  <AIReviewBlock key={key} title={String(tl.year)} {...reviewProps(key, meta[key]?.band as ConfidenceBand)}>
+                    <div className="text-[14px]">
                       <span className="font-semibold text-ink">{tl.year}</span>
                       <span className="ms-2 text-ink">{tl.title_en}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <ConfBadge band={(meta[key]?.band ?? "L") as ConfidenceBand} t={t} />
-                      <SourceChip meta={meta[key]} t={t} />
-                      <DecisionButtons
-                        decision={decisionOf(key)}
-                        onAccept={() => setDecision(key, "accepted")}
-                        onReject={() => setDecision(key, "rejected")}
-                        t={t}
-                      />
-                    </div>
-                  </div>
+                  </AIReviewBlock>
                 );
               })}
             </div>
-          </section>
+          </Card>
         </div>
 
         {/* Right rail: validation checklist */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className={cardCls}>
-            <h2 className="mb-3 text-sm font-semibold text-ink">{t.checklistTitle}</h2>
+          <Card>
+            <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
+              {t.checklistTitle}
+            </h2>
             <ul className="space-y-2">
               {checklist.map((c) => (
-                <li key={c.key} className="flex items-center gap-2 text-sm">
+                <li key={c.key} className="flex items-center gap-2 text-[14px]">
                   <span
                     aria-hidden
                     className={
                       "inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] " +
-                      (c.ok ? "bg-green-100 text-green-700" : "bg-page text-tertiary border border-border")
+                      (c.ok
+                        ? "bg-[#eef9f1] text-ok"
+                        : "border border-line bg-surface-2 text-muted")
                     }
                   >
                     {c.ok ? "✓" : ""}
                   </span>
-                  <span className={c.ok ? "text-ink" : "text-secondary"}>{t[c.key]}</span>
+                  <span className={c.ok ? "text-ink" : "text-muted"}>{t[c.key]}</span>
                 </li>
               ))}
             </ul>
 
             {validation.length > 0 && (
-              <p className="mt-3 rounded-btn border border-red-300 bg-red-50 px-2.5 py-2 text-xs text-red-700">
+              <p className="mt-3 rounded-md border border-danger/30 bg-[#fdeced] px-2.5 py-2 text-[12px] text-danger">
                 {t.validationFailed}
               </p>
             )}
             {error && (
-              <p className="mt-3 rounded-btn border border-red-300 bg-red-50 px-2.5 py-2 text-xs text-red-700">
+              <p className="mt-3 rounded-md border border-danger/30 bg-[#fdeced] px-2.5 py-2 text-[12px] text-danger">
                 {error}
               </p>
             )}
 
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="md"
               onClick={submit}
               disabled={pending || !allOk}
-              className="mt-4 w-full rounded-btn bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-50"
+              className="mt-4 w-full"
             >
               {pending ? t.creating : t.createDraft}
-            </button>
-            <p className="mt-2 text-xs text-tertiary">{t.calmNote}</p>
-          </div>
+            </Button>
+            <p className="mt-2 text-[12px] text-muted">{t.calmNote}</p>
+          </Card>
         </aside>
       </div>
     </div>
