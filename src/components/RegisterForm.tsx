@@ -145,6 +145,23 @@ export default function RegisterForm({ locale }: { locale: Locale }) {
         onChange={(e) => setConsent(e.target.checked)}
         label={dict.auth.consent}
       />
+      <p className="text-[12px] leading-5 text-muted">
+        {dict.auth.consentReadMore}{" "}
+        <Link
+          href={`/${locale}/terms`}
+          className="font-semibold text-link hover:underline"
+        >
+          {dict.footer.terms}
+        </Link>{" "}
+        {dict.auth.consentReadMoreAnd}{" "}
+        <Link
+          href={`/${locale}/privacy`}
+          className="font-semibold text-link hover:underline"
+        >
+          {dict.footer.privacy}
+        </Link>
+        .
+      </p>
       <SubmitButton pending={pending}>
         {pending ? dict.auth.processing : dict.auth.createAccount}
       </SubmitButton>

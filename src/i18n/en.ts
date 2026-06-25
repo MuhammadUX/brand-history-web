@@ -314,6 +314,10 @@ const en = {
     browse: "Browse",
     discover: "Discover",
     suggest: "Suggest a brand",
+    about: "About",
+    privacy: "Privacy",
+    terms: "Terms",
+    contact: "Contact",
   },
   auth: {
     account: "Account",
@@ -328,6 +332,8 @@ const en = {
     password: "Password",
     passwordPlaceholder: "At least 8 characters",
     consent: "I agree to the Terms of Service and Privacy Policy.",
+    consentReadMore: "Read our",
+    consentReadMoreAnd: "and",
     createAccount: "Create account",
     haveAccount: "Already have an account?",
     signIn: "Sign in",
@@ -687,6 +693,146 @@ const en = {
     body: "The brand you're looking for has been unpublished or taken down and is no longer publicly available.",
     browse: "Browse brands",
     home: "Back to home",
+  },
+  legal: {
+    kicker: "Legal",
+    backHome: "← Back to home",
+    lastUpdatedLabel: "Last updated",
+    draftLabel: "Draft — pending legal review",
+    draftBody:
+      "This is a working template, not finalized legal advice. The wording below is a starting point for the site owner and must be reviewed and approved by a qualified lawyer before it is relied upon.",
+    privacy: {
+      title: "Privacy Policy",
+      subtitle:
+        "How Brand History handles personal data under the Saudi PDPL and the EU GDPR.",
+      lastUpdated: "TBD — pending review",
+      sections: [
+        {
+          h: "What we collect",
+          b: "[Template] We collect the information you give us when you create an account or contact us (such as your display name and email), the favorites and downloads you make, and limited technical data (such as device, browser, and approximate location derived from your IP) needed to run and secure the service.",
+        },
+        {
+          h: "Lawful basis & consent",
+          b: "[Template] We process essential data to provide the service (performance of a contract) and to keep it secure (legitimate interests). Analytics, advertising, and personalization run only after you opt in through our consent banner. You may withdraw consent at any time using the “Privacy choices” control in the footer.",
+        },
+        {
+          h: "Cookies & analytics",
+          b: "[Template] We use essential cookies to keep you signed in and remember your consent choices. With your consent we may use analytics cookies to understand aggregate usage and improve the product. A full cookie inventory should be listed here before launch.",
+        },
+        {
+          h: "Advertising & personalization",
+          b: "[Template] If you consent, we may show sponsored content and tailor recommendations to your interests. We do not sell your personal data. Pro subscribers see no ads. The specific advertising partners (if any) must be named here before launch.",
+        },
+        {
+          h: "Data residency & transfers",
+          b: "[Template] Describe where personal data is stored and processed (e.g. hosting region) and the safeguards used for any cross-border transfer, as required by the PDPL and GDPR. Fill in the actual processors and regions before launch.",
+        },
+        {
+          h: "Your rights (access, export, erasure)",
+          b: "[Template] You may request access to your data, a portable export, correction, or erasure (a data-subject access request). Signed-in users can export their data and request account deletion from the Data & privacy page in their account. Describe the response timeframe (e.g. within 30 days) before launch.",
+        },
+        {
+          h: "Data retention",
+          b: "[Template] We keep personal data only as long as needed to provide the service and meet legal obligations, then delete or anonymize it. State concrete retention periods for each data category here before launch.",
+        },
+        {
+          h: "Contact & Data Protection Officer",
+          b: "[Template] Questions or requests about your data can be sent to the contact address on our Contact page. If a Data Protection Officer is appointed, their name and contact details should be listed here.",
+        },
+        {
+          h: "Changes to this policy",
+          b: "[Template] We may update this policy from time to time. Material changes will be reflected by the “Last updated” date above, and where required we will ask for renewed consent.",
+        },
+      ],
+      rightsNote: "Signed-in users can exercise these rights from",
+      rightsLink: "Data & privacy",
+    },
+    terms: {
+      title: "Terms of Use",
+      subtitle:
+        "The rules for using Brand History, including content, accounts, and Pro subscriptions.",
+      lastUpdated: "TBD — pending review",
+      sections: [
+        {
+          h: "Acceptable use",
+          b: "[Template] You agree to use Brand History lawfully and not to scrape, overload, disrupt, or misuse the service, or use it to infringe others’ rights. Describe any rate limits or prohibited activities in detail before launch.",
+        },
+        {
+          h: "Intellectual property & trademarks",
+          b: "[Template] All brand names, logos, and assets shown belong to their respective owners and are presented for reference, research, and educational purposes only. Inclusion here does not imply any affiliation with or endorsement by those owners. Brand History does not claim ownership of third-party marks.",
+        },
+        {
+          h: "Takedown & ownership claims",
+          b: "[Template] If you are a rights holder and want an asset corrected, claimed, or removed, contact us via the Contact page and we will review the request promptly. Describe the takedown process and required information before launch.",
+        },
+        {
+          h: "Accounts & Pro subscription",
+          b: "[Template] You are responsible for keeping your account credentials secure. Pro is a paid subscription that unlocks ad-free browsing, high-resolution exports, brand kits, and advanced features; describe billing, renewal, cancellation, and refund terms here before launch.",
+        },
+        {
+          h: "Disclaimers",
+          b: "[Template] The service is provided “as is” without warranties of any kind. Archive content may contain inaccuracies, and we do not guarantee that any asset is suitable for a particular use. Verify usage rights with the brand owner before relying on any asset.",
+        },
+        {
+          h: "Limitation of liability",
+          b: "[Template] To the extent permitted by law, Brand History is not liable for indirect or consequential damages arising from use of the service. Set out the agreed liability cap and exclusions here before launch.",
+        },
+        {
+          h: "Governing law",
+          b: "[Template] These terms are governed by the laws of the Kingdom of Saudi Arabia, and disputes are subject to the competent courts of the Kingdom. Confirm the chosen jurisdiction and venue before launch.",
+        },
+        {
+          h: "Changes to these terms",
+          b: "[Template] We may revise these terms from time to time. Continued use after changes take effect constitutes acceptance. Material changes will be reflected by the “Last updated” date above.",
+        },
+      ],
+      takedownNote: "To claim a brand or request a takedown, see our",
+      takedownLink: "Contact page",
+    },
+    about: {
+      kicker: "About",
+      title: "About Brand History",
+      subtitle:
+        "A curated, bilingual archive of brand assets and how identities evolve over time.",
+      whatTitle: "What it is",
+      whatBody:
+        "Brand History is a living, bilingual (English and Arabic) archive of brand identity — logos, color palettes, typography, usage guidelines, and the milestones that shaped each brand. We focus on the brands that built the region, presented in a calm, reference-first way.",
+      missionTitle: "Our mission",
+      missionBody:
+        "We believe brand history is design heritage worth preserving. Our mission is to make it easy for designers, founders, students, and the curious to explore how identities are built and how they change — accurately, respectfully, and in both Arabic and English.",
+      curationTitle: "How curation works",
+      curationSteps: [
+        "We gather public, reference material about a brand and draft a profile.",
+        "Editors review every profile for accuracy, sourcing, and tone before it is published.",
+        "Each asset is labeled with its usage policy, and archived material is marked as no longer current.",
+        "Community suggestions and owner claims help us keep the archive correct and up to date.",
+      ],
+      ctaTitle: "Explore the archive",
+      ctaBody: "Discover trending brands, or tell us about one we’re missing.",
+      ctaDiscover: "Discover brands",
+      ctaSuggest: "Suggest a brand",
+    },
+    contact: {
+      kicker: "Contact",
+      title: "Contact us",
+      subtitle:
+        "Get in touch to suggest a brand, report an issue, or make an ownership or takedown claim.",
+      emailTitle: "Email",
+      emailBody:
+        "For general questions, partnerships, and data requests, email us and we’ll get back to you.",
+      placeholderBadge: "Placeholder",
+      placeholderNote:
+        "This is a placeholder address. The site owner should replace it with a real, monitored inbox before launch.",
+      suggestTitle: "Suggest a brand or report an issue",
+      suggestBody:
+        "Know a brand we’re missing, or spotted something that looks wrong? Send it our way and our editors will review it.",
+      suggestCta: "Suggest a brand",
+      claimTitle: "Claim or takedown",
+      claimBody:
+        "If you represent a brand and want an asset corrected, claimed, or removed, contact us with the details and we’ll review your request promptly.",
+      claimSeeTerms: "For how reference-only brand assets are handled, see our",
+      claimTermsLink: "Terms of Use",
+    },
   },
 };
 

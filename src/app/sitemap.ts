@@ -5,7 +5,18 @@ import { SITE_URL } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-const STATIC_PATHS = ["", "browse", "discover", "search", "pro", "suggest"];
+const STATIC_PATHS = [
+  "",
+  "browse",
+  "discover",
+  "search",
+  "pro",
+  "suggest",
+  "about",
+  "privacy",
+  "terms",
+  "contact",
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];

@@ -29,6 +29,18 @@ export default function AppFooter({ locale }: { locale: Locale }) {
           <Link href={`/${locale}/suggest`} className={linkCls}>
             {dict.footer.suggest}
           </Link>
+          <Link href={`/${locale}/about`} className={linkCls}>
+            {dict.footer.about}
+          </Link>
+          <Link href={`/${locale}/privacy`} className={linkCls}>
+            {dict.footer.privacy}
+          </Link>
+          <Link href={`/${locale}/terms`} className={linkCls}>
+            {dict.footer.terms}
+          </Link>
+          <Link href={`/${locale}/contact`} className={linkCls}>
+            {dict.footer.contact}
+          </Link>
           <PrivacyChoicesButton
             label={dict.consent.privacyChoices}
             className={linkCls}

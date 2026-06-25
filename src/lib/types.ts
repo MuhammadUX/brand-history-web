@@ -54,6 +54,7 @@ export interface BrandAsset {
   name_ar: string;
   download_policy: DownloadPolicy;
   formats: string[] | null;
+  source_url?: string | null;
   is_archived: boolean;
   era: string | null;
   sort_order: number;

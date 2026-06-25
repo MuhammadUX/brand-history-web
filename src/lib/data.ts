@@ -62,7 +62,14 @@ export async function searchBrands(
   const term = q.trim();
   if (!term) return [];
   const supabase = getSupabaseServerClient();
-  const like = `%${term}%`;
+  // Build a normalised pattern: alif/ya/ta variants become `_` (any one char).
+  const normalized = term
+    .replace(/[ً-ْٰ]/g, "")
+    .replace(/[,()%\\]/g, " ")
+    .replace(/[آأإاٱىيةه]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim();
+  const like = `%${normalized || term.replace(/[,()%\\]/g, " ")}%`;
   let query = supabase
     .from("brands")
     .select(BRAND_SELECT)
@@ -138,7 +145,7 @@ export async function getBrandById(id: string): Promise<Brand | null> {
 }
 
 const ASSET_SELECT =
-  "id,brand_id,asset_type,name_en,name_ar,download_policy,formats,is_archived,era,sort_order";
+  "id,brand_id,asset_type,name_en,name_ar,download_policy,formats,source_url,is_archived,era,sort_order";
 
 export async function getBrandAssets(brandId: string): Promise<BrandAsset[]> {
   const supabase = getSupabaseServerClient();

@@ -205,10 +205,31 @@ export default async function BrandPage({
       );
     }
     if (asset.download_policy === "link_out") {
+      const href = asset.source_url || brand!.website || null;
+      if (href) {
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] items-center gap-1 rounded-pill border border-line px-3.5 text-[12px] font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {dict.brand.policyLinkOut} ↗
+          </a>
+        );
+      }
+      // No external URL on file — never a dead end: fall back to the host generator.
       return (
-        <span className="text-[11px] font-semibold text-muted">
-          {dict.brand.policyLinkOut}
-        </span>
+        <BrandDownloadButton
+          slug={brand!.slug}
+          initials={brand!.initials}
+          color={brand!.primary_color}
+          name={name}
+          label={dict.brand.policyHost}
+          pngLabel={dict.brand.downloadPng}
+          svgLabel={dict.brand.downloadSvg}
+          triggerVariant="ghost"
+        />
       );
     }
     return (
