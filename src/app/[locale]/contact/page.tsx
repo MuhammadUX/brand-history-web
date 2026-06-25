@@ -6,8 +6,8 @@ import { Button, Card, SectionHeader, Badge } from "@/components/ui";
 import type { Metadata } from "next";
 import type { Locale } from "@/lib/types";
 
-/** Placeholder contact address — the owner must replace this before launch. */
-const CONTACT_EMAIL = "hello@brandhistory.example";
+/** Contact address on the owned domain — ensure this inbox exists/forwards. */
+const CONTACT_EMAIL = "hello@brandshistory.com";
 
 export async function generateMetadata({
   params,

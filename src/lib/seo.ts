@@ -4,7 +4,7 @@ import type { Locale } from "./types";
 /** Canonical site origin. Override with NEXT_PUBLIC_SITE_URL in prod. */
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-  "https://brand-history-web.vercel.app";
+  "https://brandshistory.com";
 
 /**
  * Builds hreflang alternates (en/ar + x-default) for a path *after* the locale
