@@ -43,11 +43,13 @@ export async function grantProForUser(
 ): Promise<GrantResult> {
   const supabase = createAdminSupabase();
 
-  // 1) Idempotency — already granted for this exact invoice/ref?
+  // 1) Fast-path idempotency — already granted for this exact invoice/ref?
+  // (Cheap early-out for the common case where the webhook granted long before
+  // the return page runs. The hard guarantee is the unique-index insert below.)
   const { data: prior, error: priorErr } = await supabase
     .from("payment_events")
-    .select("id, detail")
-    .eq("user_id", userId)
+    .select("id")
+    .eq("provider", opts.provider)
     .eq("event_type", "payment_succeeded")
     .eq("detail->>invoice_id", opts.ref)
     .limit(1);
@@ -60,7 +62,8 @@ export async function grantProForUser(
     return { ok: true, alreadyGranted: true };
   }
 
-  // 2) Upsert subscription (one row per user; same shape as runCheckout).
+  // 2) Upsert subscription (one row per user; idempotent on user_id, so it is
+  // safe even if the webhook and the return page race here simultaneously).
   const { error: upsertErr } = await supabase.from("subscriptions").upsert(
     {
       user_id: userId,
@@ -78,7 +81,11 @@ export async function grantProForUser(
     return { ok: false, error: "db_error" };
   }
 
-  // 3) Record the succeeded payment event (carries the ref for idempotency).
+  // 3) Record the succeeded payment event. A partial unique index on
+  // (provider, detail->>'invoice_id') WHERE event_type='payment_succeeded'
+  // makes this the real idempotency gate: if a concurrent grant already
+  // inserted it, we get a 23505 unique violation and bail out as
+  // alreadyGranted — which crucially skips the duplicate receipt below.
   const { error: eventErr } = await supabase.from("payment_events").insert({
     user_id: userId,
     provider: opts.provider,
@@ -88,8 +95,15 @@ export async function grantProForUser(
     detail: { invoice_id: opts.ref, ref: opts.ref },
   });
   if (eventErr) {
-    // Subscription is already active; log but don't fail the grant.
+    if ((eventErr as { code?: string }).code === "23505") {
+      // Lost the race — the other caller already recorded this payment and sent
+      // the receipt. Subscription is active; do not email again.
+      return { ok: true, alreadyGranted: true };
+    }
+    // Other insert error: subscription is active, so don't fail the grant, but
+    // skip the receipt to avoid emailing on an inconsistent state.
     console.error("[grant] payment_event insert failed:", eventErr.message);
+    return { ok: true };
   }
 
   // 4) Receipt email (best-effort; never blocks the grant).
