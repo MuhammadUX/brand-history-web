@@ -30,7 +30,10 @@ export default async function CheckoutReturnPage({
   const dict = getDictionary(typedLocale);
 
   const sp = await searchParams;
-  const invoiceId = sp.id || sp.invoice_id || "";
+  // Moyasar's invoice callback appends both `invoice_id` (the invoice we created)
+  // and `id` (the underlying payment id). We verify against the INVOICE, so
+  // prefer invoice_id; `id` is only a fallback for invoice-level callbacks.
+  const invoiceId = sp.invoice_id || sp.id || "";
 
   let paid = false;
   if (invoiceId) {

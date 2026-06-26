@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     secret_token?: string;
     data?: {
       id?: string;
+      invoice_id?: string | null;
       status?: string;
       metadata?: Record<string, string> | null;
     };
@@ -52,7 +53,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ignored: eventType || "unknown" });
   }
 
-  const invoiceId = body.data?.id;
+  // For a `payment_paid` event, `data` is the PAYMENT object: `data.id` is the
+  // payment id and `data.invoice_id` points at the invoice we created. We must
+  // verify against the INVOICE (which carries our metadata + amount), so prefer
+  // invoice_id and only fall back to id for invoice-level events.
+  const invoiceId = body.data?.invoice_id || body.data?.id;
   if (!invoiceId) {
     return NextResponse.json({ ok: true, ignored: "no_invoice_id" });
   }
