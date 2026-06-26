@@ -702,48 +702,56 @@ const en = {
     lastUpdatedLabel: "Last updated",
     draftLabel: "Draft — pending legal review",
     draftBody:
-      "This is a working template, not finalized legal advice. The wording below is a starting point for the site owner and must be reviewed and approved by a qualified lawyer before it is relied upon.",
+      "This is a complete working draft prepared for the site owner. It has not yet been reviewed by a qualified lawyer and must be checked and approved by counsel before it is relied upon at launch.",
     privacy: {
       title: "Privacy Policy",
       subtitle:
-        "How Brand History handles personal data under the Saudi PDPL and the EU GDPR.",
-      lastUpdated: "TBD — pending review",
+        "How we handle your personal data under the Saudi PDPL and the EU GDPR.",
+      lastUpdated: "27 June 2026 (draft)",
       sections: [
         {
           h: "What we collect",
-          b: "[Template] We collect the information you give us when you create an account or contact us (such as your display name and email), the favorites and downloads you make, and limited technical data (such as device, browser, and approximate location derived from your IP) needed to run and secure the service.",
+          b: "When you create an account we collect your display name and email address; your password is handled and stored in hashed form by our authentication provider (Supabase) and is never visible to us. As you use the service we store the favorites and downloads you make and any messages you send through the Contact form. If you subscribe to Pro, we store your subscription status, plan, and a payment reference returned by our payment processor — we never receive or store your full card number (see “Payments”). We also collect limited technical data needed to run and secure the service, such as device and browser type, pages viewed, and an approximate location derived from your IP address.",
         },
         {
           h: "Lawful basis & consent",
-          b: "[Template] We process essential data to provide the service (performance of a contract) and to keep it secure (legitimate interests). Analytics, advertising, and personalization run only after you opt in through our consent banner. You may withdraw consent at any time using the “Privacy choices” control in the footer.",
+          b: "We process the data needed to create your account and provide Pro on the basis of performance of a contract, and we process limited technical and security data on the basis of our legitimate interest in keeping the service available and protected from abuse. Optional analytics, advertising, and personalization run only after you opt in through our consent banner. You can withdraw consent at any time using the “Privacy choices” control in the footer; withdrawing consent does not affect processing that already took place.",
         },
         {
           h: "Cookies & analytics",
-          b: "[Template] We use essential cookies to keep you signed in and remember your consent choices. With your consent we may use analytics cookies to understand aggregate usage and improve the product. A full cookie inventory should be listed here before launch.",
+          b: "We use a small number of essential cookies to keep you signed in and to remember your consent choices; these are required for the service to work. Only with your consent do we set analytics cookies, which help us understand aggregate, non-identifying usage so we can improve the product. You can review or change these choices at any time from “Privacy choices” in the footer.",
+        },
+        {
+          h: "Payments",
+          b: "Payments for Pro are processed by Moyasar, a payment provider licensed by the Saudi Central Bank (SAMA). Your card details are entered on Moyasar’s secure page and processed by Moyasar — we do not see or store your full card number, expiry, or security code. We retain a record of your subscription (plan, status, dates) and a payment reference so we can provide the service, issue receipts, and meet our accounting and tax obligations.",
         },
         {
           h: "Advertising & personalization",
-          b: "[Template] If you consent, we may show sponsored content and tailor recommendations to your interests. We do not sell your personal data. Pro subscribers see no ads. The specific advertising partners (if any) must be named here before launch.",
+          b: "Free browsing may include sponsored or promotional content. Where you have consented, we may tailor recommendations to your interests. Pro subscribers do not see ads. We do not sell your personal data. Any third-party advertising partners we work with will be named here before such advertising goes live.",
         },
         {
           h: "Data residency & transfers",
-          b: "[Template] Describe where personal data is stored and processed (e.g. hosting region) and the safeguards used for any cross-border transfer, as required by the PDPL and GDPR. Fill in the actual processors and regions before launch.",
+          b: "The service runs on Supabase (database and authentication) and Vercel (hosting and content delivery). Personal data is currently stored and processed on Supabase infrastructure in the European Union (Frankfurt), and may be processed transiently on Vercel’s global edge network to deliver the site. Where personal data is transferred outside the Kingdom of Saudi Arabia, we rely on appropriate safeguards as required by the PDPL and GDPR. We are evaluating hosting personal data within a Saudi region; this section will be updated when that is finalized.",
         },
         {
           h: "Your rights (access, export, erasure)",
-          b: "[Template] You may request access to your data, a portable export, correction, or erasure (a data-subject access request). Signed-in users can export their data and request account deletion from the Data & privacy page in their account. Describe the response timeframe (e.g. within 30 days) before launch.",
+          b: "You have the right to access your personal data, receive a portable copy, correct it, and request its erasure. Signed-in users can export their data and request account deletion directly from the Data & privacy page in their account. You may also contact us to exercise any of these rights, and we aim to respond within 30 days.",
         },
         {
           h: "Data retention",
-          b: "[Template] We keep personal data only as long as needed to provide the service and meet legal obligations, then delete or anonymize it. State concrete retention periods for each data category here before launch.",
+          b: "We keep personal data only as long as your account is active and as needed to provide the service. Some records are kept longer where the law requires — for example, payment and tax records are retained for the period required by Saudi regulations (ZATCA). When data is no longer needed, we delete or anonymize it.",
+        },
+        {
+          h: "Children",
+          b: "The service is intended for adults and is not directed to children under 18. We do not knowingly collect personal data from children. If you believe a child has provided us personal data, contact us and we will delete it.",
         },
         {
           h: "Contact & Data Protection Officer",
-          b: "[Template] Questions or requests about your data can be sent to the contact address on our Contact page. If a Data Protection Officer is appointed, their name and contact details should be listed here.",
+          b: "Questions or requests about your personal data can be sent through our Contact page. If we appoint a Data Protection Officer, their name and contact details will be published here.",
         },
         {
           h: "Changes to this policy",
-          b: "[Template] We may update this policy from time to time. Material changes will be reflected by the “Last updated” date above, and where required we will ask for renewed consent.",
+          b: "We may update this policy from time to time. Material changes will be reflected by the “Last updated” date above, and where the law requires we will ask for your renewed consent.",
         },
       ],
       rightsNote: "Signed-in users can exercise these rights from",
@@ -752,40 +760,44 @@ const en = {
     terms: {
       title: "Terms of Use",
       subtitle:
-        "The rules for using Brand History, including content, accounts, and Pro subscriptions.",
-      lastUpdated: "TBD — pending review",
+        "The rules for using the service, including content, accounts, and Pro subscriptions.",
+      lastUpdated: "27 June 2026 (draft)",
       sections: [
         {
           h: "Acceptable use",
-          b: "[Template] You agree to use Brand History lawfully and not to scrape, overload, disrupt, or misuse the service, or use it to infringe others’ rights. Describe any rate limits or prohibited activities in detail before launch.",
+          b: "You agree to use the service lawfully and in line with these terms. You must not scrape or bulk-download the service by automated means, attempt to overload, disrupt, or gain unauthorized access to it, circumvent access controls or the Pro paywall, or use the service to infringe the rights of others. We may suspend or limit access that threatens the security, integrity, or availability of the service.",
         },
         {
           h: "Intellectual property & trademarks",
-          b: "[Template] All brand names, logos, and assets shown belong to their respective owners and are presented for reference, research, and educational purposes only. Inclusion here does not imply any affiliation with or endorsement by those owners. Brand History does not claim ownership of third-party marks.",
+          b: "All brand names, logos, and assets shown on the service belong to their respective owners and are presented for reference, research, and educational purposes only. Their inclusion does not imply any affiliation with, sponsorship by, or endorsement from those owners. We do not claim ownership of third-party marks. The compilation, original descriptions, and arrangement of the archive are owned by us and may not be copied wholesale without permission.",
         },
         {
           h: "Takedown & ownership claims",
-          b: "[Template] If you are a rights holder and want an asset corrected, claimed, or removed, contact us via the Contact page and we will review the request promptly. Describe the takedown process and required information before launch.",
+          b: "If you are a rights holder and wish to correct, claim, or remove an asset, contact us through the Contact page with the brand name, the specific asset or page, and proof of your authority to act for the owner. We review such requests promptly and will correct or remove material where appropriate.",
         },
         {
-          h: "Accounts & Pro subscription",
-          b: "[Template] You are responsible for keeping your account credentials secure. Pro is a paid subscription that unlocks ad-free browsing, high-resolution exports, brand kits, and advanced features; describe billing, renewal, cancellation, and refund terms here before launch.",
+          h: "Accounts",
+          b: "You are responsible for the activity on your account and for keeping your login credentials secure. Please notify us promptly of any unauthorized use. We may suspend or terminate accounts that breach these terms.",
+        },
+        {
+          h: "Pro subscription, billing & refunds",
+          b: "Pro is a paid subscription that unlocks ad-free browsing, high-resolution downloads, brand kits, and other advanced features. Prices are shown in Saudi Riyal (SAR) and, where applicable, include VAT. Payment is processed by Moyasar. Subscriptions renew automatically at the end of each term (monthly or annual) unless you cancel beforehand. You can cancel at any time from your account; when you cancel, your Pro access continues until the end of the current paid period and does not renew after that. Except where required by law, payments are non-refundable; if you believe you were charged in error, contact us within 14 days and we will review the request.",
         },
         {
           h: "Disclaimers",
-          b: "[Template] The service is provided “as is” without warranties of any kind. Archive content may contain inaccuracies, and we do not guarantee that any asset is suitable for a particular use. Verify usage rights with the brand owner before relying on any asset.",
+          b: "The service and its content are provided “as is” and “as available,” without warranties of any kind. Archive content may contain inaccuracies or out-of-date material, and we do not guarantee that any asset is suitable for a particular use. Always verify usage rights with the brand owner before relying on any asset.",
         },
         {
           h: "Limitation of liability",
-          b: "[Template] To the extent permitted by law, Brand History is not liable for indirect or consequential damages arising from use of the service. Set out the agreed liability cap and exclusions here before launch.",
+          b: "To the maximum extent permitted by law, we are not liable for indirect, incidental, or consequential damages arising from your use of the service. Nothing in these terms excludes liability that cannot be excluded under applicable law.",
         },
         {
           h: "Governing law",
-          b: "[Template] These terms are governed by the laws of the Kingdom of Saudi Arabia, and disputes are subject to the competent courts of the Kingdom. Confirm the chosen jurisdiction and venue before launch.",
+          b: "These terms are governed by the laws of the Kingdom of Saudi Arabia, and any disputes are subject to the competent courts of the Kingdom.",
         },
         {
           h: "Changes to these terms",
-          b: "[Template] We may revise these terms from time to time. Continued use after changes take effect constitutes acceptance. Material changes will be reflected by the “Last updated” date above.",
+          b: "We may revise these terms from time to time. Material changes will be reflected by the “Last updated” date above, and your continued use of the service after changes take effect constitutes acceptance.",
         },
       ],
       takedownNote: "To claim a brand or request a takedown, see our",

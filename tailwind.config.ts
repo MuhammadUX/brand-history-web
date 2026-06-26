@@ -31,11 +31,11 @@ const config: Config = {
         ink: "#1A1A1A", // primary text + primary buttons
         muted: "#6B6B63", // secondary text / labels
         line: "#E6E0D2", // warm hairline borders
-        link: "#8A6D3B", // links / copy / "view all" (warm gold)
+        link: "#7A5F30", // links / copy / "view all" (warm gold) — AA ≥4.5:1 on paper
         ok: "#0A7D3B", // verified / do
         danger: "#B4232A", // don't / destructive
         amber: {
-          DEFAULT: "#9A6B12", // archived label text
+          DEFAULT: "#855A0E", // archived label text — AA ≥4.5:1 on amber-bg
           bg: "#FBF3E0", // archived label background
           line: "#EAD9AE", // archived label border
         },

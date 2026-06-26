@@ -237,9 +237,9 @@ function FeatureCard({
       </div>
       <div className="p-7">
         {metaLine && <div className="label mb-2">{metaLine}</div>}
-        <h3 className="text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+        <h2 className="text-[30px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
           {name}
-        </h3>
+        </h2>
         {altName && (
           <div className="font-arabic mb-3 mt-0.5 text-[16px] text-muted">
             {altName}

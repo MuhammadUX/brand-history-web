@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "./cn";
 
 const CONTROL =
-  "w-full rounded-md border border-line bg-surface-2 px-3 text-[14px] text-ink placeholder:text-muted transition-colors duration-150 focus:border-link focus:outline-none focus-visible:outline-none disabled:opacity-60";
+  "w-full rounded-md border border-line bg-surface-2 px-3 text-[14px] text-ink placeholder:text-muted transition-colors duration-150 focus:border-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link disabled:opacity-60";
 
 export interface FieldProps {
   label?: React.ReactNode;
@@ -27,6 +27,25 @@ export function Field({
   className,
   children,
 }: FieldProps) {
+  // Deterministic message id (SSR-safe, no hooks) so the error/hint can be
+  // linked to the control via aria-describedby. Requires htmlFor to be set.
+  const msgId = htmlFor ? `${htmlFor}-msg` : undefined;
+
+  // Auto-wire aria-describedby + aria-invalid onto the control when we have an
+  // id and a message, without every call site having to repeat it.
+  let control = children;
+  if (msgId && (error || hint) && React.isValidElement(children)) {
+    const child = children as React.ReactElement<{
+      "aria-describedby"?: string;
+      "aria-invalid"?: boolean | "true" | "false";
+    }>;
+    const existing = child.props["aria-describedby"];
+    control = React.cloneElement(child, {
+      "aria-describedby": existing ? `${existing} ${msgId}` : msgId,
+      ...(error ? { "aria-invalid": true } : {}),
+    });
+  }
+
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
@@ -35,11 +54,15 @@ export function Field({
           {required && <span className="text-danger"> *</span>}
         </label>
       )}
-      {children}
+      {control}
       {error ? (
-        <p className="text-[12px] text-danger">{error}</p>
+        <p id={msgId} className="text-[12px] text-danger">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-[12px] text-muted">{hint}</p>
+        <p id={msgId} className="text-[12px] text-muted">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { cn } from "./cn";
 
 export interface ModalProps {
@@ -28,21 +28,63 @@ export function Modal({
   footer,
   className,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    if (typeof document === "undefined") return;
+
+    // Remember what was focused so we can restore it on close.
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const getFocusable = (): HTMLElement[] => {
+      const root = dialogRef.current;
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null || el === document.activeElement);
     };
-    if (typeof document !== "undefined") {
-      document.addEventListener("keydown", onKey);
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.removeEventListener("keydown", onKey);
-        document.body.style.overflow = prev;
-      };
-    }
-    return undefined;
+
+    // Move focus into the dialog.
+    const focusables = getFocusable();
+    (focusables[0] ?? dialogRef.current)?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab") {
+        // Trap focus within the dialog.
+        const items = getFocusable();
+        if (items.length === 0) {
+          e.preventDefault();
+          return;
+        }
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+      // Restore focus to the trigger.
+      previouslyFocused?.focus?.();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -55,12 +97,14 @@ export function Modal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "w-full max-w-[440px] overflow-hidden rounded-lg bg-surface shadow-modal",
+          "w-full max-w-[440px] overflow-hidden rounded-lg bg-surface shadow-modal focus:outline-none",
           className,
         )}
       >
