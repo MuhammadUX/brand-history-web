@@ -13,18 +13,54 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
+  // null = still establishing the recovery session, true = ready, false = link invalid.
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
-  // Supabase places a recovery session via the URL hash; confirm it's present.
+  // Establish the recovery session from the reset link. With @supabase/ssr the
+  // flow is PKCE: the link returns a `?code=` that must be exchanged for a
+  // session. We also support the legacy hash/implicit flow and an
+  // already-detected session, and only declare the link invalid AFTER trying.
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(!!data.session);
-    });
+    let active = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
       if (event === "PASSWORD_RECOVERY" || session) setHasSession(true);
     });
-    return () => sub.subscription.unsubscribe();
+
+    (async () => {
+      const url = new URL(window.location.href);
+      // Explicit error returned by Supabase (e.g. expired/used link).
+      if (url.searchParams.get("error_description") || url.hash.includes("error")) {
+        if (active) setHasSession(false);
+        return;
+      }
+      // PKCE: exchange the code for a session.
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+        if (active) setHasSession(!exErr);
+        return;
+      }
+      // Already have a session (hash/implicit auto-detected, or signed in)?
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        if (active) setHasSession(true);
+        return;
+      }
+      // Give the client a moment to parse a hash-based recovery, then re-check.
+      setTimeout(async () => {
+        if (!active) return;
+        const { data: d2 } = await supabase.auth.getSession();
+        setHasSession(!!d2.session);
+      }, 800);
+    })();
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -61,6 +97,15 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
           {dict.auth.signIn}
         </Link>
       </div>
+    );
+  }
+
+  // Still establishing the session — don't show the form (or a false "invalid") yet.
+  if (hasSession === null) {
+    return (
+      <p className="text-[13px] leading-5 text-muted" role="status">
+        {dict.auth.processing}
+      </p>
     );
   }
 
