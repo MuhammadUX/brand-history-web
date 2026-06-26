@@ -87,7 +87,6 @@ export default function LoginForm({ locale }: { locale: Locale }) {
       <SubmitButton pending={pending}>
         {pending ? dict.auth.signingIn : dict.auth.signIn}
       </SubmitButton>
-      <p className="text-center text-[11px] text-muted">{dict.auth.demoHint}</p>
       <p className="text-center text-[13px] text-muted">
         {dict.auth.noAccount}{" "}
         <Link

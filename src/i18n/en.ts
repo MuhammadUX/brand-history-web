@@ -343,7 +343,7 @@ const en = {
     registerNeutral:
       "If that email is new, we've sent a verification link — check your inbox.",
     demoNote:
-      "Email delivery isn't enabled in this demo. You can sign in right away with the pre-confirmed demo account: demo@brandhistory.test / Demo#12345",
+      "Didn't get the email within a few minutes? Check your spam folder, then try again.",
     loginTitle: "Welcome back",
     loginSubtitle: "Sign in to your Brand History account.",
     forgotPassword: "Forgot password?",
