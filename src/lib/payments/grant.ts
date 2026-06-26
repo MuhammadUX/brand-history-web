@@ -28,6 +28,9 @@ export interface GrantOpts {
   provider: string;
   ref: string; // provider invoice/payment id
   amountSar: number;
+  /** Saved-card token + display info, when the payer enabled save_card. Stored
+   *  so the renewal cron can charge the card automatically. */
+  card?: { token: string; last4: string | null; brand: string | null };
 }
 
 export interface GrantResult {
@@ -73,6 +76,17 @@ export async function grantProForUser(
       provider: opts.provider,
       current_period_end: periodEndFor(plan),
       updated_at: new Date().toISOString(),
+      // Persist the saved card (if any) so renewals can charge it. Reset the
+      // dunning state on a fresh successful purchase.
+      ...(opts.card
+        ? {
+            card_token: opts.card.token,
+            card_last4: opts.card.last4,
+            card_brand: opts.card.brand,
+            renew_attempts: 0,
+            renewal_state: "ok",
+          }
+        : {}),
     },
     { onConflict: "user_id" }
   );
