@@ -212,6 +212,8 @@ const en = {
     visa: "Visa",
     mastercard: "Mastercard",
     methodsNote: "Demo — payment details aren't collected.",
+    secureNote:
+      "You'll be redirected to Moyasar's secure page to complete payment with mada, Visa, Mastercard, Apple Pay, or STC Pay.",
     consent:
       "I agree to the Terms and consent to processing my data per the Privacy Policy (PDPL).",
     consentRequired: "Please accept the terms to continue.",

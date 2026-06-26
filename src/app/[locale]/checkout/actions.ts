@@ -167,7 +167,10 @@ export async function startCheckout(
     const invoice = await createMoyasarInvoice({
       amountHalalas: amountSar * 100,
       description,
-      callbackUrl: `${SITE_URL}/${locale}/checkout/return`,
+      // Browser redirect after a paid invoice → our verify/return page.
+      successUrl: `${SITE_URL}/${locale}/checkout/return`,
+      // Back button on the hosted page → back to the Pro page.
+      backUrl: `${SITE_URL}/${locale}/pro`,
       metadata: { user_id: user.id, plan },
     });
     return { status: "redirect", url: invoice.url };

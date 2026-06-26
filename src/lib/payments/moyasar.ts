@@ -33,7 +33,10 @@ function authHeader(): string {
 export interface CreateInvoiceInput {
   amountHalalas: number;
   description: string;
-  callbackUrl: string;
+  /** Where the payer is redirected by the browser once the invoice is paid. */
+  successUrl: string;
+  /** Where the payer is redirected if they click "back" on the hosted page. */
+  backUrl: string;
   metadata: Record<string, string>;
 }
 
@@ -51,7 +54,11 @@ export async function createMoyasarInvoice(
       amount: input.amountHalalas,
       currency: "SAR",
       description: input.description,
-      callback_url: input.callbackUrl,
+      // For invoices, success_url is the browser redirect after payment;
+      // callback_url is only a server notification (we use the dashboard webhook
+      // for that), so we set the redirect URLs here instead.
+      success_url: input.successUrl,
+      back_url: input.backUrl,
       metadata: input.metadata,
     }),
     // Never cache payment calls.

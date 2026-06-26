@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import { PRICING, type Plan } from "@/lib/pricing";
 import type { Locale } from "@/lib/types";
-import { runCheckout, startCheckout } from "@/app/[locale]/checkout/actions";
+import { startCheckout } from "@/app/[locale]/checkout/actions";
 import { Button, Checkbox, Badge, Card } from "@/components/ui";
 
 type View = "form" | "success" | "declined";
@@ -24,20 +24,12 @@ export default function CheckoutForm({
   const amount = PRICING[plan].amountSar;
 
   const [consent, setConsent] = useState(false);
-  const [simulateDeclined, setSimulateDeclined] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [view, setView] = useState<View>("form");
 
   const planLabel =
     plan === "annual" ? dict.checkout.planAnnual : dict.checkout.planMonthly;
-
-  const methods = [
-    { id: "stcpay", label: dict.checkout.stcpay, primary: true },
-    { id: "mada", label: dict.checkout.mada, primary: false },
-    { id: "visa", label: dict.checkout.visa, primary: false },
-    { id: "mastercard", label: dict.checkout.mastercard, primary: false },
-  ];
 
   async function onPay() {
     setError("");
@@ -47,38 +39,24 @@ export default function CheckoutForm({
     }
     setPending(true);
     try {
-      // Real-payment path: when simulateDeclined is off, ask the server which
-      // provider is active. Moyasar returns a redirect URL to its hosted page;
-      // the mock provider returns an inline result. The simulate-declined path
-      // always uses the mock runCheckout so the decline UI stays testable.
-      if (!simulateDeclined) {
-        const start = await startCheckout(locale, plan);
-        if (start.status === "redirect") {
-          window.location.assign(start.url);
-          return;
-        }
-        if (start.status === "success" || start.status === "already_pro") {
-          setView("success");
-          router.refresh();
-          return;
-        }
-        if (start.status === "declined") {
-          setView("declined");
-          return;
-        }
-        setError(dict.auth.genericError);
+      // Ask the server to start checkout. With Moyasar active it returns a
+      // redirect URL to the hosted secure payment page; the mock provider
+      // (non-production) resolves inline.
+      const start = await startCheckout(locale, plan);
+      if (start.status === "redirect") {
+        window.location.assign(start.url);
         return;
       }
-
-      const res = await runCheckout(plan, simulateDeclined);
-      if (res.status === "success" || res.status === "already_pro") {
+      if (start.status === "success" || start.status === "already_pro") {
         setView("success");
         router.refresh();
-      } else if (res.status === "declined") {
-        setView("declined");
-      } else {
-        setError(dict.auth.genericError);
+        return;
       }
+      if (start.status === "declined") {
+        setView("declined");
+        return;
+      }
+      setError(dict.auth.genericError);
     } catch {
       setError(dict.auth.genericError);
     } finally {
@@ -129,10 +107,7 @@ export default function CheckoutForm({
           <Button
             type="button"
             variant="primary"
-            onClick={() => {
-              setSimulateDeclined(false);
-              setView("form");
-            }}
+            onClick={() => setView("form")}
           >
             {dict.checkout.retry}
           </Button>
@@ -151,40 +126,15 @@ export default function CheckoutForm({
         <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
           {dict.checkout.methods}
         </h2>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {methods.map((m) => (
-            <span
-              key={m.id}
-              className={`inline-flex items-center gap-1.5 rounded-pill border px-3 py-2 text-[12px] font-semibold ${
-                m.primary
-                  ? "border-transparent bg-ink text-white"
-                  : "border-line text-ink"
-              }`}
-            >
-              {m.label}
-              {m.primary && (
-                <span aria-hidden="true" className="text-link">
-                  ★
-                </span>
-              )}
-            </span>
-          ))}
-        </div>
-        <p className="mt-2 text-[11px] text-muted">{dict.checkout.methodsNote}</p>
+        <p className="mt-2 text-[13px] leading-6 text-muted">
+          {dict.checkout.secureNote}
+        </p>
 
         <div className="mt-6">
           <Checkbox
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
             label={dict.checkout.consent}
-          />
-        </div>
-
-        <div className="mt-4">
-          <Checkbox
-            checked={simulateDeclined}
-            onChange={(e) => setSimulateDeclined(e.target.checked)}
-            label={dict.checkout.simulateDeclined}
           />
         </div>
 
@@ -207,9 +157,6 @@ export default function CheckoutForm({
         >
           {pending ? dict.checkout.paying : dict.checkout.pay(amount)}
         </Button>
-        <p className="mt-3 text-center text-[11px] text-muted">
-          {dict.checkout.mockNote}
-        </p>
       </Card>
 
       {/* Summary */}
