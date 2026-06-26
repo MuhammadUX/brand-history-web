@@ -20,9 +20,6 @@ export default async function VerifyEmailPage({
     <AuthShell locale={typedLocale} title={dict.auth.verifyTitle}>
       <div className="flex flex-col gap-5">
         <p className="text-[13px] leading-5 text-muted">{dict.auth.verifyBody}</p>
-        <p className="rounded-md border border-line bg-surface-2 px-4 py-3 text-[13px] leading-5 text-muted">
-          {dict.auth.demoNote}
-        </p>
         <Button
           href={`/${typedLocale}/login`}
           variant="primary"

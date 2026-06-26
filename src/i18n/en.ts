@@ -366,9 +366,9 @@ const en = {
     resetSuccess: "Your password has been updated. You can now sign in.",
     resetInvalid:
       "This reset link is invalid or has expired. Request a new one.",
-    verifyTitle: "Verify your email",
+    verifyTitle: "Email confirmed",
     verifyBody:
-      "Follow the link we sent to your inbox to finish setting up your account.",
+      "Your email is verified — you can now sign in to your account.",
     goToLogin: "Go to sign in",
     required: "This field is required.",
     consentRequired: "Please accept the terms to continue.",
