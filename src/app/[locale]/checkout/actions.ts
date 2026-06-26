@@ -2,6 +2,8 @@
 
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getPaymentProvider } from "@/lib/payments/payment-provider";
+import { createMoyasarInvoice } from "@/lib/payments/moyasar";
+import { SITE_URL } from "@/lib/seo";
 import {
   FULL_ENTITLEMENTS,
   amountForPlan,
@@ -14,6 +16,10 @@ export type CheckoutResult =
   | { status: "declined"; reason: string }
   | { status: "already_pro" }
   | { status: "error"; message: string };
+
+export type StartCheckoutResult =
+  | { status: "redirect"; url: string }
+  | CheckoutResult;
 
 function periodEnd(plan: Plan): string {
   const d = new Date();
@@ -102,6 +108,73 @@ export async function runCheckout(
   });
 
   return { status: "success" };
+}
+
+/**
+ * Server action: begins a checkout, choosing the provider by PAYMENT_PROVIDER.
+ *
+ * - PAYMENT_PROVIDER==="moyasar" → create a real hosted invoice and return a
+ *   `{ status:"redirect", url }` for the client to navigate to. The buyer pays
+ *   on Moyasar's page, then is redirected to /{locale}/checkout/return. Pro is
+ *   granted by the webhook (primary) and the return page (safety net).
+ * - otherwise (mock) → run the existing synchronous mock checkout in-place.
+ *
+ * Server actions don't know the request locale, so `locale` is passed in (used
+ * to build the callback_url).
+ */
+export async function startCheckout(
+  locale: string,
+  planRaw: string
+): Promise<StartCheckoutResult> {
+  if (!isPlan(planRaw)) {
+    return { status: "error", message: "invalid_plan" };
+  }
+  const plan = planRaw;
+
+  // Mock path — keep the existing behaviour exactly (no decline simulation here;
+  // the form handles that via runCheckout when it wants to test the decline UI).
+  if ((process.env.PAYMENT_PROVIDER ?? "mock") !== "moyasar") {
+    return runCheckout(planRaw, false);
+  }
+
+  // Real (Moyasar) path.
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "unauthenticated" };
+
+  // Already-Pro guard — don't create a new invoice.
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (
+    existing &&
+    (existing.status === "active" || existing.status === "trialing")
+  ) {
+    return { status: "already_pro" };
+  }
+
+  const amountSar = amountForPlan(plan);
+  const description =
+    plan === "annual"
+      ? "Brand History Pro — annual"
+      : "Brand History Pro — monthly";
+
+  try {
+    const invoice = await createMoyasarInvoice({
+      amountHalalas: amountSar * 100,
+      description,
+      callbackUrl: `${SITE_URL}/${locale}/checkout/return`,
+      metadata: { user_id: user.id, plan },
+    });
+    return { status: "redirect", url: invoice.url };
+  } catch (e) {
+    console.error("startCheckout moyasar error:", e);
+    return { status: "error", message: "payment_init_failed" };
+  }
 }
 
 /**

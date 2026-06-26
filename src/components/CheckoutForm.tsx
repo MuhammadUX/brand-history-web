@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import { PRICING, type Plan } from "@/lib/pricing";
 import type { Locale } from "@/lib/types";
-import { runCheckout } from "@/app/[locale]/checkout/actions";
+import { runCheckout, startCheckout } from "@/app/[locale]/checkout/actions";
 import { Button, Checkbox, Badge, Card } from "@/components/ui";
 
 type View = "form" | "success" | "declined";
@@ -47,6 +47,29 @@ export default function CheckoutForm({
     }
     setPending(true);
     try {
+      // Real-payment path: when simulateDeclined is off, ask the server which
+      // provider is active. Moyasar returns a redirect URL to its hosted page;
+      // the mock provider returns an inline result. The simulate-declined path
+      // always uses the mock runCheckout so the decline UI stays testable.
+      if (!simulateDeclined) {
+        const start = await startCheckout(locale, plan);
+        if (start.status === "redirect") {
+          window.location.assign(start.url);
+          return;
+        }
+        if (start.status === "success" || start.status === "already_pro") {
+          setView("success");
+          router.refresh();
+          return;
+        }
+        if (start.status === "declined") {
+          setView("declined");
+          return;
+        }
+        setError(dict.auth.genericError);
+        return;
+      }
+
       const res = await runCheckout(plan, simulateDeclined);
       if (res.status === "success" || res.status === "already_pro") {
         setView("success");
