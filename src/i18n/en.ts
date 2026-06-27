@@ -625,6 +625,8 @@ const en = {
       deleteAllConfirm:
         "Delete all builder runs that haven't been turned into a brand? This can't be undone.",
       errors: {
+        busy:
+          "The AI model is temporarily overloaded (high demand). Nothing was created — please try again in a minute, or switch to the other model.",
         quota:
           "The AI provider's quota was exceeded. The account behind the API key has run out of free quota — enable billing or wait for the quota to reset, then try again.",
         billing:

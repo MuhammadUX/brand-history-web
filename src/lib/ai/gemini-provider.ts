@@ -27,7 +27,9 @@ export class GeminiLlmProvider implements LlmProvider {
 
   constructor(apiKey: string, model?: string) {
     this.apiKey = apiKey;
-    this.model = model || process.env.GEMINI_MODEL || "gemini-flash-latest";
+    // gemini-2.5-flash is GA with steadier capacity than the just-released
+    // "gemini-flash-latest" (3.5), which has been 503-ing under high demand.
+    this.model = model || process.env.GEMINI_MODEL || "gemini-2.5-flash";
   }
 
   async draftBrandProfile(input: DraftInput): Promise<DraftResult> {

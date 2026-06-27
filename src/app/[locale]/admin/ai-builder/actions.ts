@@ -23,6 +23,7 @@ function str(fd: FormData, key: string): string {
 function classifyAiError(e: unknown): string {
   const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
   if (msg.includes("ai_not_configured")) return "not_configured";
+  if (/503|unavailable|overload|high demand|temporarily/.test(msg)) return "busy";
   if (/429|quota|rate.?limit|resource_exhausted/.test(msg)) return "quota";
   if (/credit balance|billing|payment|insufficient|402|too low/.test(msg))
     return "billing";
