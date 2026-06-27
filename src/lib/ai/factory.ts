@@ -81,11 +81,25 @@ class UnconfiguredLlmProvider implements LlmProvider {
  * clear error instead of fake "stub" data.
  */
 export function getLlmProvider(preferred?: string): LlmProvider {
+  // If the operator explicitly chose a model and it's configured, use ONLY that
+  // model — no cross-fallback to the other AI — so the result/error reflects the
+  // model they picked (e.g. a Gemini quota error, not a Claude billing error).
+  if (preferred) {
+    const chosen = buildProvider(preferred.trim().toLowerCase());
+    if (chosen) {
+      console.info(`[llm] using selected provider: ${preferred}`);
+      return chosen;
+    }
+    console.warn(
+      `[llm] selected provider "${preferred}" is not configured — falling back to LLM_PROVIDER chain.`
+    );
+  }
+
   const envList = (process.env.LLM_PROVIDER || "gemini,claude")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const order = [...(preferred ? [preferred] : []), ...envList];
+  const order = [...envList];
   const seen = new Set<string>();
   const deduped: string[] = [];
   const providers: LlmProvider[] = [];

@@ -41,22 +41,29 @@ export class GeminiLlmProvider implements LlmProvider {
       generationConfig: { temperature: 0.2 },
     };
 
-    const res = await fetch(
-      `${API_BASE}/${encodeURIComponent(this.model)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": this.apiKey,
-        },
-        body: JSON.stringify(body),
-        cache: "no-store",
-      }
-    );
+    // Retry transient overload (503) / rate-limit (429) a couple of times with
+    // backoff — these are common right after enabling billing or under load.
+    let res: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      res = await fetch(
+        `${API_BASE}/${encodeURIComponent(this.model)}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": this.apiKey,
+          },
+          body: JSON.stringify(body),
+          cache: "no-store",
+        }
+      );
+      if (res.ok || (res.status !== 503 && res.status !== 429)) break;
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`gemini_failed_${res.status}: ${text.slice(0, 300)}`);
+    if (!res || !res.ok) {
+      const text = res ? await res.text().catch(() => "") : "";
+      throw new Error(`gemini_failed_${res?.status ?? 0}: ${text.slice(0, 300)}`);
     }
 
     const data = (await res.json()) as {
