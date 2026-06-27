@@ -154,7 +154,8 @@ export default async function AdminBrandsPage({
                       : t.dash}
                   </TCell>
                   <TCell className="text-end">
-                    {b.publication_state === "draft" &&
+                    {(b.publication_state === "draft" ||
+                      b.publication_state === "archived") &&
                     access.operator.role === "admin" ? (
                       <DeleteDraftButton
                         brandId={b.id}

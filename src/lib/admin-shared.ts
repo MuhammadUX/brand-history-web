@@ -19,6 +19,7 @@ export const PUBLICATION_STATES = [
   "in_review",
   "approved",
   "unpublished",
+  "archived",
 ] as const;
 export type PublicationState = (typeof PUBLICATION_STATES)[number];
 

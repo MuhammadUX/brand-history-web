@@ -199,6 +199,14 @@ const TRANSITIONS: Record<
   approve: { from: ["in_review"], to: "approved", adminOnly: true },
   publish: { from: ["approved", "unpublished"], to: "published", adminOnly: true },
   unpublish: { from: ["published"], to: "unpublished", adminOnly: false },
+  // Archive (retire) — hidden from the public, kept for the record. Restore
+  // brings it back to an editable draft for re-review.
+  archive: {
+    from: ["published", "unpublished", "approved", "in_review", "draft"],
+    to: "archived",
+    adminOnly: true,
+  },
+  restore: { from: ["archived"], to: "draft", adminOnly: true },
 };
 
 /** Publication state-machine transition with role gating, validation, audit. */
@@ -502,7 +510,12 @@ export async function deleteDraftBrand(
       .eq("id", brandId)
       .maybeSingle();
     if (!brand) return { ok: false, message: "notFound" };
-    if (brand.publication_state !== "draft") {
+    // Only draft or archived brands can be hard-deleted. Live/in-flight brands
+    // (published, in_review, approved, unpublished) must be archived first.
+    if (
+      brand.publication_state !== "draft" &&
+      brand.publication_state !== "archived"
+    ) {
       return { ok: false, message: "notDraft" };
     }
 

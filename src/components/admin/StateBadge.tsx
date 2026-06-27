@@ -16,9 +16,10 @@ const TONES: Record<string, string> = {
   approved: "text-link border-line bg-surface-2",
   // In review → amber "in flight".
   in_review: "text-amber border-amber-line bg-amber-bg",
-  // Draft / unpublished → neutral muted hairline.
+  // Draft / unpublished / archived → neutral muted hairline.
   draft: "text-muted border-line bg-surface-2",
   unpublished: "text-muted border-line bg-surface-2",
+  archived: "text-muted border-line bg-surface-2",
 };
 
 export default function StateBadge({

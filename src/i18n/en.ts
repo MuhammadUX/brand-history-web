@@ -449,6 +449,7 @@ const en = {
         in_review: "In review",
         approved: "Approved",
         unpublished: "Unpublished",
+        archived: "Archived",
       },
     },
     brands: {
@@ -464,7 +465,7 @@ const en = {
       colActions: "Actions",
       delete: "Delete",
       deleteConfirm:
-        "Delete this draft brand permanently? This removes its colors, assets, and timeline. This can't be undone.",
+        "Delete this brand permanently? This removes its colors, assets, and timeline. Only draft or archived brands can be deleted. This can't be undone.",
       empty: "No brands match this filter.",
       dash: "\u2014",
     },
@@ -500,6 +501,8 @@ const en = {
       approve: "Approve",
       publish: "Publish",
       unpublish: "Unpublish",
+      archive: "Archive",
+      restore: "Restore to draft",
       adminOnly: "Admin only",
       transitionDone: "State updated.",
       validationTitle: "Resolve these before publishing:",

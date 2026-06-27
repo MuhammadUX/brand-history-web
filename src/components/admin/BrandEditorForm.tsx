@@ -258,7 +258,9 @@ function StateMachine({
   );
   const vLabels = t as unknown as Record<string, string>;
 
-  function run(action: "submit" | "approve" | "publish" | "unpublish") {
+  function run(
+    action: "submit" | "approve" | "publish" | "unpublish" | "archive" | "restore"
+  ) {
     setValidation(null);
     setMsg(null);
     startTransition(async () => {
@@ -278,12 +280,26 @@ function StateMachine({
 
   const canApprove = role === "admin";
   const canPublish = role === "admin";
+  const isAdmin = role === "admin";
 
-  const buttons: { key: "submit" | "approve" | "publish" | "unpublish"; label: string; show: boolean; disabled: boolean }[] = [
+  const buttons: {
+    key: "submit" | "approve" | "publish" | "unpublish" | "archive" | "restore";
+    label: string;
+    show: boolean;
+    disabled: boolean;
+  }[] = [
     { key: "submit", label: t.submitReview, show: state === "draft", disabled: false },
     { key: "approve", label: t.approve, show: state === "in_review", disabled: !canApprove },
     { key: "publish", label: t.publish, show: state === "approved" || state === "unpublished", disabled: !canPublish },
     { key: "unpublish", label: t.unpublish, show: state === "published", disabled: false },
+    // Archive any non-archived state; Restore from archived. Admin-only.
+    {
+      key: "archive",
+      label: t.archive,
+      show: state !== "archived",
+      disabled: !isAdmin,
+    },
+    { key: "restore", label: t.restore, show: state === "archived", disabled: !isAdmin },
   ];
 
   return (
