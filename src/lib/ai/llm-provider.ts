@@ -1,7 +1,8 @@
-// LlmProvider — clean interface behind which a real Claude/GPT/Gemini impl can
-// be swapped. Sprint 4 ships ONLY a deterministic dev STUB; no network is ever
-// called. All "AI" wording, confidence and source data stays in the back-office;
-// the public site must never surface any of it.
+// LlmProvider — clean interface behind which real providers plug in. Gemini is
+// wired (see gemini-provider.ts); a deterministic dev STUB remains as the final
+// fallback so the pipeline never hard-fails. All "AI" wording, confidence and
+// source data stays in the back-office; the public site must never surface it.
+import { GeminiLlmProvider } from "./gemini-provider";
 
 export type ConfidenceBand = "H" | "M" | "L";
 
@@ -390,14 +391,61 @@ export function isHighConfidenceSourced(meta: FieldMeta | undefined): boolean {
   return !!meta && meta.band === "H" && meta.sources.length > 0;
 }
 
-export function getLlmProvider(): LlmProvider {
-  const provider = (process.env.LLM_PROVIDER || "dev").toLowerCase();
-  switch (provider) {
-    // case "claude": ...
-    // case "gpt": ...
-    // case "gemini": ...
+/**
+ * Build a single provider by key. Returns null if its required key is missing,
+ * so the fallback chain can skip it. (Claude/GPT slots are ready to fill in.)
+ */
+function buildProvider(key: string): LlmProvider | null {
+  switch (key.trim().toLowerCase()) {
+    case "gemini": {
+      const k = process.env.GEMINI_API_KEY;
+      if (!k) return null;
+      return new GeminiLlmProvider(k);
+    }
+    // case "claude": { const k = process.env.ANTHROPIC_API_KEY; ... }
+    // case "gpt":    { const k = process.env.OPENAI_API_KEY; ... }
     case "dev":
-    default:
       return new DevStubLlmProvider();
+    default:
+      return null;
   }
+}
+
+/**
+ * Tries each configured provider in order until one returns without throwing.
+ * This is what lets you run more than one model (e.g. "gemini,dev"): if Gemini
+ * is unconfigured or errors, the next provider handles the request.
+ */
+class FallbackLlmProvider implements LlmProvider {
+  constructor(private providers: LlmProvider[]) {}
+  async draftBrandProfile(input: DraftInput): Promise<DraftResult> {
+    let lastErr: unknown;
+    for (const p of this.providers) {
+      try {
+        return await p.draftBrandProfile(input);
+      } catch (e) {
+        console.error("[llm] provider failed, trying next:", e);
+        lastErr = e;
+      }
+    }
+    throw lastErr ?? new Error("no_llm_provider_available");
+  }
+}
+
+/**
+ * Returns the active provider. LLM_PROVIDER is a comma-separated priority list
+ * (default "gemini,dev"): the first that is configured + succeeds wins, and the
+ * dev stub at the end guarantees the pipeline never hard-fails. Set e.g.
+ * LLM_PROVIDER="gemini" to disable the stub fallback, or "gemini,claude,dev".
+ */
+export function getLlmProvider(): LlmProvider {
+  const list = (process.env.LLM_PROVIDER || "gemini,dev")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const providers = list
+    .map(buildProvider)
+    .filter((p): p is LlmProvider => p !== null);
+  if (providers.length === 0) return new DevStubLlmProvider();
+  return new FallbackLlmProvider(providers);
 }
