@@ -1,5 +1,4 @@
 import { createServerSupabase } from "./supabase-server";
-import { NO_ENTITLEMENTS } from "./pricing";
 import type { Plan } from "./pricing";
 
 export type Entitlements = {
@@ -62,17 +61,28 @@ export function isSubscriptionPro(
 }
 
 /**
- * Server-authoritative entitlement read. Returns the user's subscription
- * entitlements when Pro, otherwise all-false (free / anonymous). The UI must
- * reflect this value and never guess client-side.
+ * Server-authoritative entitlement read.
  *
- * Note: if a row exists but the status is not Pro (canceled / past_due /
- * none), entitlements collapse to all-false regardless of the stored jsonb.
+ * CURRENT MODEL (subscriptions hidden): the product is free for everyone, and
+ * the only thing sign-in changes is removing ads. Every feature is granted to
+ * all visitors; `ad_free` is true only when signed in. Anonymous visitors can
+ * still download — they just see ads.
+ *
+ * (The subscription helpers below are retained, dormant, for a future paid
+ * model — they no longer gate features.)
  */
 export async function getEntitlements(): Promise<Entitlements> {
-  const sub = await getSubscription();
-  if (isSubscriptionPro(sub)) return sub!.entitlements;
-  return { ...NO_ENTITLEMENTS };
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return {
+    ad_free: !!user, // signed in → no ads; anonymous → ads
+    bulk_zip: true,
+    high_res: true,
+    api: false, // no programmatic access offered
+    advanced_search: true,
+  };
 }
 
 /** Convenience: is the current user Pro right now? */

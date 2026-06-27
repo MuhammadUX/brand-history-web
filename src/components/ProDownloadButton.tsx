@@ -124,7 +124,6 @@ export default function ProDownloadButton({
 
   return (
     <Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={busy}>
-      <Badge kind="pro">{dict.nav.proBadge}</Badge>
       {busy && kind === "kit" ? dict.brand.kitDownloading : label}
     </Button>
   );

@@ -29,7 +29,7 @@ export default async function AdSlot({
       title={dict.ad.body}
       body={dict.ad.cta}
       cta={`${dict.ad.removeAds} →`}
-      ctaHref={`/${locale}/pro`}
+      ctaHref={`/${locale}/login`}
     />
   );
 }

@@ -3,7 +3,6 @@ import AccountTabs from "@/components/AccountTabs";
 import FavoritesMerger from "@/components/FavoritesMerger";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getFavoriteBrands } from "@/lib/favorites";
-import { getSubscription } from "@/lib/entitlements";
 import { getDictionary, isLocale } from "@/i18n";
 import type { Locale } from "@/lib/types";
 
@@ -39,10 +38,7 @@ export default async function AccountPage({
     (user.user_metadata?.display_name as string | undefined) ||
     "";
 
-  const [favorites, subscription] = await Promise.all([
-    getFavoriteBrands(),
-    getSubscription(),
-  ]);
+  const favorites = await getFavoriteBrands();
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-content px-6 py-8">
@@ -58,7 +54,6 @@ export default async function AccountPage({
         email={user.email ?? ""}
         displayName={displayName}
         favorites={favorites}
-        subscription={subscription}
       />
     </main>
   );

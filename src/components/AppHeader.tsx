@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { getIsPro } from "@/lib/entitlements";
 import { getUnreadNotificationCount } from "@/lib/notifications";
 import AccountMenu from "./AccountMenu";
 import HeaderBar from "./HeaderBar";
@@ -38,13 +37,13 @@ export default async function AppHeader({ locale }: { locale: Locale }) {
     role = profile?.role;
   }
 
-  const isPro = user ? await getIsPro() : false;
   const unread = user ? await getUnreadNotificationCount() : 0;
 
-  const proPill =
+  // Subscriptions are hidden in the current free model, so there is no "Get Pro"
+  // CTA. Anonymous visitors get a prominent Sign in pill (signing in removes
+  // ads); signed-in visitors get notifications + the account menu.
+  const signInPill =
     "inline-flex h-[42px] shrink-0 items-center rounded-pill bg-ink px-[18px] text-[13.5px] font-semibold text-white transition-colors duration-150 hover:bg-black";
-  const signInCls =
-    "hidden h-[42px] shrink-0 items-center rounded-pill border border-line bg-surface px-3.5 text-[13.5px] font-semibold text-ink transition-colors duration-150 hover:bg-surface-2 sm:inline-flex";
 
   const authSlot = user ? (
     <>
@@ -65,25 +64,11 @@ export default async function AppHeader({ locale }: { locale: Locale }) {
         )}
       </Link>
       <AccountMenu locale={locale} displayName={displayName} role={role} />
-      {isPro ? (
-        <Link href={`/${locale}/account`} className={proPill}>
-          {dict.nav.proBadge}
-        </Link>
-      ) : (
-        <Link href={`/${locale}/pro`} className={proPill}>
-          {dict.nav.getPro}
-        </Link>
-      )}
     </>
   ) : (
-    <>
-      <Link href={`/${locale}/login`} className={signInCls}>
-        {dict.nav.login}
-      </Link>
-      <Link href={`/${locale}/pro`} className={proPill}>
-        {dict.nav.getPro}
-      </Link>
-    </>
+    <Link href={`/${locale}/login`} className={signInPill}>
+      {dict.nav.login}
+    </Link>
   );
 
   return <HeaderBar locale={locale} authSlot={authSlot} />;

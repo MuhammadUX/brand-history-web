@@ -279,7 +279,7 @@ const en = {
     tag: "Ad",
     body: "Your brand here — reach designers and founders across the region.",
     cta: "Advertise with us",
-    removeAds: "Remove ads with Pro",
+    removeAds: "Sign in to remove ads",
   },
   suggest: {
     title: "Suggest a brand",
