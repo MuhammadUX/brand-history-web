@@ -1,9 +1,7 @@
-// LlmProvider — clean interface behind which real providers plug in. Gemini is
-// wired (see gemini-provider.ts); a deterministic dev STUB remains as the final
-// fallback so the pipeline never hard-fails. All "AI" wording, confidence and
-// source data stays in the back-office; the public site must never surface it.
-import { GeminiLlmProvider } from "./gemini-provider";
-import { ClaudeLlmProvider } from "./claude-provider";
+// LlmProvider — clean interface + shared types + the deterministic dev STUB.
+// This module must stay free of server-only imports (no next/headers, no
+// Supabase) so client components can import its types/helpers. The real
+// providers and the selection factory live in ./factory (server-only).
 
 export type ConfidenceBand = "H" | "M" | "L";
 
@@ -371,100 +369,14 @@ export class DevStubLlmProvider implements LlmProvider {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Factory — primary -> fallback routing                                     */
+/*  Gating helper                                                             */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Returns the configured LlmProvider. Reads LLM_PROVIDER (default "dev").
- *
- * When real providers are wired up they plug in here, e.g.:
- *
- *   case "claude": return new ClaudeLlmProvider(process.env.ANTHROPIC_API_KEY!);
- *   case "gpt":    return new OpenAiLlmProvider(process.env.OPENAI_API_KEY!);
- *   case "gemini": return new GeminiLlmProvider(process.env.GOOGLE_API_KEY!);
- *
- * A production factory would also wrap the primary provider with a fallback
- * (primary -> fallback) so a provider outage degrades gracefully. No external
- * keys are available in Sprint 4, so we always return the deterministic stub.
- */
 /** Gating rule: an item is bulk-acceptable only if band is H AND it is sourced. */
 export function isHighConfidenceSourced(meta: FieldMeta | undefined): boolean {
   return !!meta && meta.band === "H" && meta.sources.length > 0;
 }
 
-/**
- * Build a single provider by key. Returns null if its required key is missing,
- * so the fallback chain can skip it. (Claude/GPT slots are ready to fill in.)
- */
-function buildProvider(key: string): LlmProvider | null {
-  switch (key.trim().toLowerCase()) {
-    case "gemini": {
-      const k = process.env.GEMINI_API_KEY;
-      if (!k) return null;
-      return new GeminiLlmProvider(k);
-    }
-    case "claude": {
-      const k = process.env.ANTHROPIC_API_KEY;
-      if (!k) return null;
-      return new ClaudeLlmProvider(k);
-    }
-    // case "gpt": { const k = process.env.OPENAI_API_KEY; ... }
-    case "dev":
-      return new DevStubLlmProvider();
-    default:
-      return null;
-  }
-}
-
-/** Provider keys the operator can pick in the AI builder UI. */
-export const SELECTABLE_PROVIDERS = ["gemini", "claude"] as const;
-export type ProviderKey = (typeof SELECTABLE_PROVIDERS)[number];
-
-/**
- * Tries each configured provider in order until one returns without throwing.
- * This is what lets you run more than one model (e.g. "gemini,dev"): if Gemini
- * is unconfigured or errors, the next provider handles the request.
- */
-class FallbackLlmProvider implements LlmProvider {
-  constructor(private providers: LlmProvider[]) {}
-  async draftBrandProfile(input: DraftInput): Promise<DraftResult> {
-    let lastErr: unknown;
-    for (const p of this.providers) {
-      try {
-        return await p.draftBrandProfile(input);
-      } catch (e) {
-        console.error("[llm] provider failed, trying next:", e);
-        lastErr = e;
-      }
-    }
-    throw lastErr ?? new Error("no_llm_provider_available");
-  }
-}
-
-/**
- * Returns the active provider.
- *
- * `preferred` (from the operator's per-run choice in the AI builder) is tried
- * first; then the LLM_PROVIDER priority list (default "gemini,claude,dev"); the
- * dev stub at the end guarantees the pipeline never hard-fails. The first
- * configured provider that succeeds wins.
- */
-export function getLlmProvider(preferred?: string): LlmProvider {
-  const envList = (process.env.LLM_PROVIDER || "gemini,claude,dev")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  // Preferred choice leads; dedupe while preserving order.
-  const order = [...(preferred ? [preferred] : []), ...envList];
-  const seen = new Set<string>();
-  const providers: LlmProvider[] = [];
-  for (const key of order) {
-    const k = key.trim().toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    const p = buildProvider(k);
-    if (p) providers.push(p);
-  }
-  if (providers.length === 0) return new DevStubLlmProvider();
-  return new FallbackLlmProvider(providers);
-}
+// NOTE: the provider-selection factory (getLlmProvider) lives in ./factory,
+// which is server-only (it pulls in the grounded providers + Supabase). Keep
+// it out of this module so client components can import these types safely.

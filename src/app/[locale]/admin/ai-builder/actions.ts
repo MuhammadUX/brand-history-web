@@ -10,10 +10,10 @@ import {
   type Operator,
 } from "@/lib/admin";
 import {
-  getLlmProvider,
   isHighConfidenceSourced,
   type BrandDraft,
 } from "@/lib/ai/llm-provider";
+import { getLlmProvider } from "@/lib/ai/factory";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
