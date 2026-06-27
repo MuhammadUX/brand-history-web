@@ -25,11 +25,19 @@ function buildProvider(key: string): LlmProvider | null {
   switch (key.trim().toLowerCase()) {
     case "gemini": {
       const k = process.env.GEMINI_API_KEY;
-      return k ? new GeminiLlmProvider(k) : null;
+      if (!k) {
+        console.warn("[llm] gemini requested but GEMINI_API_KEY is not set — skipping");
+        return null;
+      }
+      return new GeminiLlmProvider(k);
     }
     case "claude": {
       const k = process.env.ANTHROPIC_API_KEY;
-      return k ? new ClaudeLlmProvider(k) : null;
+      if (!k) {
+        console.warn("[llm] claude requested but ANTHROPIC_API_KEY is not set — skipping");
+        return null;
+      }
+      return new ClaudeLlmProvider(k);
     }
     // case "gpt": { const k = process.env.OPENAI_API_KEY; ... }
     case "dev":
@@ -76,6 +84,12 @@ export function getLlmProvider(preferred?: string): LlmProvider {
     const p = buildProvider(k);
     if (p) providers.push(p);
   }
-  if (providers.length === 0) return new DevStubLlmProvider();
+  if (providers.length === 0) {
+    console.warn(
+      `[llm] no real provider configured (order: ${order.join(",") || "none"}) — using dev stub. Set GEMINI_API_KEY / ANTHROPIC_API_KEY in the environment.`
+    );
+    return new DevStubLlmProvider();
+  }
+  console.info(`[llm] using providers in order: ${order.join(",")}`);
   return new FallbackLlmProvider(providers);
 }

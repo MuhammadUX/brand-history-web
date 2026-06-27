@@ -15,6 +15,7 @@ import {
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import StateBadge from "@/components/admin/StateBadge";
+import DeleteDraftButton from "@/components/admin/DeleteDraftButton";
 
 export const dynamic = "force-dynamic";
 
@@ -96,12 +97,15 @@ export default async function AdminBrandsPage({
           <TCell head className="hidden lg:table-cell">
             {t.colUpdated}
           </TCell>
+          <TCell head>
+            <span className="sr-only">{t.colActions}</span>
+          </TCell>
         </THead>
         <tbody>
           {!brands || brands.length === 0 ? (
             <tr>
               <td
-                colSpan={5}
+                colSpan={6}
                 className="px-4 py-10 text-center text-[14px] text-muted"
               >
                 {t.empty}
@@ -148,6 +152,16 @@ export default async function AdminBrandsPage({
                           typedLocale,
                         )
                       : t.dash}
+                  </TCell>
+                  <TCell className="text-end">
+                    {b.publication_state === "draft" &&
+                    access.operator.role === "admin" ? (
+                      <DeleteDraftButton
+                        brandId={b.id}
+                        label={t.delete}
+                        confirmText={t.deleteConfirm}
+                      />
+                    ) : null}
                   </TCell>
                 </TRow>
               );

@@ -461,6 +461,10 @@ const en = {
       colClaim: "Claim",
       colSector: "Sector",
       colUpdated: "Updated",
+      colActions: "Actions",
+      delete: "Delete",
+      deleteConfirm:
+        "Delete this draft brand permanently? This removes its colors, assets, and timeline. This can't be undone.",
       empty: "No brands match this filter.",
       dash: "\u2014",
     },

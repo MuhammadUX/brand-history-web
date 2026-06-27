@@ -477,3 +477,55 @@ export async function deleteTimeline(brandId: string, entryId: string): Promise<
     return { ok: false, message: "forbidden" };
   }
 }
+
+export interface DeleteBrandResult {
+  ok: boolean;
+  message?: "forbidden" | "notDraft" | "notFound" | "error";
+}
+
+/**
+ * Delete a brand — restricted to ADMINS and to brands still in `draft` state
+ * (published / in-review / archived brands must be archived, not hard-deleted).
+ * Removes child rows first, then the brand. Used to clean up bad AI-builder
+ * drafts.
+ */
+export async function deleteDraftBrand(
+  brandId: string
+): Promise<DeleteBrandResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    if (operator.role !== "admin") return { ok: false, message: "forbidden" };
+
+    const { data: brand } = await supabase
+      .from("brands")
+      .select("id, name_en, publication_state")
+      .eq("id", brandId)
+      .maybeSingle();
+    if (!brand) return { ok: false, message: "notFound" };
+    if (brand.publication_state !== "draft") {
+      return { ok: false, message: "notDraft" };
+    }
+
+    // Remove children explicitly (don't rely on cascade), then the brand.
+    await supabase.from("brand_colors").delete().eq("brand_id", brandId);
+    await supabase.from("brand_assets").delete().eq("brand_id", brandId);
+    await supabase.from("timeline_entries").delete().eq("brand_id", brandId);
+    await supabase.from("favorites").delete().eq("brand_id", brandId);
+    await supabase.from("downloads").delete().eq("brand_id", brandId);
+
+    const { error } = await supabase.from("brands").delete().eq("id", brandId);
+    if (error) {
+      console.error("deleteDraftBrand error:", error.message);
+      return { ok: false, message: "error" };
+    }
+
+    await writeAudit(supabase, operator, "brand_deleted", "brand", brandId, {
+      name_en: brand.name_en,
+    });
+    revalidatePath("/");
+    return { ok: true };
+  } catch (e) {
+    console.error("deleteDraftBrand exception:", e);
+    return { ok: false, message: "forbidden" };
+  }
+}
