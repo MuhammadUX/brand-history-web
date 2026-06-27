@@ -48,6 +48,10 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     url: str(fd, "url") || null,
   };
 
+  // Operator-selected AI provider for this run (gemini | claude). Falls back to
+  // the env priority list if blank/unknown.
+  const aiProvider = str(fd, "ai_provider");
+
   // Create the run in 'gathering' state first (auditable, cancellable).
   const { data: run, error } = await supabase
     .from("profile_builder_runs")
@@ -69,13 +73,14 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
   await writeAudit(supabase, operator, "ai_run_created", "profile_builder_run", run.id, {
     input_name,
     hints,
+    ai_provider: aiProvider || "(default)",
   });
 
   // Run the (synchronous) stub provider. NEVER calls a real network.
   let draft: BrandDraft;
   let findings: string;
   try {
-    const provider = getLlmProvider();
+    const provider = getLlmProvider(aiProvider);
     const result = await provider.draftBrandProfile({
       name: input_name,
       hints,

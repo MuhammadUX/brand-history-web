@@ -3,6 +3,7 @@
 // fallback so the pipeline never hard-fails. All "AI" wording, confidence and
 // source data stays in the back-office; the public site must never surface it.
 import { GeminiLlmProvider } from "./gemini-provider";
+import { ClaudeLlmProvider } from "./claude-provider";
 
 export type ConfidenceBand = "H" | "M" | "L";
 
@@ -402,14 +403,22 @@ function buildProvider(key: string): LlmProvider | null {
       if (!k) return null;
       return new GeminiLlmProvider(k);
     }
-    // case "claude": { const k = process.env.ANTHROPIC_API_KEY; ... }
-    // case "gpt":    { const k = process.env.OPENAI_API_KEY; ... }
+    case "claude": {
+      const k = process.env.ANTHROPIC_API_KEY;
+      if (!k) return null;
+      return new ClaudeLlmProvider(k);
+    }
+    // case "gpt": { const k = process.env.OPENAI_API_KEY; ... }
     case "dev":
       return new DevStubLlmProvider();
     default:
       return null;
   }
 }
+
+/** Provider keys the operator can pick in the AI builder UI. */
+export const SELECTABLE_PROVIDERS = ["gemini", "claude"] as const;
+export type ProviderKey = (typeof SELECTABLE_PROVIDERS)[number];
 
 /**
  * Tries each configured provider in order until one returns without throwing.
@@ -433,19 +442,29 @@ class FallbackLlmProvider implements LlmProvider {
 }
 
 /**
- * Returns the active provider. LLM_PROVIDER is a comma-separated priority list
- * (default "gemini,dev"): the first that is configured + succeeds wins, and the
- * dev stub at the end guarantees the pipeline never hard-fails. Set e.g.
- * LLM_PROVIDER="gemini" to disable the stub fallback, or "gemini,claude,dev".
+ * Returns the active provider.
+ *
+ * `preferred` (from the operator's per-run choice in the AI builder) is tried
+ * first; then the LLM_PROVIDER priority list (default "gemini,claude,dev"); the
+ * dev stub at the end guarantees the pipeline never hard-fails. The first
+ * configured provider that succeeds wins.
  */
-export function getLlmProvider(): LlmProvider {
-  const list = (process.env.LLM_PROVIDER || "gemini,dev")
+export function getLlmProvider(preferred?: string): LlmProvider {
+  const envList = (process.env.LLM_PROVIDER || "gemini,claude,dev")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const providers = list
-    .map(buildProvider)
-    .filter((p): p is LlmProvider => p !== null);
+  // Preferred choice leads; dedupe while preserving order.
+  const order = [...(preferred ? [preferred] : []), ...envList];
+  const seen = new Set<string>();
+  const providers: LlmProvider[] = [];
+  for (const key of order) {
+    const k = key.trim().toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const p = buildProvider(k);
+    if (p) providers.push(p);
+  }
   if (providers.length === 0) return new DevStubLlmProvider();
   return new FallbackLlmProvider(providers);
 }
