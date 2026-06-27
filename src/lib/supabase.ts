@@ -1,13 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Publishable-by-design dev keys (RLS-protected; anon can only read published rows).
-// Used as a fallback so the app deploys without extra env config. Override via env in prod.
-const FALLBACK_URL = "https://osivlxbygjdluzuckvpo.supabase.co";
-const FALLBACK_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaXZseGJ5Z2pkbHV6dWNrdnBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTE5NjQsImV4cCI6MjA5NzgyNzk2NH0.ldGSInsBFa3-PTOdD33AjU9DMIQKXnouL1xkxiQH6c4";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_ANON_KEY;
+// No hardcoded fallback: each environment (local / staging / production) MUST set
+// its own Supabase URL + anon key. A missing var fails fast (below) rather than
+// silently connecting to the wrong database — critical now that staging and
+// production are separate projects.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Server-side Supabase client using the anon (publishable) key.
