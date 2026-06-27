@@ -27,7 +27,40 @@ export async function middleware(request: NextRequest) {
   });
 
   // Touch the user to trigger a token refresh when needed.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // SEC-5: belt-and-suspenders gate for the admin area. Pages/actions already
+  // guard server-side; this avoids flashing the admin shell to non-operators
+  // and short-circuits unauthenticated traffic at the edge. Fail-safe: on any
+  // error we fall through to the page-level guard rather than locking the site.
+  const adminMatch = request.nextUrl.pathname.match(/^\/([^/]+)\/admin(\/|$)/);
+  if (adminMatch) {
+    const locale = adminMatch[1];
+    try {
+      let isOperator = false;
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+        const role = profile?.role;
+        isOperator = role === "editor" || role === "admin";
+      }
+      if (!isOperator) {
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = `/${locale}/login`;
+        loginUrl.search = `?next=${encodeURIComponent(
+          request.nextUrl.pathname
+        )}`;
+        return NextResponse.redirect(loginUrl);
+      }
+    } catch {
+      // Fall through to the existing page-level guard on any failure.
+    }
+  }
 
   return response;
 }

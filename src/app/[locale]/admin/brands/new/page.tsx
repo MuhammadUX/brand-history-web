@@ -39,7 +39,12 @@ export default async function NewBrandPage({
       .select("name, region")
       .eq("id", from)
       .maybeSingle();
-    if (data) prefill = { name_en: data.name ?? "", region: data.region ?? "KSA" };
+    if (data)
+      prefill = {
+        name_en: data.name ?? "",
+        region: data.region ?? "KSA",
+        suggestionId: from,
+      };
   }
 
   return (

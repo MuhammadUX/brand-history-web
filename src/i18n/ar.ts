@@ -685,6 +685,8 @@ const ar: Dictionary = {
       colDate: "تاريخ الإرسال",
       markReviewed: "وضع كمراجَع",
       createBrand: "إنشاء علامة",
+      dismiss: "تجاهل",
+      dismissConfirm: "تجاهل هذا الاقتراح؟ سيؤدي ذلك إلى حذفه نهائيًا.",
       statusNew: "جديد",
       statusReviewed: "تمت المراجعة",
     },

@@ -18,6 +18,8 @@ const initial: ActionResult = { ok: false };
 export interface BrandPrefill {
   name_en?: string;
   region?: string;
+  /** When creating from a public suggestion, its id (marked reviewed on save). */
+  suggestionId?: string;
 }
 
 export default function BrandEditorForm({
@@ -103,6 +105,13 @@ export default function BrandEditorForm({
             {t.sectionBasics}
           </h2>
           {!isNew && <input type="hidden" name="row_version" value={rowVersion} />}
+          {isNew && prefill?.suggestionId && (
+            <input
+              type="hidden"
+              name="suggestion_id"
+              value={prefill.suggestionId}
+            />
+          )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label={t.nameEn} htmlFor="name_en" required>

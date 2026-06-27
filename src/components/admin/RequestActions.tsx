@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
 import { Button } from "@/components/ui";
-import { markRequestReviewed } from "@/app/[locale]/admin/requests/actions";
+import {
+  markRequestReviewed,
+  dismissSuggestion,
+} from "@/app/[locale]/admin/requests/actions";
 
 export default function RequestActions({
   locale,
@@ -40,6 +43,21 @@ export default function RequestActions({
       )}
       <Button href={`/${locale}/admin/brands/new?from=${id}`} variant="primary" size="sm">
         {t.createBrand}
+      </Button>
+      <Button
+        type="button"
+        variant="danger"
+        size="sm"
+        disabled={pending}
+        onClick={() => {
+          if (!window.confirm(t.dismissConfirm)) return;
+          start(async () => {
+            await dismissSuggestion(locale, id);
+            router.refresh();
+          });
+        }}
+      >
+        {t.dismiss}
       </Button>
     </div>
   );

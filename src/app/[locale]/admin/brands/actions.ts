@@ -104,6 +104,31 @@ export async function createBrand(
       name_en,
       slug,
     });
+
+    // AI-2: if this brand was created from a public suggestion, mark that
+    // suggestion handled so it drops out of the dashboard "pending" count.
+    const suggestionId = nullableStr(fd, "suggestion_id");
+    if (suggestionId) {
+      const { error: sugErr } = await supabase
+        .from("brand_suggestions")
+        .update({ status: "reviewed" })
+        .eq("id", suggestionId);
+      if (sugErr) {
+        console.error("createBrand: mark suggestion reviewed:", sugErr.message);
+      } else {
+        await writeAudit(
+          supabase,
+          operator,
+          "reviewed",
+          "brand_suggestion",
+          suggestionId,
+          { via: "create_brand", brand_id: data.id }
+        );
+        revalidatePath(`/${locale}/admin/requests`);
+        revalidatePath(`/${locale}/admin`);
+      }
+    }
+
     revalidatePath(`/${locale}/admin/brands`);
     return { ok: true, message: "saved", id: data.id };
   } catch {

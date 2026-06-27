@@ -686,6 +686,8 @@ const en = {
       colDate: "Submitted",
       markReviewed: "Mark reviewed",
       createBrand: "Create brand",
+      dismiss: "Dismiss",
+      dismissConfirm: "Dismiss this suggestion? This permanently deletes it.",
       statusNew: "New",
       statusReviewed: "Reviewed",
     },
