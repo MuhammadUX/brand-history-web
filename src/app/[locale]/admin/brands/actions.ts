@@ -288,11 +288,16 @@ export async function transitionBrand(
 
 /* ---------------- child collection actions (colors / assets / timeline) ---------------- */
 
-/** Result of a child-collection mutation (colors / assets / timeline). */
+/** Result of a child-collection mutation (colors / assets / timeline / fonts / guidelines / applications). */
 export interface ChildResult {
   ok: boolean;
   /** dictionary key under admin.editor for a user-facing error, when ok=false */
-  message?: "childPublished" | "saveError" | "forbidden" | "conflict";
+  message?:
+    | "childPublished"
+    | "archivedFrozen"
+    | "saveError"
+    | "forbidden"
+    | "conflict";
 }
 
 /** A minimal Supabase result shape — only the error field matters here. */
@@ -326,15 +331,24 @@ const EDITABLE_CHILD_STATES: PublicationState[] = [
 async function loadEditableBrand(
   supabase: Awaited<ReturnType<typeof createServerSupabase>>,
   brandId: string
-): Promise<{ ok: true; rowVersion: number } | { ok: false; reason: "childPublished" | "saveError" }> {
+): Promise<
+  | { ok: true; rowVersion: number }
+  | { ok: false; reason: "childPublished" | "archivedFrozen" | "saveError" }
+> {
   const { data: brand, error } = await supabase
     .from("brands")
     .select("publication_state,row_version")
     .eq("id", brandId)
     .maybeSingle();
   if (error || !brand) return { ok: false, reason: "saveError" };
-  if (!EDITABLE_CHILD_STATES.includes(brand.publication_state as PublicationState)) {
-    return { ok: false, reason: "childPublished" };
+  const stateNow = brand.publication_state as PublicationState;
+  if (!EDITABLE_CHILD_STATES.includes(stateNow)) {
+    // Distinguish an archived (frozen, restore-first) brand from a published one
+    // so the editor can surface the correct reason + restore hint (CMS-4).
+    return {
+      ok: false,
+      reason: stateNow === "archived" ? "archivedFrozen" : "childPublished",
+    };
   }
   return { ok: true, rowVersion: brand.row_version ?? 0 };
 }
@@ -524,6 +538,170 @@ export async function deleteTimeline(brandId: string, entryId: string): Promise<
     const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
     if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, "timeline_removed", "brand", brandId, { entry_id: entryId });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+/* ---------------- child collection actions (fonts / guidelines / applications) ---------------- */
+
+export async function saveFont(
+  brandId: string,
+  fontId: string | null,
+  fd: FormData
+): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const payload = {
+      brand_id: brandId,
+      family: str(fd, "family") || "Font",
+      role: nullableStr(fd, "role"),
+      specimen_en: nullableStr(fd, "specimen_en"),
+      specimen_ar: nullableStr(fd, "specimen_ar"),
+      weights: nullableStr(fd, "weights"),
+      policy: (str(fd, "policy") || "specimen_only") as
+        | "host"
+        | "link_out"
+        | "specimen_only",
+      license: nullableStr(fd, "license"),
+      foundry: nullableStr(fd, "foundry"),
+      source_url: nullableStr(fd, "source_url"),
+      css_stack: nullableStr(fd, "css_stack"),
+      sort_order: intOrNull(fd, "sort_order") ?? 0,
+    };
+    const res = fontId
+      ? await supabase.from("brand_fonts").update(payload).eq("id", fontId)
+      : await supabase.from("brand_fonts").insert(payload);
+    if (!isOk(res, "saveFont")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, fontId ? "font_updated" : "font_added", "brand", brandId, {
+      font_id: fontId,
+      family: payload.family,
+    });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+export async function deleteFont(brandId: string, fontId: string): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const res = await supabase.from("brand_fonts").delete().eq("id", fontId);
+    if (!isOk(res, "deleteFont")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, "font_removed", "brand", brandId, { font_id: fontId });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+export async function saveGuideline(
+  brandId: string,
+  guidelineId: string | null,
+  fd: FormData
+): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const payload = {
+      brand_id: brandId,
+      kind: (str(fd, "kind") || "do") as "do" | "dont",
+      text_en: str(fd, "text_en") || "Guideline",
+      text_ar: nullableStr(fd, "text_ar"),
+      sort_order: intOrNull(fd, "sort_order") ?? 0,
+    };
+    const res = guidelineId
+      ? await supabase.from("brand_guidelines").update(payload).eq("id", guidelineId)
+      : await supabase.from("brand_guidelines").insert(payload);
+    if (!isOk(res, "saveGuideline")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, guidelineId ? "guideline_updated" : "guideline_added", "brand", brandId, {
+      guideline_id: guidelineId,
+      kind: payload.kind,
+    });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+export async function deleteGuideline(brandId: string, guidelineId: string): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const res = await supabase.from("brand_guidelines").delete().eq("id", guidelineId);
+    if (!isOk(res, "deleteGuideline")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, "guideline_removed", "brand", brandId, { guideline_id: guidelineId });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+export async function saveApplication(
+  brandId: string,
+  applicationId: string | null,
+  fd: FormData
+): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const payload = {
+      brand_id: brandId,
+      context: str(fd, "context") || "app_icon",
+      image_url: nullableStr(fd, "image_url"),
+      caption_en: nullableStr(fd, "caption_en"),
+      caption_ar: nullableStr(fd, "caption_ar"),
+      bg_color: nullableStr(fd, "bg_color"),
+      sort_order: intOrNull(fd, "sort_order") ?? 0,
+    };
+    const res = applicationId
+      ? await supabase.from("brand_applications").update(payload).eq("id", applicationId)
+      : await supabase.from("brand_applications").insert(payload);
+    if (!isOk(res, "saveApplication")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, applicationId ? "application_updated" : "application_added", "brand", brandId, {
+      application_id: applicationId,
+      context: payload.context,
+    });
+    revalidatePath("/");
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "forbidden" };
+  }
+}
+
+export async function deleteApplication(brandId: string, applicationId: string): Promise<ChildResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    const gate = await loadEditableBrand(supabase, brandId);
+    if (!gate.ok) return { ok: false, message: gate.reason };
+    const res = await supabase.from("brand_applications").delete().eq("id", applicationId);
+    if (!isOk(res, "deleteApplication")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
+    await writeAudit(supabase, operator, "application_removed", "brand", brandId, { application_id: applicationId });
     revalidatePath("/");
     return { ok: true };
   } catch {

@@ -81,7 +81,12 @@ export default function BrandEditorForm({
           {t.slugTaken}
         </p>
       )}
-      {(state.message === "saveError" || state.message === "forbidden") && (
+      {state.message === "forbidden" && (
+        <p className="rounded-md border border-danger/30 bg-[#fdeced] px-3 py-2 text-[14px] text-danger">
+          {t.forbidden}
+        </p>
+      )}
+      {state.message === "saveError" && (
         <p className="rounded-md border border-line bg-surface-2 px-3 py-2 text-[14px] text-ink">
           {t.saveError}
         </p>
@@ -326,7 +331,12 @@ function StateMachine({
           {t.conflict}
         </p>
       )}
-      {(msg === "saveError" || msg === "forbidden") && (
+      {msg === "forbidden" && (
+        <p className="mb-3 rounded-md border border-danger/30 bg-[#fdeced] px-3 py-2 text-[14px] text-danger">
+          {t.forbidden}
+        </p>
+      )}
+      {msg === "saveError" && (
         <p className="mb-3 rounded-md border border-line bg-surface-2 px-3 py-2 text-[14px] text-ink">
           {t.saveError}
         </p>
