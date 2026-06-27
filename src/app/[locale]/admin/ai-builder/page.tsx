@@ -23,6 +23,10 @@ import StartRunButton from "@/components/admin/StartRunButton";
 import { startRun } from "./actions";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+// startRun schedules the web-grounded provider call (30–90s) via after() in this
+// segment's invocation; give the function headroom so after() isn't cut short.
+export const maxDuration = 300;
 
 export default async function AiBuilderStart({
   params,

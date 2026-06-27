@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { after } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import {
   requireOperatorAction,
@@ -11,29 +11,10 @@ import {
   type Operator,
 } from "@/lib/admin";
 import { isHighConfidenceSourced, type BrandDraft } from "@/lib/ai/llm-provider";
-// classifyAiError lives in ./classify-error so the worker route can reuse it
-// (DRY). A "use server" module may only export async functions, so it is NOT
-// re-exported from here — import it from "@/lib/ai/classify-error" directly.
-import { classifyAiError } from "@/lib/ai/classify-error";
+import { runDraftWorker } from "@/lib/ai/run-worker";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
-}
-
-/**
- * Build an absolute origin for server-to-server calls. Prefer the live request
- * host (so Preview/Prod each call themselves) and fall back to the configured
- * site URL when headers are unavailable.
- */
-async function absoluteOrigin(): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  if (host) return `${proto}://${host}`;
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
-    /\/$/,
-    ""
-  );
 }
 
 async function operatorClient() {
@@ -43,14 +24,19 @@ async function operatorClient() {
 }
 
 /**
- * Step 1: create a 'gathering' run, then hand the long (30–90s, web-grounded)
- * provider call off to a dedicated background route and redirect immediately.
+ * Step 1: create a 'gathering' run, then schedule the long (30–90s, web-grounded)
+ * provider call via `after()` in THIS same server-action invocation and redirect
+ * immediately.
  *
- * This action stays fast (~1s): the background route returns 202 right away and
- * does the real work in an `after()` callback, so the form never blocks and the
- * serverless function can't be killed mid-redirect. The operator's chosen
- * provider is persisted inside `hints.ai_provider` so the worker uses ONLY that
- * model (provider isolation) — no schema migration needed.
+ * We deliberately do NOT make a server-to-server fetch to our own
+ * `/api/ai-builder/run` route: on Vercel preview deployments, Deployment
+ * Protection intercepts that self-call before it reaches the route, so the run
+ * stayed 'gathering' forever. `after()` runs the worker after the response/redirect
+ * is sent, inside the same function (bounded by the page's maxDuration), which
+ * avoids the protection wall entirely.
+ *
+ * The operator's chosen provider is persisted inside `hints.ai_provider` so the
+ * worker uses ONLY that model (provider isolation) — no schema migration needed.
  */
 export async function startRun(locale: string, fd: FormData): Promise<void> {
   const { operator, supabase } = await operatorClient();
@@ -100,41 +86,11 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     ai_provider: aiProvider || "(default)",
   });
 
-  // Kick off the background worker. The route returns 202 immediately and runs
-  // the long provider call in an after() callback, so this await is ~1s. If the
-  // kickoff itself fails, mark the run failed so the user sees a clear error
-  // rather than an eternal 'gathering'.
-  try {
-    const origin = await absoluteOrigin();
-    const res = await fetch(`${origin}/api/ai-builder/run`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-internal-secret": process.env.CRON_SECRET ?? "",
-      },
-      body: JSON.stringify({ runId: run.id }),
-      // Don't let a slow/hung kickoff block the redirect indefinitely.
-      cache: "no-store",
-    });
-    if (!res.ok && res.status !== 202 && res.status !== 200) {
-      throw new Error(`kickoff_failed_${res.status}`);
-    }
-  } catch (e) {
-    console.error("startRun kickoff error:", e);
-    await supabase
-      .from("profile_builder_runs")
-      .update({
-        status: "failed",
-        error_code: "unknown",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", run.id);
-    await writeAudit(supabase, operator, "ai_run_failed", "profile_builder_run", run.id, {
-      error_code: "unknown",
-      stage: "kickoff",
-    });
-    redirect(`/${locale}/admin/ai-builder/${run.id}`);
-  }
+  // Schedule the long provider call to run AFTER the response/redirect is sent,
+  // in this same server-action invocation (no self-fetch). The page segment sets
+  // maxDuration=300 so this isn't cut short. runDraftWorker is idempotent and
+  // uses the service-role client + the operator's chosen provider exclusively.
+  after(() => runDraftWorker(run.id));
 
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder/${run.id}`);

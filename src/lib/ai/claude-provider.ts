@@ -39,7 +39,7 @@ export class ClaudeLlmProvider implements LlmProvider {
       temperature: 0.2,
       system: buildSystemPrompt(sectors),
       messages: [{ role: "user", content: buildUserPrompt(input) }],
-      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }],
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }],
     };
 
     const res = await fetch(API_URL, {
