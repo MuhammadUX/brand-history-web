@@ -494,6 +494,7 @@ const en = {
       conflict:
         "This brand changed since you opened it. Reload to get the latest, then re-apply your edits.",
       saveError: "Couldn't save. Please try again.",
+      slugTaken: "That slug is already taken. Choose a different one.",
       childPublished:
         "This brand is published. Unpublish it to edit, or edit a draft — published content can't be changed directly.",
       stateLabel: "Publication state",
@@ -508,6 +509,7 @@ const en = {
       validationTitle: "Resolve these before publishing:",
       vNameEn: "English name is required",
       vNameAr: "Arabic name is required",
+      vSector: "A sector is required",
       vAsset: "At least one non-archived asset is required",
       vColor: "At least one color is required",
       colorsTitle: "Colors",

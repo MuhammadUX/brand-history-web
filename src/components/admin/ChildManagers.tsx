@@ -64,7 +64,7 @@ export function ColorsManager({
 }) {
   const t = getDictionary(locale).admin.editor;
   const { pending, run, error } = useRefresh();
-  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError, conflict: t.conflict };
 
   return (
     <Card>
@@ -113,7 +113,7 @@ export function AssetsManager({
 }) {
   const t = getDictionary(locale).admin.editor;
   const { pending, run, error } = useRefresh();
-  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError, conflict: t.conflict };
 
   return (
     <Card>
@@ -183,7 +183,7 @@ export function TimelineManager({
 }) {
   const t = getDictionary(locale).admin.editor;
   const { pending, run, error } = useRefresh();
-  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError };
+  const msgs = { childPublished: t.childPublished, saveError: t.saveError, forbidden: t.saveError, conflict: t.conflict };
 
   return (
     <Card>

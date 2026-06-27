@@ -13,7 +13,13 @@ import {
 export interface ActionResult {
   ok: boolean;
   /** dictionary key under admin.editor for the message, or null */
-  message?: "saved" | "conflict" | "saveError" | "transitionDone" | "forbidden";
+  message?:
+    | "saved"
+    | "conflict"
+    | "saveError"
+    | "transitionDone"
+    | "forbidden"
+    | "slugTaken";
   /** for "new" save: the created id so the client can navigate */
   id?: string;
   /** for publish validation failures */
@@ -87,6 +93,9 @@ export async function createBrand(
       .single();
 
     if (error || !data) {
+      if (error?.code === "23505") {
+        return { ok: false, message: "slugTaken" };
+      }
       console.error("createBrand error:", error?.message);
       return { ok: false, message: "saveError" };
     }
@@ -144,6 +153,9 @@ export async function updateBrand(
       .select("id");
 
     if (error) {
+      if (error.code === "23505") {
+        return { ok: false, message: "slugTaken" };
+      }
       console.error("updateBrand error:", error.message);
       return { ok: false, message: "saveError" };
     }
@@ -169,11 +181,12 @@ async function publishValidation(
   const fails: string[] = [];
   const { data: brand } = await supabase
     .from("brands")
-    .select("name_en,name_ar")
+    .select("name_en,name_ar,sector_id")
     .eq("id", id)
     .maybeSingle();
   if (!brand?.name_en?.trim()) fails.push("vNameEn");
   if (!brand?.name_ar?.trim()) fails.push("vNameAr");
+  if (!brand?.sector_id) fails.push("vSector");
 
   const { count: assetCount } = await supabase
     .from("brand_assets")
@@ -198,7 +211,7 @@ const TRANSITIONS: Record<
   submit: { from: ["draft"], to: "in_review", adminOnly: false },
   approve: { from: ["in_review"], to: "approved", adminOnly: true },
   publish: { from: ["approved", "unpublished"], to: "published", adminOnly: true },
-  unpublish: { from: ["published"], to: "unpublished", adminOnly: false },
+  unpublish: { from: ["published"], to: "unpublished", adminOnly: true },
   // Archive (retire) — hidden from the public, kept for the record. Restore
   // brings it back to an editable draft for re-review.
   archive: {
@@ -279,7 +292,22 @@ export async function transitionBrand(
 export interface ChildResult {
   ok: boolean;
   /** dictionary key under admin.editor for a user-facing error, when ok=false */
-  message?: "childPublished" | "saveError" | "forbidden";
+  message?: "childPublished" | "saveError" | "forbidden" | "conflict";
+}
+
+/** A minimal Supabase result shape — only the error field matters here. */
+type MaybeError = { error: { message: string } | null };
+
+/**
+ * True when a Supabase mutation succeeded (no error). Logs the error otherwise.
+ * Use to gate audit/version-bump on the child mutation actually landing.
+ */
+function isOk(res: MaybeError, label: string): boolean {
+  if (res.error) {
+    console.error(`${label} error:`, res.error.message);
+    return false;
+  }
+  return true;
 }
 
 /** States in which a brand's children may be edited directly. */
@@ -320,15 +348,26 @@ async function bumpBrand(
   operator: Operator,
   brandId: string,
   currentVersion: number
-) {
-  await supabase
+): Promise<{ ok: true } | { ok: false; reason: "conflict" | "saveError" }> {
+  const { data, error } = await supabase
     .from("brands")
     .update({
       updated_by: operator.id,
       last_updated_at: new Date().toISOString(),
       row_version: currentVersion + 1,
     })
-    .eq("id", brandId);
+    .eq("id", brandId)
+    .eq("row_version", currentVersion)
+    .select("id");
+  if (error) {
+    console.error("bumpBrand error:", error.message);
+    return { ok: false, reason: "saveError" };
+  }
+  if (!data || data.length === 0) {
+    // Parent changed under us — optimistic-lock conflict.
+    return { ok: false, reason: "conflict" };
+  }
+  return { ok: true };
 }
 
 export async function saveColor(
@@ -347,12 +386,12 @@ export async function saveColor(
       role: str(fd, "role") || "primary",
       sort_order: intOrNull(fd, "sort_order") ?? 0,
     };
-    if (colorId) {
-      await supabase.from("brand_colors").update(payload).eq("id", colorId);
-    } else {
-      await supabase.from("brand_colors").insert(payload);
-    }
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = colorId
+      ? await supabase.from("brand_colors").update(payload).eq("id", colorId)
+      : await supabase.from("brand_colors").insert(payload);
+    if (!isOk(res, "saveColor")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, colorId ? "color_updated" : "color_added", "brand", brandId, {
       color_id: colorId,
       ...payload,
@@ -369,8 +408,10 @@ export async function deleteColor(brandId: string, colorId: string): Promise<Chi
     const { operator, supabase } = await operatorClient();
     const gate = await loadEditableBrand(supabase, brandId);
     if (!gate.ok) return { ok: false, message: gate.reason };
-    await supabase.from("brand_colors").delete().eq("id", colorId);
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = await supabase.from("brand_colors").delete().eq("id", colorId);
+    if (!isOk(res, "deleteColor")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, "color_removed", "brand", brandId, { color_id: colorId });
     revalidatePath("/");
     return { ok: true };
@@ -402,12 +443,12 @@ export async function saveAsset(
       is_archived: fd.get("is_archived") === "on" || fd.get("is_archived") === "true",
       sort_order: intOrNull(fd, "sort_order") ?? 0,
     };
-    if (assetId) {
-      await supabase.from("brand_assets").update(payload).eq("id", assetId);
-    } else {
-      await supabase.from("brand_assets").insert(payload);
-    }
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = assetId
+      ? await supabase.from("brand_assets").update(payload).eq("id", assetId)
+      : await supabase.from("brand_assets").insert(payload);
+    if (!isOk(res, "saveAsset")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, assetId ? "asset_updated" : "asset_added", "brand", brandId, {
       asset_id: assetId,
       name_en: payload.name_en,
@@ -425,8 +466,10 @@ export async function deleteAsset(brandId: string, assetId: string): Promise<Chi
     const { operator, supabase } = await operatorClient();
     const gate = await loadEditableBrand(supabase, brandId);
     if (!gate.ok) return { ok: false, message: gate.reason };
-    await supabase.from("brand_assets").delete().eq("id", assetId);
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = await supabase.from("brand_assets").delete().eq("id", assetId);
+    if (!isOk(res, "deleteAsset")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, "asset_removed", "brand", brandId, { asset_id: assetId });
     revalidatePath("/");
     return { ok: true };
@@ -454,12 +497,12 @@ export async function saveTimeline(
       category: str(fd, "category") || "identity_update",
       sort_order: intOrNull(fd, "sort_order") ?? 0,
     };
-    if (entryId) {
-      await supabase.from("timeline_entries").update(payload).eq("id", entryId);
-    } else {
-      await supabase.from("timeline_entries").insert(payload);
-    }
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = entryId
+      ? await supabase.from("timeline_entries").update(payload).eq("id", entryId)
+      : await supabase.from("timeline_entries").insert(payload);
+    if (!isOk(res, "saveTimeline")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, entryId ? "timeline_updated" : "timeline_added", "brand", brandId, {
       entry_id: entryId,
       year: payload.year,
@@ -476,8 +519,10 @@ export async function deleteTimeline(brandId: string, entryId: string): Promise<
     const { operator, supabase } = await operatorClient();
     const gate = await loadEditableBrand(supabase, brandId);
     if (!gate.ok) return { ok: false, message: gate.reason };
-    await supabase.from("timeline_entries").delete().eq("id", entryId);
-    await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    const res = await supabase.from("timeline_entries").delete().eq("id", entryId);
+    if (!isOk(res, "deleteTimeline")) return { ok: false, message: "saveError" };
+    const bump = await bumpBrand(supabase, operator, brandId, gate.rowVersion);
+    if (!bump.ok) return { ok: false, message: bump.reason };
     await writeAudit(supabase, operator, "timeline_removed", "brand", brandId, { entry_id: entryId });
     revalidatePath("/");
     return { ok: true };
@@ -519,13 +564,8 @@ export async function deleteDraftBrand(
       return { ok: false, message: "notDraft" };
     }
 
-    // Remove children explicitly (don't rely on cascade), then the brand.
-    await supabase.from("brand_colors").delete().eq("brand_id", brandId);
-    await supabase.from("brand_assets").delete().eq("brand_id", brandId);
-    await supabase.from("timeline_entries").delete().eq("brand_id", brandId);
-    await supabase.from("favorites").delete().eq("brand_id", brandId);
-    await supabase.from("downloads").delete().eq("brand_id", brandId);
-
+    // FK cascade removes child rows (colors, assets, timeline, favorites,
+    // downloads) automatically, so just delete the brand.
     const { error } = await supabase.from("brands").delete().eq("id", brandId);
     if (error) {
       console.error("deleteDraftBrand error:", error.message);

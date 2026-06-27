@@ -76,7 +76,12 @@ export default function BrandEditorForm({
           {t.conflict}
         </p>
       )}
-      {state.message === "saveError" && (
+      {state.message === "slugTaken" && (
+        <p className="rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
+          {t.slugTaken}
+        </p>
+      )}
+      {(state.message === "saveError" || state.message === "forbidden") && (
         <p className="rounded-md border border-line bg-surface-2 px-3 py-2 text-[14px] text-ink">
           {t.saveError}
         </p>
