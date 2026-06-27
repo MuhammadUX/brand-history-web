@@ -19,7 +19,9 @@ export interface ActionResult {
     | "saveError"
     | "transitionDone"
     | "forbidden"
-    | "slugTaken";
+    | "slugTaken"
+    /** internal: from-state doesn't allow this transition (bulk skip signal) */
+    | "notAllowed";
   /** for "new" save: the created id so the client can navigate */
   id?: string;
   /** for publish validation failures */
@@ -247,6 +249,72 @@ const TRANSITIONS: Record<
   restore: { from: ["archived"], to: "draft", adminOnly: true },
 };
 
+/**
+ * Core of a publication transition for a single brand, WITHOUT revalidation.
+ * Reused by `transitionBrand` (single) and `bulkBrandAction` (batch). Performs
+ * role gating, from-state check, publish validation, optimistic-locked update
+ * and audit. The caller owns revalidatePath().
+ *
+ * `expectedVersion` is optional: when omitted (bulk path) we read the brand's
+ * current row_version and lock against that, so the operator doesn't need a
+ * fresh version per row.
+ */
+async function transitionBrandCore(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  operator: Operator,
+  id: string,
+  action: keyof typeof TRANSITIONS
+): Promise<ActionResult> {
+  const t = TRANSITIONS[action];
+  if (!t) return { ok: false, message: "saveError" };
+  if (t.adminOnly && operator.role !== "admin") {
+    return { ok: false, message: "forbidden" };
+  }
+
+  const { data: brand } = await supabase
+    .from("brands")
+    .select("publication_state,row_version")
+    .eq("id", id)
+    .maybeSingle();
+  if (!brand) return { ok: false, message: "notAllowed" };
+  if (!t.from.includes(brand.publication_state as PublicationState)) {
+    return { ok: false, message: "notAllowed" };
+  }
+
+  if (action === "publish") {
+    const fails = await publishValidation(supabase, id);
+    if (fails.length > 0) {
+      return { ok: false, validation: fails };
+    }
+  }
+
+  const baseVersion = brand.row_version ?? 0;
+  const newVersion = baseVersion + 1;
+  const { data, error } = await supabase
+    .from("brands")
+    .update({
+      publication_state: t.to,
+      updated_by: operator.id,
+      last_updated_at: new Date().toISOString(),
+      row_version: newVersion,
+    })
+    .eq("id", id)
+    .eq("row_version", baseVersion)
+    .select("id");
+
+  if (error) {
+    console.error("transitionBrand error:", error.message);
+    return { ok: false, message: "saveError" };
+  }
+  if (!data || data.length === 0) return { ok: false, message: "conflict" };
+
+  await writeAudit(supabase, operator, action, "brand", id, {
+    from: brand.publication_state,
+    to: t.to,
+  });
+  return { ok: true, message: "transitionDone", rowVersion: newVersion };
+}
+
 /** Publication state-machine transition with role gating, validation, audit. */
 export async function transitionBrand(
   locale: string,
@@ -262,50 +330,13 @@ export async function transitionBrand(
       return { ok: false, message: "forbidden" };
     }
 
-    const { data: brand } = await supabase
-      .from("brands")
-      .select("publication_state,row_version")
-      .eq("id", id)
-      .maybeSingle();
-    if (!brand) return { ok: false, message: "saveError" };
-    if (!t.from.includes(brand.publication_state as PublicationState)) {
-      return { ok: false, message: "saveError" };
-    }
-
-    if (action === "publish") {
-      const fails = await publishValidation(supabase, id);
-      if (fails.length > 0) {
-        return { ok: false, validation: fails };
-      }
-    }
-
-    const newVersion = (brand.row_version ?? 0) + 1;
-    const { data, error } = await supabase
-      .from("brands")
-      .update({
-        publication_state: t.to,
-        updated_by: operator.id,
-        last_updated_at: new Date().toISOString(),
-        row_version: newVersion,
-      })
-      .eq("id", id)
-      .eq("row_version", brand.row_version ?? 0)
-      .select("id");
-
-    if (error) {
-      console.error("transitionBrand error:", error.message);
-      return { ok: false, message: "saveError" };
-    }
-    if (!data || data.length === 0) return { ok: false, message: "conflict" };
-
-    await writeAudit(supabase, operator, action, "brand", id, {
-      from: brand.publication_state,
-      to: t.to,
-    });
+    void expectedVersion;
+    const res = await transitionBrandCore(supabase, operator, id, action);
+    if (!res.ok) return res;
     revalidatePath(`/${locale}/admin/brands/${id}`);
     revalidatePath(`/${locale}/admin/brands`);
     revalidatePath(`/${locale}/admin`);
-    return { ok: true, message: "transitionDone", rowVersion: newVersion };
+    return res;
   } catch {
     return { ok: false, message: "forbidden" };
   }
@@ -745,43 +776,137 @@ export interface DeleteBrandResult {
  * Removes child rows first, then the brand. Used to clean up bad AI-builder
  * drafts.
  */
+/**
+ * Core delete logic (admin + draft/archived only), WITHOUT revalidation.
+ * Reused by `deleteDraftBrand` (single) and `bulkBrandAction` (batch). Assumes
+ * the caller already verified `operator.role === "admin"`.
+ */
+async function deleteDraftBrandCore(
+  supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+  operator: Operator,
+  brandId: string
+): Promise<DeleteBrandResult> {
+  const { data: brand } = await supabase
+    .from("brands")
+    .select("id, name_en, publication_state")
+    .eq("id", brandId)
+    .maybeSingle();
+  if (!brand) return { ok: false, message: "notFound" };
+  // Only draft or archived brands can be hard-deleted. Live/in-flight brands
+  // (published, in_review, approved, unpublished) must be archived first.
+  if (
+    brand.publication_state !== "draft" &&
+    brand.publication_state !== "archived"
+  ) {
+    return { ok: false, message: "notDraft" };
+  }
+
+  // FK cascade removes child rows (colors, assets, timeline, favorites,
+  // downloads) automatically, so just delete the brand.
+  const { error } = await supabase.from("brands").delete().eq("id", brandId);
+  if (error) {
+    console.error("deleteDraftBrand error:", error.message);
+    return { ok: false, message: "error" };
+  }
+
+  await writeAudit(supabase, operator, "brand_deleted", "brand", brandId, {
+    name_en: brand.name_en,
+  });
+  return { ok: true };
+}
+
 export async function deleteDraftBrand(
   brandId: string
 ): Promise<DeleteBrandResult> {
   try {
     const { operator, supabase } = await operatorClient();
     if (operator.role !== "admin") return { ok: false, message: "forbidden" };
-
-    const { data: brand } = await supabase
-      .from("brands")
-      .select("id, name_en, publication_state")
-      .eq("id", brandId)
-      .maybeSingle();
-    if (!brand) return { ok: false, message: "notFound" };
-    // Only draft or archived brands can be hard-deleted. Live/in-flight brands
-    // (published, in_review, approved, unpublished) must be archived first.
-    if (
-      brand.publication_state !== "draft" &&
-      brand.publication_state !== "archived"
-    ) {
-      return { ok: false, message: "notDraft" };
-    }
-
-    // FK cascade removes child rows (colors, assets, timeline, favorites,
-    // downloads) automatically, so just delete the brand.
-    const { error } = await supabase.from("brands").delete().eq("id", brandId);
-    if (error) {
-      console.error("deleteDraftBrand error:", error.message);
-      return { ok: false, message: "error" };
-    }
-
-    await writeAudit(supabase, operator, "brand_deleted", "brand", brandId, {
-      name_en: brand.name_en,
-    });
-    revalidatePath("/");
-    return { ok: true };
+    const res = await deleteDraftBrandCore(supabase, operator, brandId);
+    if (res.ok) revalidatePath("/");
+    return res;
   } catch (e) {
     console.error("deleteDraftBrand exception:", e);
     return { ok: false, message: "forbidden" };
+  }
+}
+
+/* ---------------- bulk brand actions (list page) ---------------- */
+
+export type BulkAction = "delete" | "archive" | "publish";
+
+export interface BulkActionResult {
+  ok: boolean;
+  succeeded: number;
+  skipped: number;
+  failed: number;
+  /** Per-id outcome for optional detail in the UI. */
+  results?: { id: string; outcome: "succeeded" | "skipped" | "failed" }[];
+  /** Set when the whole call is rejected up-front (not admin). */
+  message?: "forbidden";
+}
+
+/**
+ * Apply a bulk action to many brands, admin-gated, reusing the EXACT per-brand
+ * rules:
+ *   - delete  → `deleteDraftBrandCore` (only draft/archived qualify);
+ *   - archive → `transitionBrandCore("archive")` (any non-archived state);
+ *   - publish → `transitionBrandCore("publish")` (only approved/unpublished
+ *               that also pass publish validation).
+ *
+ * Ids that don't qualify are SKIPPED (state/validation mismatch) rather than
+ * failing the whole batch; genuine DB errors count as `failed`. Each successful
+ * mutation keeps the existing audit behavior; we revalidate once at the end.
+ */
+export async function bulkBrandAction(
+  locale: string,
+  ids: string[],
+  action: BulkAction
+): Promise<BulkActionResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+    // All three bulk actions are admin-only (delete + archive + publish).
+    if (operator.role !== "admin") {
+      return { ok: false, succeeded: 0, skipped: 0, failed: 0, message: "forbidden" };
+    }
+
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    let succeeded = 0;
+    let skipped = 0;
+    let failed = 0;
+    const results: NonNullable<BulkActionResult["results"]> = [];
+
+    for (const id of unique) {
+      let outcome: "succeeded" | "skipped" | "failed";
+      if (action === "delete") {
+        const r = await deleteDraftBrandCore(supabase, operator, id);
+        if (r.ok) outcome = "succeeded";
+        // notDraft / notFound = doesn't qualify → skip; error = real failure.
+        else if (r.message === "notDraft" || r.message === "notFound") outcome = "skipped";
+        else outcome = "failed";
+      } else {
+        const r = await transitionBrandCore(supabase, operator, id, action);
+        if (r.ok) outcome = "succeeded";
+        // Wrong from-state (`notAllowed`) or failed publish validation
+        // (`r.validation`) → doesn't qualify → skip. A real write failure
+        // (`saveError`/`conflict`) or `forbidden` → failed.
+        else if (r.validation || r.message === "notAllowed") outcome = "skipped";
+        else outcome = "failed";
+      }
+      if (outcome === "succeeded") succeeded++;
+      else if (outcome === "skipped") skipped++;
+      else failed++;
+      results.push({ id, outcome });
+    }
+
+    if (succeeded > 0) {
+      revalidatePath(`/${locale}/admin/brands`);
+      revalidatePath(`/${locale}/admin`);
+      revalidatePath("/");
+    }
+
+    return { ok: true, succeeded, skipped, failed, results };
+  } catch (e) {
+    console.error("bulkBrandAction exception:", e);
+    return { ok: false, succeeded: 0, skipped: 0, failed: 0, message: "forbidden" };
   }
 }

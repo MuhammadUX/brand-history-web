@@ -18,6 +18,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
 import StateBadge from "@/components/admin/StateBadge";
 import BrandEditorForm from "@/components/admin/BrandEditorForm";
+import BrandStateMachine from "@/components/admin/BrandStateMachine";
 import {
   ColorsManager,
   AssetsManager,
@@ -103,6 +104,26 @@ export default async function EditBrandPage({
         >
           {dict.admin.nav.brands}
         </Link>
+      </div>
+
+      {/* Sticky action bar: lifecycle controls at the top so the operator
+          doesn't have to scroll. Reuses the same StateMachine logic. */}
+      <div className="sticky top-0 z-20 -mx-4 mb-4 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/80 sm:-mx-6 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <span className="text-[13px] font-bold uppercase tracking-label text-muted">
+            {t.stateLabel}
+          </span>
+          <BrandStateMachine
+            locale={typedLocale}
+            brandId={id}
+            state={brand.publication_state}
+            rowVersion={
+              (brand as unknown as { row_version?: number }).row_version ?? 0
+            }
+            role={access.operator.role}
+            variant="bar"
+          />
+        </div>
       </div>
 
       <div className="space-y-4">

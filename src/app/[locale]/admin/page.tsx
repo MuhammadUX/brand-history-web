@@ -10,7 +10,17 @@ import Forbidden from "@/components/admin/Forbidden";
 
 export const dynamic = "force-dynamic";
 
-const STATES = ["published", "draft", "in_review", "approved", "unpublished"] as const;
+import { PUBLICATION_STATES } from "@/lib/admin-shared";
+
+// All publication states, in dashboard display order.
+const STATES = [
+  "published",
+  "draft",
+  "in_review",
+  "approved",
+  "unpublished",
+  "archived",
+] as const;
 
 export default async function AdminDashboard({
   params,
@@ -29,17 +39,18 @@ export default async function AdminDashboard({
 
   const supabase = await createServerSupabase();
 
-  // Count brands per state
-  const counts: Record<string, number> = {};
-  await Promise.all(
-    STATES.map(async (s) => {
-      const { count } = await supabase
-        .from("brands")
-        .select("id", { count: "exact", head: true })
-        .eq("publication_state", s);
-      counts[s] = count ?? 0;
-    })
+  // Count brands per publication_state in a SINGLE query: pull the state column
+  // for every brand once, then tally in memory (PostgREST has no GROUP BY here).
+  const counts: Record<string, number> = Object.fromEntries(
+    PUBLICATION_STATES.map((s) => [s, 0])
   );
+  const { data: stateRows } = await supabase
+    .from("brands")
+    .select("publication_state");
+  for (const row of stateRows ?? []) {
+    const s = row.publication_state as string;
+    if (s in counts) counts[s] += 1;
+  }
 
   const { count: pendingRequests } = await supabase
     .from("brand_suggestions")
@@ -71,7 +82,7 @@ export default async function AdminDashboard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {STATES.map((s) => (
           <Link
             key={s}
