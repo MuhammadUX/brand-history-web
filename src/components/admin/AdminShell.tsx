@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/types";
 import type { Operator } from "@/lib/admin";
 
-type Section = "dashboard" | "brands" | "ai-builder" | "requests" | "audit";
+type Section = "dashboard" | "brands" | "ai-builder" | "requests" | "team" | "audit";
 
 /**
  * AdminShell — content pass-through.

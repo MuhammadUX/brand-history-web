@@ -51,6 +51,10 @@ export default async function AdminLayout({
     { label: t.nav.brands, href: `${base}/brands` },
     { label: t.nav.aiBuilder, href: `${base}/ai-builder` },
     { label: t.nav.requests, href: `${base}/requests` },
+    // Team & Roles is admin-only (renders only for admins).
+    ...(operator.role === "admin"
+      ? [{ label: t.nav.team, href: `${base}/team` }]
+      : []),
     { label: t.nav.audit, href: `${base}/audit` },
   ];
 
