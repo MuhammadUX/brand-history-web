@@ -556,6 +556,7 @@ const en = {
       langEn: "English",
       langAr: "Arabic",
       start: "Start drafting",
+      starting: "Starting…",
       errorName: "Enter a company name.",
       errorCreate: "Couldn't start the run. Please try again.",
       errorDelete: "Couldn't delete. Please try again, or contact support if it persists.",
@@ -577,6 +578,8 @@ const en = {
       collectAssets: "Logo & assets",
       collectTimeline: "Timeline milestones",
       cancel: "Cancel",
+      gatheringStale:
+        "This is taking longer than expected. You can keep waiting, or Cancel and retry.",
       lowFindings: "Low or no findings — you can still review what was drafted, or start over.",
       // Review workspace
       reviewBanner: "AI-drafted — needs review · nothing publishes until you approve.",

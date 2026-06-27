@@ -11,7 +11,6 @@ import {
   Input,
   Select,
   Checkbox,
-  Button,
   Badge,
 } from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
@@ -20,6 +19,7 @@ import {
   DeleteRunButton,
   DeleteAllRunsButton,
 } from "@/components/admin/AiBuilderRunActions";
+import StartRunButton from "@/components/admin/StartRunButton";
 import { startRun } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -134,9 +134,7 @@ export default async function AiBuilderStart({
             </div>
           </fieldset>
 
-          <Button type="submit" variant="primary" size="md">
-            {t.start}
-          </Button>
+          <StartRunButton label={t.start} pendingLabel={t.starting} />
         </Card>
       </form>
 

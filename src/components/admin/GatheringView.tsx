@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/types";
 import { getDictionary } from "@/i18n";
@@ -8,10 +8,17 @@ import { Card, Button } from "@/components/ui";
 import { cancelRun } from "@/app/[locale]/admin/ai-builder/actions";
 
 /**
- * Step 2 interstitial. The stub provider is synchronous, so a 'gathering' run
- * normally flips to 'draft_ready' before this even renders. We still show a
- * calm progress state and auto-refresh; Cancel discards the run.
+ * Step 2 interstitial. A real grounded provider call takes 30–90s, so the run
+ * stays in 'gathering' while the background worker runs. We poll by refreshing
+ * the server component every few seconds until the status flips to
+ * draft_ready/failed (the page re-renders the right branch when it does).
+ *
+ * After ~3 minutes we surface a "taking longer than expected" notice with a
+ * Cancel-and-retry affordance — without hard-failing the row.
  */
+const POLL_MS = 3000;
+const STALE_MS = 3 * 60 * 1000; // 3 minutes
+
 export default function GatheringView({
   locale,
   runId,
@@ -22,10 +29,17 @@ export default function GatheringView({
   const t = getDictionary(locale).admin.aiBuilder;
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [stale, setStale] = useState(false);
+  const startedAt = useRef<number>(Date.now());
 
   useEffect(() => {
-    const id = setTimeout(() => router.refresh(), 1200);
-    return () => clearTimeout(id);
+    const poll = setInterval(() => {
+      router.refresh();
+      if (Date.now() - startedAt.current >= STALE_MS) {
+        setStale(true);
+      }
+    }, POLL_MS);
+    return () => clearInterval(poll);
   }, [router]);
 
   const steps = [
@@ -58,6 +72,12 @@ export default function GatheringView({
       </Card>
 
       <p className="mt-4 text-[12px] text-muted">{t.lowFindings}</p>
+
+      {stale && (
+        <p className="mt-4 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
+          {t.gatheringStale}
+        </p>
+      )}
 
       <Button
         type="button"

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createServerSupabase } from "@/lib/supabase-server";
 import {
   requireOperatorAction,
@@ -9,27 +10,30 @@ import {
   writeAudit,
   type Operator,
 } from "@/lib/admin";
-import {
-  isHighConfidenceSourced,
-  type BrandDraft,
-} from "@/lib/ai/llm-provider";
-import { getLlmProvider } from "@/lib/ai/factory";
+import { isHighConfidenceSourced, type BrandDraft } from "@/lib/ai/llm-provider";
+// classifyAiError lives in ./classify-error so the worker route can reuse it
+// (DRY). A "use server" module may only export async functions, so it is NOT
+// re-exported from here — import it from "@/lib/ai/classify-error" directly.
+import { classifyAiError } from "@/lib/ai/classify-error";
 
 function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
 }
 
-/** Map a provider error to a stable code the review page renders a message for. */
-function classifyAiError(e: unknown): string {
-  const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
-  if (msg.includes("ai_not_configured")) return "not_configured";
-  if (/503|unavailable|overload|high demand|temporarily/.test(msg)) return "busy";
-  if (/429|quota|rate.?limit|resource_exhausted/.test(msg)) return "quota";
-  if (/credit balance|billing|payment|insufficient|402|too low/.test(msg))
-    return "billing";
-  if (/unparseable|invalid_response|unexpected/.test(msg)) return "parse";
-  if (/401|403|api key|unauthorized|permission/.test(msg)) return "auth";
-  return "unknown";
+/**
+ * Build an absolute origin for server-to-server calls. Prefer the live request
+ * host (so Preview/Prod each call themselves) and fall back to the configured
+ * site URL when headers are unavailable.
+ */
+async function absoluteOrigin(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  if (host) return `${proto}://${host}`;
+  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
+    /\/$/,
+    ""
+  );
 }
 
 async function operatorClient() {
@@ -39,8 +43,14 @@ async function operatorClient() {
 }
 
 /**
- * Step 1: create a run, invoke the stub provider to produce a draft, mark it
- * draft_ready, then redirect to the review workspace (Step 3).
+ * Step 1: create a 'gathering' run, then hand the long (30–90s, web-grounded)
+ * provider call off to a dedicated background route and redirect immediately.
+ *
+ * This action stays fast (~1s): the background route returns 202 right away and
+ * does the real work in an `after()` callback, so the form never blocks and the
+ * serverless function can't be killed mid-redirect. The operator's chosen
+ * provider is persisted inside `hints.ai_provider` so the worker uses ONLY that
+ * model (provider isolation) — no schema migration needed.
  */
 export async function startRun(locale: string, fd: FormData): Promise<void> {
   const { operator, supabase } = await operatorClient();
@@ -55,15 +65,16 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
   if (fd.get("lang_ar")) langs.push("ar");
   const languages = langs.length ? langs : ["en", "ar"];
 
+  // Operator-selected AI provider for this run (gemini | claude). Stored inside
+  // hints so the background worker knows which AI to use exclusively.
+  const aiProvider = str(fd, "ai_provider");
+
   const hints = {
     sector_slug: str(fd, "sector_slug") || null,
     region: str(fd, "region") || null,
     url: str(fd, "url") || null,
+    ai_provider: aiProvider || null,
   };
-
-  // Operator-selected AI provider for this run (gemini | claude). Falls back to
-  // the env priority list if blank/unknown.
-  const aiProvider = str(fd, "ai_provider");
 
   // Create the run in 'gathering' state first (auditable, cancellable).
   const { data: run, error } = await supabase
@@ -89,49 +100,41 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     ai_provider: aiProvider || "(default)",
   });
 
-  // Run the (synchronous) stub provider. NEVER calls a real network.
-  let draft: BrandDraft;
-  let findings: string;
+  // Kick off the background worker. The route returns 202 immediately and runs
+  // the long provider call in an after() callback, so this await is ~1s. If the
+  // kickoff itself fails, mark the run failed so the user sees a clear error
+  // rather than an eternal 'gathering'.
   try {
-    const provider = getLlmProvider(aiProvider);
-    const result = await provider.draftBrandProfile({
-      name: input_name,
-      hints,
-      languages,
+    const origin = await absoluteOrigin();
+    const res = await fetch(`${origin}/api/ai-builder/run`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-internal-secret": process.env.CRON_SECRET ?? "",
+      },
+      body: JSON.stringify({ runId: run.id }),
+      // Don't let a slow/hung kickoff block the redirect indefinitely.
+      cache: "no-store",
     });
-    draft = result.draft;
-    findings = result.findings;
+    if (!res.ok && res.status !== 202 && res.status !== 200) {
+      throw new Error(`kickoff_failed_${res.status}`);
+    }
   } catch (e) {
-    console.error("startRun provider error:", e);
-    const error_code = classifyAiError(e);
+    console.error("startRun kickoff error:", e);
     await supabase
       .from("profile_builder_runs")
       .update({
         status: "failed",
-        error_code,
+        error_code: "unknown",
         updated_at: new Date().toISOString(),
       })
       .eq("id", run.id);
     await writeAudit(supabase, operator, "ai_run_failed", "profile_builder_run", run.id, {
-      error_code,
+      error_code: "unknown",
+      stage: "kickoff",
     });
     redirect(`/${locale}/admin/ai-builder/${run.id}`);
   }
-
-  // The stub always produces a (possibly empty) draft, so the run is always
-  // 'draft_ready' for review. When findings are "none", flag the draft so the
-  // review screen can surface a clear "found little — build manually" notice.
-  const noFindings = findings === "none";
-  const flaggedDraft: BrandDraft = { ...draft, no_findings: noFindings };
-
-  await supabase
-    .from("profile_builder_runs")
-    .update({
-      draft: flaggedDraft,
-      status: "draft_ready",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", run.id);
 
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder/${run.id}`);
