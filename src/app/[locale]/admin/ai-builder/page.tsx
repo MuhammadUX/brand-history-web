@@ -16,6 +16,10 @@ import {
 } from "@/components/ui";
 import AdminShell from "@/components/admin/AdminShell";
 import Forbidden from "@/components/admin/Forbidden";
+import {
+  DeleteRunButton,
+  DeleteAllRunsButton,
+} from "@/components/admin/AiBuilderRunActions";
 import { startRun } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -132,9 +136,18 @@ export default async function AiBuilderStart({
       </form>
 
       <div className="mt-8">
-        <h2 className="mb-3 text-[13px] font-bold uppercase tracking-label text-muted">
-          {t.recentRuns}
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-[13px] font-bold uppercase tracking-label text-muted">
+            {t.recentRuns}
+          </h2>
+          {runs.length > 0 && (
+            <DeleteAllRunsButton
+              locale={typedLocale}
+              label={t.deleteAll}
+              confirmText={t.deleteAllConfirm}
+            />
+          )}
+        </div>
         {runs.length === 0 ? (
           <p className="text-[14px] text-muted">{t.noRuns}</p>
         ) : (
@@ -145,16 +158,22 @@ export default async function AiBuilderStart({
                   ? `/${typedLocale}/admin/brands/${r.brand_id}`
                   : `/${typedLocale}/admin/ai-builder/${r.id}`;
               return (
-                <li key={r.id}>
+                <li key={r.id} className="flex items-center gap-2 pe-3">
                   <Link
                     href={href}
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-[14px] transition-colors hover:bg-surface-2"
+                    className="flex flex-1 items-center justify-between gap-3 px-4 py-3 text-[14px] transition-colors hover:bg-surface-2"
                   >
                     <span className="truncate font-medium text-ink">
                       {r.input_name}
                     </span>
                     <Badge kind="state">{runStatus[r.status] ?? r.status}</Badge>
                   </Link>
+                  <DeleteRunButton
+                    locale={typedLocale}
+                    runId={r.id}
+                    label={t.deleteRun}
+                    confirmText={t.deleteRunConfirm}
+                  />
                 </li>
               );
             })}

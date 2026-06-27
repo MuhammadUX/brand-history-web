@@ -614,6 +614,27 @@ const en = {
       createdNote: "Draft brand created. Continue in the editor to run the publish gate.",
       noDraft: "No draft is available for this run.",
       discarded: "This run was discarded.",
+      failedTitle: "Couldn't build a draft for",
+      tryAgain: "Back to AI builder",
+      deleteRun: "Delete",
+      deleteRunConfirm: "Delete this run? This can't be undone.",
+      deleteAll: "Delete all drafts",
+      deleteAllConfirm:
+        "Delete all builder runs that haven't been turned into a brand? This can't be undone.",
+      errors: {
+        quota:
+          "The AI provider's quota was exceeded. The account behind the API key has run out of free quota — enable billing or wait for the quota to reset, then try again.",
+        billing:
+          "The AI provider rejected the request for billing reasons (no credit balance). Add credit to the provider account, then try again.",
+        not_configured:
+          "No AI provider is configured. Add a GEMINI_API_KEY or ANTHROPIC_API_KEY in the environment and redeploy.",
+        auth:
+          "The AI provider rejected the API key (unauthorized). Check the key is valid and has access, then try again.",
+        parse:
+          "The AI returned a response we couldn't read. Try again, or switch to the other model.",
+        unknown:
+          "The AI couldn't complete this draft. Nothing was created. Please try again, or switch models.",
+      },
     },
     requests: {
       title: "Requests",

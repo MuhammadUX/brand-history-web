@@ -64,32 +64,45 @@ class FallbackLlmProvider implements LlmProvider {
   }
 }
 
+/** Thrown when no real provider is configured (so the action can surface it). */
+class UnconfiguredLlmProvider implements LlmProvider {
+  async draftBrandProfile(): Promise<DraftResult> {
+    throw new Error("ai_not_configured");
+  }
+}
+
 /**
  * Returns the active provider. `preferred` (the operator's per-run choice) is
- * tried first, then the LLM_PROVIDER priority list (default "gemini,claude,dev").
- * The dev stub at the end guarantees the pipeline never hard-fails.
+ * tried first, then the LLM_PROVIDER priority list (default "gemini,claude").
+ *
+ * The deterministic dev stub is NO LONGER a silent fallback — it only runs when
+ * explicitly requested via LLM_PROVIDER=dev. If no real provider is configured,
+ * we return a provider that throws `ai_not_configured` so the caller shows a
+ * clear error instead of fake "stub" data.
  */
 export function getLlmProvider(preferred?: string): LlmProvider {
-  const envList = (process.env.LLM_PROVIDER || "gemini,claude,dev")
+  const envList = (process.env.LLM_PROVIDER || "gemini,claude")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
   const order = [...(preferred ? [preferred] : []), ...envList];
   const seen = new Set<string>();
+  const deduped: string[] = [];
   const providers: LlmProvider[] = [];
   for (const key of order) {
     const k = key.trim().toLowerCase();
     if (seen.has(k)) continue;
     seen.add(k);
+    deduped.push(k);
     const p = buildProvider(k);
     if (p) providers.push(p);
   }
   if (providers.length === 0) {
     console.warn(
-      `[llm] no real provider configured (order: ${order.join(",") || "none"}) — using dev stub. Set GEMINI_API_KEY / ANTHROPIC_API_KEY in the environment.`
+      `[llm] no real provider configured (requested: ${deduped.join(",") || "none"}). Set GEMINI_API_KEY / ANTHROPIC_API_KEY.`
     );
-    return new DevStubLlmProvider();
+    return new UnconfiguredLlmProvider();
   }
-  console.info(`[llm] using providers in order: ${order.join(",")}`);
+  console.info(`[llm] using providers in order: ${deduped.join(",")}`);
   return new FallbackLlmProvider(providers);
 }

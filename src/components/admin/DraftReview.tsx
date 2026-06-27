@@ -56,16 +56,17 @@ function sourceNode(
   return <span className="text-muted">{dom}</span>;
 }
 
-/** Accept / reject toggle pair, surfaced in the AIReviewBlock footer. */
+/**
+ * Accept toggle (click again to un-accept). There is no separate "reject" — an
+ * item is simply included when accepted and left out otherwise.
+ */
 function DecisionButtons({
   decision,
   onAccept,
-  onReject,
   t,
 }: {
   decision: Decision;
   onAccept: () => void;
-  onReject: () => void;
   t: Record<string, string>;
 }) {
   return (
@@ -78,15 +79,6 @@ function DecisionButtons({
         aria-pressed={decision === "accepted"}
       >
         {decision === "accepted" ? t.accepted : t.accept}
-      </Button>
-      <Button
-        type="button"
-        variant={decision === "rejected" ? "danger" : "ghost"}
-        size="sm"
-        onClick={onReject}
-        aria-pressed={decision === "rejected"}
-      >
-        {decision === "rejected" ? t.rejected : t.reject}
       </Button>
     </div>
   );
@@ -215,7 +207,6 @@ export default function DraftReview({
       <DecisionButtons
         decision={decisionOf(key)}
         onAccept={() => setDecision(key, "accepted")}
-        onReject={() => setDecision(key, "rejected")}
         t={t}
       />
     ),

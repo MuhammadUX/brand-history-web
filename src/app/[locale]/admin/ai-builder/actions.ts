@@ -19,6 +19,18 @@ function str(fd: FormData, key: string): string {
   return String(fd.get(key) ?? "").trim();
 }
 
+/** Map a provider error to a stable code the review page renders a message for. */
+function classifyAiError(e: unknown): string {
+  const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+  if (msg.includes("ai_not_configured")) return "not_configured";
+  if (/429|quota|rate.?limit|resource_exhausted/.test(msg)) return "quota";
+  if (/credit balance|billing|payment|insufficient|402|too low/.test(msg))
+    return "billing";
+  if (/unparseable|invalid_response|unexpected/.test(msg)) return "parse";
+  if (/401|403|api key|unauthorized|permission/.test(msg)) return "auth";
+  return "unknown";
+}
+
 async function operatorClient() {
   const operator = await requireOperatorAction();
   const supabase = await createServerSupabase();
@@ -90,10 +102,18 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     findings = result.findings;
   } catch (e) {
     console.error("startRun provider error:", e);
+    const error_code = classifyAiError(e);
     await supabase
       .from("profile_builder_runs")
-      .update({ status: "failed", updated_at: new Date().toISOString() })
+      .update({
+        status: "failed",
+        error_code,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", run.id);
+    await writeAudit(supabase, operator, "ai_run_failed", "profile_builder_run", run.id, {
+      error_code,
+    });
     redirect(`/${locale}/admin/ai-builder/${run.id}`);
   }
 
@@ -125,6 +145,30 @@ export async function cancelRun(locale: string, runId: string): Promise<void> {
     .eq("id", runId)
     .in("status", ["gathering", "draft_ready"]);
   await writeAudit(supabase, operator, "ai_run_discarded", "profile_builder_run", runId, {});
+  revalidatePath(`/${locale}/admin/ai-builder`);
+  redirect(`/${locale}/admin/ai-builder`);
+}
+
+/** Hard-delete a single builder run (any status). Operator-gated + audited. */
+export async function deleteRun(locale: string, runId: string): Promise<void> {
+  const { operator, supabase } = await operatorClient();
+  await supabase.from("profile_builder_runs").delete().eq("id", runId);
+  await writeAudit(supabase, operator, "ai_run_deleted", "profile_builder_run", runId, {});
+  revalidatePath(`/${locale}/admin/ai-builder`);
+  redirect(`/${locale}/admin/ai-builder`);
+}
+
+/**
+ * Delete ALL builder runs that have not been turned into a brand (i.e. status
+ * != 'accepted'). Clears out drafts/failed/discarded runs in one go.
+ */
+export async function deleteAllRuns(locale: string): Promise<void> {
+  const { operator, supabase } = await operatorClient();
+  await supabase
+    .from("profile_builder_runs")
+    .delete()
+    .neq("status", "accepted");
+  await writeAudit(supabase, operator, "ai_runs_cleared", "profile_builder_run", null, {});
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder`);
 }

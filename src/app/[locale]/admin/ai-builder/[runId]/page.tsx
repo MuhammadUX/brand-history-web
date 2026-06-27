@@ -34,7 +34,7 @@ export default async function AiBuilderRun({
   const supabase = await createServerSupabase();
   const { data: run } = await supabase
     .from("profile_builder_runs")
-    .select("id, input_name, status, draft, brand_id, languages, hints")
+    .select("id, input_name, status, draft, brand_id, languages, hints, error_code")
     .eq("id", runId)
     .maybeSingle();
 
@@ -92,15 +92,20 @@ export default async function AiBuilderRun({
 
   const draft = run.draft as BrandDraft | null;
   if (!draft || run.status === "failed") {
+    const errors = t.errors as unknown as Record<string, string>;
+    const code = (run.error_code as string | null) || "unknown";
+    const reason = errors?.[code] || errors?.unknown || t.noDraft;
     return (
       <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
         <div className="mx-auto max-w-md">
           <StateBlock
             state="error"
-            message={t.noDraft}
+            icon="⚠"
+            title={`${t.failedTitle} ${run.input_name}`}
+            message={reason}
             action={
               <Button href={`/${typedLocale}/admin/ai-builder`} variant="primary">
-                {t.title}
+                {t.tryAgain}
               </Button>
             }
           />
