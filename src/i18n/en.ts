@@ -711,7 +711,7 @@ const en = {
       sections: [
         {
           h: "What we collect",
-          b: "When you create an account we collect your display name and email address; your password is handled and stored in hashed form by our authentication provider (Supabase) and is never visible to us. As you use the service we store the favorites and downloads you make and any messages you send through the Contact form. If you subscribe to Pro, we store your subscription status, plan, and a payment reference returned by our payment processor — we never receive or store your full card number (see “Payments”). We also collect limited technical data needed to run and secure the service, such as device and browser type, pages viewed, and an approximate location derived from your IP address.",
+          b: "When you create an account we collect your display name and email address; your password is handled and stored in hashed form by our authentication provider (Supabase) and is never visible to us. As you use the service we store the favorites and downloads you make and any messages you send through the Contact form. We also collect limited technical data needed to run and secure the service, such as device and browser type, pages viewed, and an approximate location derived from your IP address.",
         },
         {
           h: "Lawful basis & consent",
@@ -722,12 +722,8 @@ const en = {
           b: "We use a small number of essential cookies to keep you signed in and to remember your consent choices; these are required for the service to work. Only with your consent do we set analytics cookies, which help us understand aggregate, non-identifying usage so we can improve the product. You can review or change these choices at any time from “Privacy choices” in the footer.",
         },
         {
-          h: "Payments",
-          b: "Payments for Pro are processed by Moyasar, a payment provider licensed by the Saudi Central Bank (SAMA). Your card details are entered on Moyasar’s secure page and processed by Moyasar — we do not see or store your full card number, expiry, or security code. We retain a record of your subscription (plan, status, dates) and a payment reference so we can provide the service, issue receipts, and meet our accounting and tax obligations.",
-        },
-        {
           h: "Advertising & personalization",
-          b: "Free browsing may include sponsored or promotional content. Where you have consented, we may tailor recommendations to your interests. Pro subscribers do not see ads. We do not sell your personal data. Any third-party advertising partners we work with will be named here before such advertising goes live.",
+          b: "The service is free and may include sponsored or promotional content for visitors who are not signed in. Where you have consented, we may tailor recommendations to your interests. Signed-in users do not see ads. We do not sell your personal data. Any third-party advertising partners we work with will be named here before such advertising goes live.",
         },
         {
           h: "Data residency & transfers",
@@ -739,7 +735,7 @@ const en = {
         },
         {
           h: "Data retention",
-          b: "We keep personal data only as long as your account is active and as needed to provide the service. Some records are kept longer where the law requires — for example, payment and tax records are retained for the period required by Saudi regulations (ZATCA). When data is no longer needed, we delete or anonymize it.",
+          b: "We keep personal data only as long as your account is active and as needed to provide the service. Some records may be kept longer where the law requires. When data is no longer needed, we delete or anonymize it.",
         },
         {
           h: "Children",
@@ -765,7 +761,7 @@ const en = {
       sections: [
         {
           h: "Acceptable use",
-          b: "You agree to use the service lawfully and in line with these terms. You must not scrape or bulk-download the service by automated means, attempt to overload, disrupt, or gain unauthorized access to it, circumvent access controls or the Pro paywall, or use the service to infringe the rights of others. We may suspend or limit access that threatens the security, integrity, or availability of the service.",
+          b: "You agree to use the service lawfully and in line with these terms. You must not scrape or bulk-download the service by automated means, attempt to overload, disrupt, or gain unauthorized access to it, circumvent access controls, or use the service to infringe the rights of others. We may suspend or limit access that threatens the security, integrity, or availability of the service.",
         },
         {
           h: "Intellectual property & trademarks",
@@ -780,8 +776,8 @@ const en = {
           b: "You are responsible for the activity on your account and for keeping your login credentials secure. Please notify us promptly of any unauthorized use. We may suspend or terminate accounts that breach these terms.",
         },
         {
-          h: "Pro subscription, billing & refunds",
-          b: "Pro is a paid subscription that unlocks ad-free browsing, high-resolution downloads, brand kits, and other advanced features. Prices are shown in Saudi Riyal (SAR) and, where applicable, include VAT. Payment is processed by Moyasar. Subscriptions renew automatically at the end of each term (monthly or annual) unless you cancel beforehand. You can cancel at any time from your account; when you cancel, your Pro access continues until the end of the current paid period and does not renew after that. Except where required by law, payments are non-refundable; if you believe you were charged in error, contact us within 14 days and we will review the request.",
+          h: "Free service",
+          b: "The service is currently provided free of charge. Creating an account is free; signing in simply removes ads. We may introduce paid features in the future, and if we do, their pricing and terms will be presented clearly before you are asked to pay.",
         },
         {
           h: "Disclaimers",
