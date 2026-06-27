@@ -194,6 +194,7 @@ export default async function BrandPage({
       return (
         <BrandDownloadButton
           slug={brand!.slug}
+          brandId={brand!.id}
           initials={brand!.initials}
           color={brand!.primary_color}
           name={name}
@@ -222,6 +223,7 @@ export default async function BrandPage({
       return (
         <BrandDownloadButton
           slug={brand!.slug}
+          brandId={brand!.id}
           initials={brand!.initials}
           color={brand!.primary_color}
           name={name}
@@ -262,6 +264,7 @@ export default async function BrandPage({
             <>
               <BrandDownloadButton
                 slug={brand.slug}
+                brandId={brand.id}
                 initials={brand.initials}
                 color={brand.primary_color}
                 name={name}

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import ProfileForm from "./ProfileForm";
 import AccountFavorites from "./AccountFavorites";
+import AccountDownloads from "./AccountDownloads";
 import SignOutButton from "./SignOutButton";
 import PrivacyPanel from "./PrivacyPanel";
 import { Tabs } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import type { Brand, Locale } from "@/lib/types";
+import type { DownloadItem } from "@/lib/downloads";
 
 // "subscription" is omitted while the paid model is hidden (kept in code only).
 type Tab = "profile" | "favorites" | "downloads" | "privacy";
@@ -17,11 +19,13 @@ export default function AccountTabs({
   email,
   displayName,
   favorites,
+  downloads,
 }: {
   locale: Locale;
   email: string;
   displayName: string;
   favorites: Brand[];
+  downloads: DownloadItem[];
 }) {
   const dict = getDictionary(locale);
   const [tab, setTab] = useState<Tab>("profile");
@@ -78,9 +82,10 @@ export default function AccountTabs({
           <h2 className="text-[18px] font-bold leading-tight tracking-tight text-ink">
             {dict.account.downloadsTitle}
           </h2>
-          <p className="mt-1 text-[13px] leading-5 text-muted">
+          <p className="mb-5 mt-1 text-[13px] leading-5 text-muted">
             {dict.account.downloadsBody}
           </p>
+          <AccountDownloads locale={locale} items={downloads} />
         </section>
       )}
 

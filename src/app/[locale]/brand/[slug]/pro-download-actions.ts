@@ -3,6 +3,7 @@
 import { getEntitlements } from "@/lib/entitlements";
 import { getBrandById, getBrandColors } from "@/lib/data";
 import { buildLogoSvg } from "@/lib/logo";
+import { recordDownload } from "./download-actions";
 
 export type ProDownloadKind = "highres" | "kit";
 
@@ -68,10 +69,8 @@ export async function requestProDownload(
     size: 512,
   });
 
-  // `kind` is accepted for parity/telemetry; the payload carries everything
-  // needed for either download so the client builds only from this authorized
-  // server response.
-  void kind;
+  // Record the download for the user's history (best-effort).
+  await recordDownload(brand.id, kind === "kit" ? "kit" : "highres");
 
   return {
     ok: true,

@@ -397,7 +397,15 @@ const en = {
     remove: "Remove",
     removeAria: (name: string) => `Remove ${name} from favorites`,
     downloadsTitle: "Downloads",
-    downloadsBody: "Your downloaded brand kits will appear here. Coming soon.",
+    downloadsBody: "Logos and brand kits you've downloaded.",
+    downloadsEmpty: "You haven't downloaded anything yet.",
+    openBrand: "Open",
+    downloadKinds: {
+      "logo-svg": "Logo (SVG)",
+      "logo-png": "Logo (PNG)",
+      highres: "High-res logo",
+      kit: "Brand kit",
+    } as Record<string, string>,
     signOut: "Sign out",
   },
   favorite: {

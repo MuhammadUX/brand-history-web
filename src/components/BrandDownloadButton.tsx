@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { Button, Modal } from "@/components/ui";
 import { buildLogoSvg } from "@/lib/logo";
+import { recordDownload } from "@/app/[locale]/brand/[slug]/download-actions";
 
 interface BrandDownloadButtonProps {
   slug: string;
+  /** Brand id — used to record the download in the user's history. */
+  brandId: string;
   initials: string;
   color: string;
   name: string;
@@ -36,6 +39,7 @@ function triggerDownload(blob: Blob, filename: string) {
  */
 export default function BrandDownloadButton({
   slug,
+  brandId,
   initials,
   color,
   name,
@@ -53,6 +57,8 @@ export default function BrandDownloadButton({
       new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
       `${slug}-logo.svg`,
     );
+    // Record for the user's download history (best-effort, anon = no-op).
+    void recordDownload(brandId, "logo-svg");
   }
 
   async function downloadPng() {
@@ -82,6 +88,7 @@ export default function BrandDownloadButton({
             resolve();
           }, "image/png");
         });
+        void recordDownload(brandId, "logo-png");
       }
     } catch {
       // fall back silently; SVG remains available

@@ -399,7 +399,15 @@ const ar: Dictionary = {
     remove: "إزالة",
     removeAria: (name: string) => `إزالة ${name} من المفضّلة`,
     downloadsTitle: "التنزيلات",
-    downloadsBody: "ستظهر حزم العلامات التي نزّلتها هنا. قريباً.",
+    downloadsBody: "الشعارات وحزم العلامات التي نزّلتها.",
+    downloadsEmpty: "لم تقم بتنزيل أي شيء بعد.",
+    openBrand: "فتح",
+    downloadKinds: {
+      "logo-svg": "الشعار (SVG)",
+      "logo-png": "الشعار (PNG)",
+      highres: "شعار عالي الدقة",
+      kit: "حزمة العلامة",
+    } as Record<string, string>,
     signOut: "تسجيل الخروج",
   },
   favorite: {
