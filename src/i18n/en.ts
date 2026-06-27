@@ -556,6 +556,7 @@ const en = {
       start: "Start drafting",
       errorName: "Enter a company name.",
       errorCreate: "Couldn't start the run. Please try again.",
+      errorDelete: "Couldn't delete. Please try again, or contact support if it persists.",
       recentRuns: "Recent runs",
       noRuns: "No runs yet.",
       runStatus: {

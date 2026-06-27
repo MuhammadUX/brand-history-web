@@ -153,7 +153,17 @@ export async function cancelRun(locale: string, runId: string): Promise<void> {
 /** Hard-delete a single builder run (any status). Operator-gated + audited. */
 export async function deleteRun(locale: string, runId: string): Promise<void> {
   const { operator, supabase } = await operatorClient();
-  await supabase.from("profile_builder_runs").delete().eq("id", runId);
+  // Verify the row is actually gone — a silent 0-row delete (e.g. a missing RLS
+  // policy) must surface as an error, not pretend success.
+  const { data: deleted, error } = await supabase
+    .from("profile_builder_runs")
+    .delete()
+    .eq("id", runId)
+    .select("id");
+  if (error || !deleted || deleted.length === 0) {
+    console.error("deleteRun failed:", error?.message ?? "0 rows deleted (RLS?)");
+    redirect(`/${locale}/admin/ai-builder?error=delete`);
+  }
   await writeAudit(supabase, operator, "ai_run_deleted", "profile_builder_run", runId, {});
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder`);
@@ -165,10 +175,15 @@ export async function deleteRun(locale: string, runId: string): Promise<void> {
  */
 export async function deleteAllRuns(locale: string): Promise<void> {
   const { operator, supabase } = await operatorClient();
-  await supabase
+  const { error } = await supabase
     .from("profile_builder_runs")
     .delete()
-    .neq("status", "accepted");
+    .neq("status", "accepted")
+    .select("id");
+  if (error) {
+    console.error("deleteAllRuns failed:", error.message);
+    redirect(`/${locale}/admin/ai-builder?error=delete`);
+  }
   await writeAudit(supabase, operator, "ai_runs_cleared", "profile_builder_run", null, {});
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder`);

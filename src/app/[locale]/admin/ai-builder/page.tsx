@@ -77,6 +77,11 @@ export default async function AiBuilderStart({
           {t.errorCreate}
         </p>
       )}
+      {error === "delete" && (
+        <p className="mt-4 rounded-md border border-amber-line bg-amber-bg px-3 py-2 text-[14px] text-amber">
+          {t.errorDelete}
+        </p>
+      )}
 
       <form action={startWithLocale} className="mt-6">
         <Card className="space-y-5">
