@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { classifyAiError } from "@/lib/ai/classify-error";
 import {
   requireOperatorAction,
   slugify,
@@ -86,11 +86,31 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     ai_provider: aiProvider || "(default)",
   });
 
-  // Schedule the long provider call to run AFTER the response/redirect is sent,
-  // in this same server-action invocation (no self-fetch). The page segment sets
-  // maxDuration=300 so this isn't cut short. runDraftWorker is idempotent and
-  // uses the service-role client + the operator's chosen provider exclusively.
-  after(() => runDraftWorker(run.id));
+  // Run the provider call SYNCHRONOUSLY (awaited) before redirecting. Vercel
+  // background execution proved unreliable on this deployment — BOTH a
+  // self-fetch to /api/ai-builder/run (intercepted by preview Deployment
+  // Protection) AND next/server after() left the run stuck on 'gathering'
+  // forever (the worker body never ran/completed, so it never wrote
+  // draft_ready or failed). Doing the work inline guarantees a terminal state.
+  // The page segment sets maxDuration=300 for headroom and the Start button
+  // shows a pending state during the call.
+  try {
+    await runDraftWorker(run.id);
+  } catch (e) {
+    // Hard failure before the worker could record one (e.g. admin client / env
+    // misconfig that throws before its own try/catch). Mark the run failed via
+    // the operator's client so it never hangs on 'gathering'.
+    console.error("startRun worker error:", e);
+    await supabase
+      .from("profile_builder_runs")
+      .update({
+        status: "failed",
+        error_code: classifyAiError(e),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", run.id)
+      .eq("status", "gathering");
+  }
 
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder/${run.id}`);
