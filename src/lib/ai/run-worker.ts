@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminSupabase } from "@/lib/supabase-admin";
 import { getLlmProvider } from "@/lib/ai/factory";
 import { classifyAiError } from "@/lib/ai/classify-error";
+import { redactSecrets } from "@/lib/redact-secrets";
 import type { BrandDraft } from "@/lib/ai/llm-provider";
 
 interface RunRow {
@@ -90,10 +91,10 @@ export async function runDraftWorker(runId: string): Promise<void> {
   } catch (e) {
     console.error("[ai-builder/worker] provider error:", e);
     const error_code = classifyAiError(e);
-    const error_detail = (e instanceof Error ? e.message : String(e)).slice(
-      0,
-      4000
-    );
+    // WEB-7: redact obvious secrets before persisting, then cap length.
+    const error_detail = redactSecrets(
+      e instanceof Error ? e.message : String(e)
+    ).slice(0, 4000);
     await admin
       .from("profile_builder_runs")
       .update({

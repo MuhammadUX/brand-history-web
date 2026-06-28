@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "./cn";
 import { Button } from "./Button";
+import { safeHref } from "@/lib/safe-href";
 import type { BrandFont } from "@/lib/types";
 
 export interface FontSpecimenLabels {
@@ -39,6 +40,8 @@ export function FontSpecimen({
   className,
 }: FontSpecimenProps) {
   const stack = font.css_stack || undefined;
+  // WEB-5: only offer the "Get the font" link for safe http(s) URLs.
+  const fontHref = safeHref(font.source_url);
   const specimenEn = font.specimen_en || DEFAULT_SPECIMEN_EN;
   const specimenAr = font.specimen_ar;
 
@@ -97,9 +100,9 @@ export function FontSpecimen({
           </span>
         ) : null}
 
-        {font.policy === "link_out" && font.source_url ? (
+        {font.policy === "link_out" && fontHref ? (
           <Button
-            href={font.source_url}
+            href={fontHref}
             variant="ghost"
             size="sm"
             target="_blank"

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { isLocale, safeNext } from "@/i18n";
 
 /**
  * Server-side auth callback for email links (verify signup / password recovery /
@@ -20,9 +21,11 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const nextParam = searchParams.get("next") || `/${locale}`;
-  // Open-redirect guard: only allow same-site relative paths.
-  const next = nextParam.startsWith("/") ? nextParam : `/${locale}`;
+  // Open-redirect guard (WEB-4): route `next` through the shared safeNext()
+  // helper, which rejects protocol-relative ("//host"), backslash tricks, and
+  // any scheme/host — not just the bare startsWith("/") check.
+  const safeLocale = isLocale(locale) ? locale : "en";
+  const next = safeNext(searchParams.get("next"), safeLocale);
 
   if (token_hash && type) {
     const supabase = await createServerSupabase();

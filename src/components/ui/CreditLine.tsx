@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "./cn";
+import { safeHref } from "@/lib/safe-href";
 
 export interface CreditLineProps {
   /** "Identity by {label}" — already-composed credit text (designer / agency). */
@@ -27,6 +28,9 @@ export function CreditLine({
 }: CreditLineProps) {
   if (!creditText && !lastUpdated) return null;
 
+  // WEB-5: only link a safe http(s) source URL; otherwise render no link.
+  const href = safeHref(sourceUrl);
+
   return (
     <p
       className={cn(
@@ -35,9 +39,9 @@ export function CreditLine({
       )}
     >
       {creditText ? <span className="text-ink">{creditText}</span> : null}
-      {creditText && sourceUrl ? (
+      {creditText && href ? (
         <a
-          href={sourceUrl}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           className="font-semibold text-link hover:underline focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"
@@ -45,7 +49,7 @@ export function CreditLine({
           {sourceLabel} ↗
         </a>
       ) : null}
-      {(creditText || sourceUrl) && lastUpdated ? (
+      {(creditText || href) && lastUpdated ? (
         <span aria-hidden="true" className="text-line">
           ·
         </span>

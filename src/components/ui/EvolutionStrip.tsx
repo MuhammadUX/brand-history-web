@@ -3,6 +3,7 @@
 import React, { useId, useRef, useState } from "react";
 import { cn } from "./cn";
 import { BrandMark } from "./BrandMark";
+import { safeHref } from "@/lib/safe-href";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/lib/types";
 
@@ -111,6 +112,8 @@ export function EvolutionStrip({
   };
 
   const active = eras[selected];
+  // WEB-5: only render the source link for safe http(s) URLs.
+  const activeSourceHref = safeHref(active.sourceUrl);
   const kindLabel = (kind?: string | null) =>
     kind ? labels.kinds[kind] ?? kind : null;
 
@@ -167,9 +170,9 @@ export function EvolutionStrip({
             {active.caption}
           </p>
         ) : null}
-        {active.sourceUrl ? (
+        {activeSourceHref ? (
           <a
-            href={active.sourceUrl}
+            href={activeSourceHref}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1.5 inline-block text-[12px] font-semibold text-link hover:underline focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link"

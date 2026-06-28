@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale, Sector } from "@/lib/types";
 import { getDictionary } from "@/i18n";
-import { createClient } from "@/lib/supabase-browser";
 import {
   isHighConfidenceSourced,
   type BrandDraft,
@@ -35,19 +34,11 @@ const BAND_TO_CONFIDENCE: Record<ConfidenceBand, ConfidencePillProps["confidence
   L: "low",
 };
 
-// Operator-added assets upload to the same public Storage bucket as the editor.
-const ASSET_BUCKET = "brand-assets";
+// Operator-added asset images upload via the operator-gated server route.
 const ASSET_ACCEPT = "image/svg+xml,image/png,image/jpeg,image/webp";
 
 // A valid hex is #RRGGBB (uppercase fine). Operators may type without the '#'.
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
-
-/** Best-effort file extension from a filename, lowercased, no dot. */
-function extFromName(name: string): string | null {
-  const clean = name.split(/[?#]/)[0];
-  const m = clean.match(/\.([a-z0-9]+)$/i);
-  return m ? m[1].toLowerCase() : null;
-}
 
 /**
  * Normalize an operator-typed hex toward #RRGGBB: trim, add a leading '#' if
@@ -217,22 +208,26 @@ export default function DraftReview({
   async function uploadAssetFile(i: number, file: File) {
     updateAssetRow(i, { uploading: true, uploadError: false });
     try {
-      const supabase = createClient();
-      const ext = extFromName(file.name) || "png";
-      const uuid = crypto?.randomUUID?.() ?? String(Date.now());
-      const path = `ai-drafts/${runId}/${uuid}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from(ASSET_BUCKET)
-        .upload(path, file, { upsert: true, contentType: file.type || undefined });
-      if (upErr) {
+      // Upload via the operator-gated server route (validates MIME + size,
+      // sanitizes SVG, writes via service role to `ai-drafts/<runId>/<uuid>.<ext>`).
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("kind", "draft");
+      fd.set("id", runId);
+      const res = await fetch("/api/admin/upload-asset", {
+        method: "POST",
+        body: fd,
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok: boolean; url?: string; ext?: string }
+        | null;
+      if (!res.ok || !data?.ok || !data.url) {
         updateAssetRow(i, { uploading: false, uploadError: true });
         return;
       }
-      const { data } = supabase.storage.from(ASSET_BUCKET).getPublicUrl(path);
-      const publicUrl = `${data.publicUrl}?v=${Date.now()}`;
       updateAssetRow(i, {
-        image_url: publicUrl,
-        ext,
+        image_url: data.url,
+        ext: data.ext,
         uploading: false,
         uploadError: false,
       });

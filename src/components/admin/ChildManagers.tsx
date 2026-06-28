@@ -14,7 +14,6 @@ import type {
 import { getDictionary } from "@/i18n";
 import { Card, Button } from "@/components/ui";
 import { logoSrc } from "@/components/ui/BrandMark";
-import { createClient } from "@/lib/supabase-browser";
 import {
   saveColor,
   deleteColor,
@@ -139,7 +138,6 @@ export function ColorsManager({
 /* ---------------- Assets ---------------- */
 const ASSET_TYPES = ["logo_primary", "secondary", "icon", "wordmark", "monochrome"];
 const POLICIES = ["host", "link_out", "pro"];
-const ASSET_BUCKET = "brand-assets";
 const ASSET_ACCEPT = "image/svg+xml,image/png,image/jpeg,image/webp";
 
 /** Reduce a brand website to a bare domain for the logo API (drops scheme/path). */
@@ -153,13 +151,6 @@ function websiteDomain(website?: string | null): string | null {
   } catch {
     return null;
   }
-}
-
-/** Best-effort file extension from a filename or URL, lowercased, no dot. */
-function extFromName(name: string): string | null {
-  const clean = name.split(/[?#]/)[0];
-  const m = clean.match(/\.([a-z0-9]+)$/i);
-  return m ? m[1].toLowerCase() : null;
 }
 
 type AssetImageFieldDict = Pick<
@@ -205,24 +196,26 @@ function AssetImageField({
     setErr(null);
     setBusy(true);
     try {
-      const supabase = createClient();
-      const ext = extFromName(file.name) || "png";
-      // Stable, brand-scoped path. New rows (no id yet) get a uuid so two
-      // unsaved rows can't collide; saved rows reuse the asset id.
-      const key = assetId ?? (crypto?.randomUUID?.() ?? `${Date.now()}`);
-      const path = `brands/${brandId}/${key}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from(ASSET_BUCKET)
-        .upload(path, file, { upsert: true, contentType: file.type || undefined });
-      if (upErr) {
+      // Upload goes through the operator-gated server route, which validates
+      // MIME + size, sanitizes SVGs, and writes via the service role to a
+      // server-controlled path. The browser no longer writes the bucket.
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("kind", "brand");
+      fd.set("id", brandId);
+      const res = await fetch("/api/admin/upload-asset", {
+        method: "POST",
+        body: fd,
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { ok: boolean; url?: string; ext?: string }
+        | null;
+      if (!res.ok || !data?.ok || !data.url) {
         setErr(t.assetUploadError);
         return;
       }
-      const { data } = supabase.storage.from(ASSET_BUCKET).getPublicUrl(path);
-      // Cache-bust so re-uploads to the same path refresh the preview.
-      const publicUrl = `${data.publicUrl}?v=${Date.now()}`;
-      setUrl(publicUrl);
-      onExtDetected?.(ext);
+      setUrl(data.url);
+      if (data.ext) onExtDetected?.(data.ext);
     } catch {
       setErr(t.assetUploadError);
     } finally {

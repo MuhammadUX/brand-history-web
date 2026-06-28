@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { classifyAiError } from "@/lib/ai/classify-error";
+import { redactSecrets } from "@/lib/redact-secrets";
 import {
   requireOperatorAction,
   slugify,
@@ -107,7 +108,9 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
       .update({
         status: "failed",
         error_code: classifyAiError(e),
-        error_detail: (e instanceof Error ? e.message : String(e)).slice(0, 4000),
+        error_detail: redactSecrets(
+          e instanceof Error ? e.message : String(e)
+        ).slice(0, 4000),
         updated_at: new Date().toISOString(),
       })
       .eq("id", run.id)
