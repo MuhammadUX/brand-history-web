@@ -29,6 +29,9 @@ export interface AssetTileProps {
   name: React.ReactNode;
   /** Asset file format, e.g. "SVG" | "PNG" | "PDF" | "EPS". */
   format?: string;
+  /** Uploaded asset image URL. When set, the real image renders on the ground
+   *  instead of the BrandMark fallback. */
+  imageUrl?: string | null;
   domain?: string | null;
   initials: string;
   color?: string | null;
@@ -53,6 +56,7 @@ const GROUNDS: Record<NonNullable<AssetTileProps["ground"]>, string> = {
 export function AssetTile({
   name,
   format,
+  imageUrl,
   domain,
   initials,
   color,
@@ -75,7 +79,17 @@ export function AssetTile({
           GROUNDS[ground],
         )}
       >
-        <BrandMark domain={domain} initials={initials} color={color} size="sm" />
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-16 w-16 object-contain"
+          />
+        ) : (
+          <BrandMark domain={domain} initials={initials} color={color} size="sm" />
+        )}
       </div>
       <div className="flex items-center gap-2 border-t border-line px-3 py-2.5">
         <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-ink">

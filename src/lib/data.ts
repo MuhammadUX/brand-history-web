@@ -145,7 +145,7 @@ export async function getBrandById(id: string): Promise<Brand | null> {
 }
 
 const ASSET_SELECT =
-  "id,brand_id,asset_type,name_en,name_ar,download_policy,formats,source_url,is_archived,era,sort_order";
+  "id,brand_id,asset_type,name_en,name_ar,download_policy,formats,source_url,image_url,is_archived,era,sort_order";
 
 export async function getBrandAssets(brandId: string): Promise<BrandAsset[]> {
   const supabase = getSupabaseServerClient();

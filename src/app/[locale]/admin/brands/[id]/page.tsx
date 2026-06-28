@@ -134,7 +134,7 @@ export default async function EditBrandPage({
           role={access.operator.role}
         />
         <ColorsManager locale={typedLocale} brandId={id} colors={colors} role={access.operator.role} />
-        <AssetsManager locale={typedLocale} brandId={id} assets={assets} role={access.operator.role} />
+        <AssetsManager locale={typedLocale} brandId={id} assets={assets} role={access.operator.role} website={(brand as unknown as Brand).website} />
         <TimelineManager locale={typedLocale} brandId={id} entries={timeline} role={access.operator.role} />
         <FontsManager locale={typedLocale} brandId={id} fonts={fonts} role={access.operator.role} />
         <GuidelinesManager locale={typedLocale} brandId={id} guidelines={guidelines} role={access.operator.role} />

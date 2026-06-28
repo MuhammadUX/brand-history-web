@@ -13,6 +13,8 @@ import type {
 } from "@/lib/types";
 import { getDictionary } from "@/i18n";
 import { Card, Button } from "@/components/ui";
+import { logoSrc } from "@/components/ui/BrandMark";
+import { createClient } from "@/lib/supabase-browser";
 import {
   saveColor,
   deleteColor,
@@ -137,21 +139,178 @@ export function ColorsManager({
 /* ---------------- Assets ---------------- */
 const ASSET_TYPES = ["logo_primary", "secondary", "icon", "wordmark", "monochrome"];
 const POLICIES = ["host", "link_out", "pro"];
+const ASSET_BUCKET = "brand-assets";
+const ASSET_ACCEPT = "image/svg+xml,image/png,image/jpeg,image/webp";
+
+/** Reduce a brand website to a bare domain for the logo API (drops scheme/path). */
+function websiteDomain(website?: string | null): string | null {
+  if (!website) return null;
+  const raw = website.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    return url.hostname.replace(/^www\./, "") || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Best-effort file extension from a filename or URL, lowercased, no dot. */
+function extFromName(name: string): string | null {
+  const clean = name.split(/[?#]/)[0];
+  const m = clean.match(/\.([a-z0-9]+)$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+type AssetImageFieldDict = Pick<
+  EditorDict,
+  | "assetImage"
+  | "assetUpload"
+  | "assetUploading"
+  | "assetUploadError"
+  | "assetSuggestLogo"
+  | "assetImagePreview"
+  | "assetClearImage"
+>;
+
+/**
+ * Per-asset image control: a thumbnail preview, a file upload (to the public
+ * `brand-assets` bucket via the browser/operator session so Storage RLS
+ * applies), and an optional "Suggest logo" button that pre-fills the URL from
+ * the brand domain via the logo API. The resolved URL lives in component state
+ * and is submitted with the parent form through a hidden `image_url` input, so
+ * the existing hardened `saveAsset` action persists it. Never auto-saves — the
+ * operator still submits the row.
+ */
+function AssetImageField({
+  brandId,
+  assetId,
+  initial,
+  domain,
+  t,
+  onExtDetected,
+}: {
+  brandId: string;
+  assetId: string | null;
+  initial: string | null;
+  domain: string | null;
+  t: AssetImageFieldDict;
+  onExtDetected?: (ext: string) => void;
+}) {
+  const [url, setUrl] = useState<string>(initial ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    setErr(null);
+    setBusy(true);
+    try {
+      const supabase = createClient();
+      const ext = extFromName(file.name) || "png";
+      // Stable, brand-scoped path. New rows (no id yet) get a uuid so two
+      // unsaved rows can't collide; saved rows reuse the asset id.
+      const key = assetId ?? (crypto?.randomUUID?.() ?? `${Date.now()}`);
+      const path = `brands/${brandId}/${key}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(ASSET_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) {
+        setErr(t.assetUploadError);
+        return;
+      }
+      const { data } = supabase.storage.from(ASSET_BUCKET).getPublicUrl(path);
+      // Cache-bust so re-uploads to the same path refresh the preview.
+      const publicUrl = `${data.publicUrl}?v=${Date.now()}`;
+      setUrl(publicUrl);
+      onExtDetected?.(ext);
+    } catch {
+      setErr(t.assetUploadError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function suggest() {
+    if (!domain) return;
+    setUrl(logoSrc(domain, 256));
+    onExtDetected?.("png");
+  }
+
+  return (
+    <div className="col-span-2 flex flex-wrap items-center gap-2 sm:col-span-4">
+      {/* Submitted with the parent form; saveAsset reads `image_url`. */}
+      <input type="hidden" name="image_url" value={url} />
+      <span
+        className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-surface-2"
+        aria-hidden={url ? undefined : "true"}
+      >
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt={t.assetImagePreview}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <span className="text-[10px] text-muted">{t.assetImage}</span>
+        )}
+      </span>
+      <label className="cursor-pointer rounded-md border border-line bg-surface-2 px-2.5 py-1.5 text-[12px] font-medium text-ink hover:border-link">
+        {busy ? t.assetUploading : t.assetUpload}
+        <input
+          type="file"
+          accept={ASSET_ACCEPT}
+          className="hidden"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void handleFile(f);
+            e.target.value = "";
+          }}
+        />
+      </label>
+      {domain && (
+        <button
+          type="button"
+          onClick={suggest}
+          disabled={busy}
+          className="rounded-md border border-line bg-surface-2 px-2.5 py-1.5 text-[12px] font-medium text-ink hover:border-link disabled:opacity-50"
+        >
+          {t.assetSuggestLogo}
+        </button>
+      )}
+      {url && (
+        <button
+          type="button"
+          onClick={() => setUrl("")}
+          className="rounded-md px-2 py-1.5 text-[12px] font-medium text-muted hover:text-danger"
+        >
+          {t.assetClearImage}
+        </button>
+      )}
+      {err && <span className="text-[12px] text-danger">{err}</span>}
+    </div>
+  );
+}
 
 export function AssetsManager({
   locale,
   brandId,
   assets,
   role,
+  website,
 }: {
   locale: Locale;
   brandId: string;
   assets: BrandAsset[];
   role: "editor" | "admin";
+  /** Brand website — drives the "Suggest logo" button (domain → logo API). */
+  website?: string | null;
 }) {
   const t = getDictionary(locale).admin.editor;
   const { pending, run, error } = useRefresh();
   const msgs = childMessages(t, role);
+  const domain = websiteDomain(website);
 
   return (
     <Card>
@@ -179,6 +338,7 @@ export function AssetsManager({
               <input type="checkbox" name="is_archived" defaultChecked={a.is_archived} className="h-4 w-4 rounded border-line accent-ink" />
               {t.assetArchived}
             </label>
+            <AssetImageField brandId={brandId} assetId={a.id} initial={a.image_url ?? null} domain={domain} t={t} />
             <div className="col-span-2 flex gap-2 sm:col-span-4">
               <Button type="submit" variant="ghost" size="sm" disabled={pending}>{t.save}</Button>
               <Button type="button" variant="danger" size="sm" disabled={pending} onClick={() => run(() => deleteAsset(brandId, a.id), msgs)}>{t.remove}</Button>
@@ -201,6 +361,7 @@ export function AssetsManager({
           <input type="checkbox" name="is_archived" className="h-4 w-4 rounded border-line accent-ink" />
           {t.assetArchived}
         </label>
+        <AssetImageField brandId={brandId} assetId={null} initial={null} domain={domain} t={t} />
         <div className="col-span-2 sm:col-span-4">
           <Button type="submit" variant="primary" size="sm" disabled={pending}>{t.add}</Button>
         </div>

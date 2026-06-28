@@ -344,6 +344,7 @@ export default async function BrandPage({
                       key={`${asset.id}-light`}
                       name={aName}
                       format={fmt}
+                      imageUrl={asset.image_url}
                       domain={brand.website}
                       initials={brand.initials}
                       color={brand.primary_color}
@@ -363,6 +364,7 @@ export default async function BrandPage({
                     <AssetTile
                       key={`${asset.id}-dark`}
                       name={aName}
+                      imageUrl={asset.image_url}
                       domain={brand.website}
                       initials={brand.initials}
                       color={brand.primary_color}
@@ -474,6 +476,7 @@ export default async function BrandPage({
                         name={`${
                           (isAr ? asset.name_ar : asset.name_en) || typeLabel
                         }${asset.era ? ` · ${asset.era}` : ""}`}
+                        imageUrl={asset.image_url}
                         domain={brand.website}
                         initials={brand.initials}
                         color={brand.primary_color}

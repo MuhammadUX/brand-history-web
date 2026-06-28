@@ -55,6 +55,8 @@ export interface BrandAsset {
   download_policy: DownloadPolicy;
   formats: string[] | null;
   source_url?: string | null;
+  /** Public URL of the uploaded asset image file (in the brand-assets bucket). */
+  image_url?: string | null;
   is_archived: boolean;
   era: string | null;
   sort_order: number;

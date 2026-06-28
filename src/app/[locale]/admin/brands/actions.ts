@@ -510,6 +510,7 @@ export async function saveAsset(
       name_ar: str(fd, "name_ar") || "",
       download_policy: str(fd, "download_policy") || "host",
       formats: formats.length ? formats : ["svg", "png"],
+      image_url: nullableStr(fd, "image_url"),
       is_archived: fd.get("is_archived") === "on" || fd.get("is_archived") === "true",
       sort_order: intOrNull(fd, "sort_order") ?? 0,
     };
