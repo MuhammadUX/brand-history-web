@@ -19,7 +19,10 @@ import {
   AIReviewBlock,
 } from "@/components/ui";
 import type { ConfidencePillProps } from "@/components/ui";
-import { createDraftBrand } from "@/app/[locale]/admin/ai-builder/actions";
+import {
+  createDraftBrand,
+  createSector,
+} from "@/app/[locale]/admin/ai-builder/actions";
 
 type Decision = "accepted" | "rejected" | "pending";
 
@@ -103,6 +106,16 @@ export default function DraftReview({
   const router = useRouter();
   const [pending, start] = useTransition();
   const meta = draft.fields_meta || {};
+
+  // Sectors live in state so a sector created here appears in the dropdown
+  // immediately (and can be auto-selected) without a full page reload.
+  const [sectorList, setSectorList] = useState<Sector[]>(sectors);
+  const proposed = draft.sector_new ?? null;
+  // The proposed sector is still offerable only if it isn't already in the list.
+  const proposedAvailable =
+    !!proposed && !sectorList.some((s) => s.slug === proposed.slug);
+  const [sectorBusy, setSectorBusy] = useState(false);
+  const [sectorErr, setSectorErr] = useState<string | null>(null);
 
   const showEn = languages.includes("en");
   const showAr = languages.includes("ar");
@@ -196,6 +209,42 @@ export default function DraftReview({
     });
   };
 
+  // One-click create the AI-proposed sector, then select it.
+  const createProposedSector = () => {
+    if (!proposed || sectorBusy) return;
+    setSectorErr(null);
+    setSectorBusy(true);
+    start(async () => {
+      const res = await createSector(locale, {
+        slug: proposed.slug,
+        name_en: proposed.name_en,
+        name_ar: proposed.name_ar,
+      });
+      setSectorBusy(false);
+      if (res.ok && res.sectorId && res.slug) {
+        // Add to the list if not already present, then select it.
+        setSectorList((prev) =>
+          prev.some((s) => s.slug === res.slug)
+            ? prev
+            : [
+                ...prev,
+                {
+                  id: res.sectorId as string,
+                  slug: res.slug as string,
+                  name_en: proposed.name_en,
+                  name_ar: proposed.name_ar,
+                  sort_order: prev.length + 1,
+                },
+              ],
+        );
+        setFields((p) => ({ ...p, sector_slug: res.slug as string }));
+        setDecisions((p) => ({ ...p, sector: "accepted" }));
+      } else {
+        setSectorErr(t.sectorCreateError);
+      }
+    });
+  };
+
   // Shared per-item review props for the AIReviewBlock.
   const reviewProps = (key: string, band: ConfidenceBand | undefined, conflict = false) => ({
     confidence: BAND_TO_CONFIDENCE[band ?? "L"],
@@ -282,17 +331,49 @@ export default function DraftReview({
 
             <div className="space-y-3">
               <AIReviewBlock title={t.sector} {...reviewProps("sector", meta.sector?.band as ConfidenceBand)}>
-                <Select
-                  value={fields.sector_slug}
-                  onChange={(e) => setFields((p) => ({ ...p, sector_slug: e.target.value }))}
-                >
-                  <option value="">{"—"}</option>
-                  {sectors.map((s) => (
-                    <option key={s.id} value={s.slug}>
-                      {locale === "ar" ? s.name_ar : s.name_en}
-                    </option>
-                  ))}
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    value={fields.sector_slug}
+                    onChange={(e) => setFields((p) => ({ ...p, sector_slug: e.target.value }))}
+                  >
+                    <option value="">{"—"}</option>
+                    {sectorList.map((s) => (
+                      <option key={s.id} value={s.slug}>
+                        {locale === "ar" ? s.name_ar : s.name_en}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {/* AI proposed a sector not yet in the taxonomy — offer to create it. */}
+                  {proposedAvailable && proposed && (
+                    <div className="rounded-md border border-line bg-surface-2 px-3 py-2">
+                      <p className="text-[12px] text-muted">
+                        {t.sectorSuggested}{" "}
+                        <span className="font-medium text-ink">
+                          {locale === "ar" ? proposed.name_ar : proposed.name_en}
+                        </span>
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-1.5"
+                        onClick={createProposedSector}
+                        disabled={sectorBusy || pending}
+                      >
+                        {sectorBusy
+                          ? t.sectorCreating
+                          : t.sectorCreateNew.replace(
+                              "{name}",
+                              locale === "ar" ? proposed.name_ar : proposed.name_en,
+                            )}
+                      </Button>
+                      {sectorErr && (
+                        <p className="mt-1 text-[12px] text-danger">{sectorErr}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </AIReviewBlock>
 
               <AIReviewBlock

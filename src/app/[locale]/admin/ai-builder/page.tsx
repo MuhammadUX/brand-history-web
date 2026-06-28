@@ -120,6 +120,14 @@ export default async function AiBuilderStart({
             <Field label={t.urlLabel} htmlFor="url">
               <Input id="url" name="url" type="url" placeholder="https://" />
             </Field>
+            <Field label={t.guidelinesUrlLabel} htmlFor="guidelines_url" hint={t.guidelinesUrlHint}>
+              <Input
+                id="guidelines_url"
+                name="guidelines_url"
+                type="url"
+                placeholder="https://…/brand-guidelines.pdf"
+              />
+            </Field>
             <Field label={t.providerLabel} htmlFor="ai_provider">
               <Select id="ai_provider" name="ai_provider" defaultValue="gemini">
                 <option value="gemini">{t.providerGemini}</option>

@@ -59,6 +59,7 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
     sector_slug: str(fd, "sector_slug") || null,
     region: str(fd, "region") || null,
     url: str(fd, "url") || null,
+    guidelines_url: str(fd, "guidelines_url") || null,
     ai_provider: aiProvider || null,
   };
 
@@ -166,6 +167,77 @@ export async function deleteAllRuns(locale: string): Promise<void> {
   await writeAudit(supabase, operator, "ai_runs_cleared", "profile_builder_run", null, {});
   revalidatePath(`/${locale}/admin/ai-builder`);
   redirect(`/${locale}/admin/ai-builder`);
+}
+
+export interface CreateSectorResult {
+  ok: boolean;
+  message?: "forbidden" | "validation" | "error";
+  sectorId?: string;
+  slug?: string;
+}
+
+/**
+ * Create (or pick up an existing) sector from the AI-builder review screen.
+ * Operator-gated + audited. Slugifies the proposed slug, inserts with
+ * `on conflict (slug) do nothing`, and always resolves the row's id so the
+ * caller can link the brand to it whether it was just created or already
+ * existed. Server-validated: name_en is required.
+ */
+export async function createSector(
+  locale: string,
+  input: { slug: string; name_en: string; name_ar: string }
+): Promise<CreateSectorResult> {
+  try {
+    const { operator, supabase } = await operatorClient();
+
+    const name_en = (input.name_en ?? "").trim();
+    const name_ar = (input.name_ar ?? "").trim() || name_en;
+    const slug = slugify(input.slug || name_en);
+    if (!slug || !name_en) {
+      return { ok: false, message: "validation" };
+    }
+
+    // Next sort_order = max + 1 (keeps the dropdown ordering stable).
+    const { data: last } = await supabase
+      .from("sectors")
+      .select("sort_order")
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const sort_order = ((last?.sort_order as number | undefined) ?? 0) + 1;
+
+    // Insert; ignore conflict so a duplicate slug is a no-op (idempotent).
+    const { error: insErr } = await supabase
+      .from("sectors")
+      .insert({ slug, name_en, name_ar, sort_order })
+      .select("id");
+    // 23505 = unique_violation (slug already exists) — treated as success below.
+    if (insErr && insErr.code !== "23505") {
+      console.error("createSector insert error:", insErr.message);
+      return { ok: false, message: "error" };
+    }
+
+    // Resolve the id (whether just inserted or pre-existing).
+    const { data: row } = await supabase
+      .from("sectors")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!row?.id) return { ok: false, message: "error" };
+
+    await writeAudit(supabase, operator, "sector_created", "sector", row.id, {
+      slug,
+      name_en,
+      name_ar,
+      via: "ai-builder",
+    });
+
+    revalidatePath(`/${locale}/admin/ai-builder`);
+    return { ok: true, sectorId: row.id, slug };
+  } catch (e) {
+    console.error("createSector error:", e);
+    return { ok: false, message: "forbidden" };
+  }
 }
 
 export interface CreateDraftResult {
@@ -313,7 +385,10 @@ export async function createDraftBrand(
         founded_year,
         summary_en,
         summary_ar,
-        primary_color: acceptedColors[0]?.hex || "#3B5BDB",
+        primary_color:
+          acceptedColors.find((c) => c.role === "primary")?.hex ||
+          acceptedColors[0]?.hex ||
+          "#3B5BDB",
         claim_status: "unclaimed",
         publication_state, // asserted 'draft'
         source: "ai",
@@ -338,7 +413,8 @@ export async function createDraftBrand(
           brand_id: brand.id,
           name: col.name,
           hex: col.hex,
-          role: i === 0 ? "primary" : "secondary",
+          // Prefer the AI-extracted palette role; fall back to position-based.
+          role: col.role || (i === 0 ? "primary" : "secondary"),
           sort_order: i,
         }))
       );

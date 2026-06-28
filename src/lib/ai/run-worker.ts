@@ -14,6 +14,7 @@ interface RunRow {
     sector_slug?: string | null;
     region?: string | null;
     url?: string | null;
+    guidelines_url?: string | null;
     ai_provider?: string | null;
   } | null;
 }

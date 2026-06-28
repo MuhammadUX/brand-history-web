@@ -11,6 +11,7 @@ import {
   type DraftResult,
   type BrandDraft,
   type DraftColor,
+  type ProposedSector,
   type DraftAsset,
   type DraftTimelineEntry,
   type FieldMeta,
@@ -34,6 +35,8 @@ export function clamp01(n: unknown): number {
 export interface RawBrand {
   found?: boolean;
   sector_slug?: string | null;
+  /** A new sector the model proposes when nothing in the allowed list fits. */
+  sector_new?: { slug?: string; name_en?: string; name_ar?: string } | null;
   founded_year?: number | null;
   overview_en?: string;
   overview_ar?: string;
@@ -41,7 +44,13 @@ export interface RawBrand {
   summary_ar?: string;
   field_confidence?: Record<string, number>;
   field_sources?: Record<string, string[]>;
-  colors?: Array<{ name?: string; hex?: string; confidence?: number; source?: string }>;
+  colors?: Array<{
+    name?: string;
+    hex?: string;
+    role?: string;
+    confidence?: number;
+    source?: string;
+  }>;
   assets?: Array<{
     asset_type?: string;
     name_en?: string;
@@ -58,6 +67,15 @@ export interface RawBrand {
     confidence?: number;
     source?: string;
   }>;
+}
+
+const COLOR_ROLES = new Set(["primary", "secondary", "neutral", "accent"]);
+
+/** Map a model-supplied color role onto our allowed set; undefined if unknown. */
+function normalizeRole(role: unknown): string | undefined {
+  if (typeof role !== "string") return undefined;
+  const r = role.trim().toLowerCase();
+  return COLOR_ROLES.has(r) ? r : undefined;
 }
 
 const IDENTITY_KINDS = new Set([
@@ -80,23 +98,31 @@ Return ONLY a single JSON object (no markdown, no code fences, no commentary) wi
 {
   "found": boolean,
   "sector_slug": string|null,
+  "sector_new": { "slug": string, "name_en": string, "name_ar": string } | null,
   "founded_year": number|null,
   "overview_en": string, "overview_ar": string,
   "summary_en": string, "summary_ar": string,
   "field_confidence": { "overview": number, "summary": number, "sector": number, "founded_year": number },
   "field_sources": { "overview": string[], "summary": string[], "sector": string[], "founded_year": string[] },
-  "colors": [ { "name": string, "hex": string, "confidence": number, "source": string } ],
+  "colors": [ { "name": string, "hex": string, "role": string, "confidence": number, "source": string } ],
   "assets": [ { "asset_type": string, "name_en": string, "name_ar": string, "confidence": number } ],
   "timeline": [ { "year": number, "title_en": string, "title_ar": string, "description_en": string, "description_ar": string, "change_kind": string, "confidence": number, "source": string } ]
 }
-Rules: sector_slug MUST be one of [${sectors.join(", ") || "none"}] or null. All confidence values are 0..1. hex like #RRGGBB. timeline change_kind MUST be one of: founding, logo, wordmark, color, refresh, rebrand, rename, identity; if you find no genuine identity events, return an empty timeline. If nothing can be verified, set found=false and leave text fields empty.`;
+Rules:
+- Sector: pick the brand's best-fitting sector. PREFER a slug from this allowed list: [${sectors.join(", ") || "none"}]. If one fits, set sector_slug to it and set sector_new to null. If NOTHING in the list fits, set sector_slug to null AND propose sector_new = { slug (lowercase, hyphenated, e.g. "real-estate"), name_en, name_ar }. Never both — when sector_slug is set, sector_new must be null.
+- Colors: if a brand-guidelines URL is provided, READ it and extract the COMPLETE color palette — primary, secondary, neutrals, accents — each with its name, role, and exact hex. Return ALL colors, not just the primary. Set each color's "role" to one of: primary, secondary, neutral, accent. NEVER invent a hex; if you are unsure of an exact value, lower that color's confidence.
+- All confidence values are 0..1. hex like #RRGGBB.
+- timeline change_kind MUST be one of: founding, logo, wordmark, color, refresh, rebrand, rename, identity; if you find no genuine identity events, return an empty timeline.
+- If nothing can be verified, set found=false and leave text fields empty.`;
 }
 
 export function buildUserPrompt(input: DraftInput): string {
   const url = input.hints?.url?.trim();
+  const guidelines = input.hints?.guidelines_url?.trim();
   return `Brand name: ${input.name.trim()}
 ${url ? `Official website: ${url}` : "Official website: (not provided — find it)"}
 ${input.hints?.region ? `Region hint: ${input.hints.region}` : ""}
+${guidelines ? `Brand-guidelines URL (read this PDF for the full color palette): ${guidelines}` : ""}
 
 Research this brand's visual identity and return the JSON.`;
 }
@@ -129,8 +155,25 @@ export function buildDraft(
     : "";
 
   const found = g.found !== false;
-  const sector_slug =
-    g.sector_slug && ctx.sectors.includes(g.sector_slug) ? g.sector_slug : null;
+  // If the model's slug is in the allowed list, use it. Otherwise DON'T silently
+  // drop it — surface it as a proposed new sector so the operator can create it.
+  const slugInList =
+    !!g.sector_slug && ctx.sectors.includes(g.sector_slug);
+  const sector_slug = slugInList ? (g.sector_slug as string) : null;
+
+  let sector_new: ProposedSector | null = null;
+  if (!slugInList) {
+    // Prefer an explicit sector_new from the model; otherwise synthesize one
+    // from the non-listed slug it returned.
+    const proposedSlug = (g.sector_new?.slug || g.sector_slug || "").trim();
+    if (proposedSlug) {
+      sector_new = {
+        slug: proposedSlug,
+        name_en: (g.sector_new?.name_en || proposedSlug).trim(),
+        name_ar: (g.sector_new?.name_ar || g.sector_new?.name_en || proposedSlug).trim(),
+      };
+    }
+  }
 
   const conf = g.field_confidence ?? {};
   const srcs = g.field_sources ?? {};
@@ -140,6 +183,7 @@ export function buildDraft(
     .map((c) => ({
       name: c.name || "Color",
       hex: c.hex as string,
+      role: normalizeRole(c.role),
       confidence: clamp01(c.confidence),
       source: c.source || "",
     }));
@@ -217,6 +261,7 @@ export function buildDraft(
     overview_en: g.overview_en || "",
     overview_ar: g.overview_ar || "",
     sector_slug,
+    sector_new,
     founded_year: typeof g.founded_year === "number" ? g.founded_year : null,
     summary_en: g.summary_en || "",
     summary_ar: g.summary_ar || "",

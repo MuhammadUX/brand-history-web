@@ -21,8 +21,21 @@ export interface FieldMeta {
 export interface DraftColor {
   name: string;
   hex: string;
+  /** Palette role from the brand guidelines: primary | secondary | neutral | accent. */
+  role?: string;
   confidence: number;
   source: string;
+}
+
+/**
+ * A sector the model proposed that is NOT yet in the taxonomy. Surfaced in the
+ * review UI so the operator can one-click create it (instead of silently
+ * dropping the suggestion).
+ */
+export interface ProposedSector {
+  slug: string;
+  name_en: string;
+  name_ar: string;
 }
 
 export interface DraftAsset {
@@ -60,6 +73,12 @@ export interface BrandDraft {
   overview_en: string;
   overview_ar: string;
   sector_slug: string | null;
+  /**
+   * A sector the model proposed that is not in the taxonomy yet. When set, the
+   * review UI offers the operator a "create new sector" option. Null/undefined
+   * when the model's suggestion already maps to an existing slug.
+   */
+  sector_new?: ProposedSector | null;
   founded_year: number | null;
   summary_en: string;
   summary_ar: string;
@@ -82,6 +101,8 @@ export interface DraftInput {
     sector_slug?: string | null;
     region?: string | null;
     url?: string | null;
+    /** Optional brand-guidelines PDF URL; Gemini's url_context can read it. */
+    guidelines_url?: string | null;
   };
   languages?: string[];
 }
