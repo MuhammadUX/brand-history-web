@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Locale, Sector } from "@/lib/types";
 import { getDictionary } from "@/i18n";
+import { createClient } from "@/lib/supabase-browser";
 import {
   isHighConfidenceSourced,
   type BrandDraft,
@@ -33,6 +34,32 @@ const BAND_TO_CONFIDENCE: Record<ConfidenceBand, ConfidencePillProps["confidence
   M: "medium",
   L: "low",
 };
+
+// Operator-added assets upload to the same public Storage bucket as the editor.
+const ASSET_BUCKET = "brand-assets";
+const ASSET_ACCEPT = "image/svg+xml,image/png,image/jpeg,image/webp";
+
+// A valid hex is #RRGGBB (uppercase fine). Operators may type without the '#'.
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+/** Best-effort file extension from a filename, lowercased, no dot. */
+function extFromName(name: string): string | null {
+  const clean = name.split(/[?#]/)[0];
+  const m = clean.match(/\.([a-z0-9]+)$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+/**
+ * Normalize an operator-typed hex toward #RRGGBB: trim, add a leading '#' if
+ * missing, uppercase. Returns the (possibly still-invalid) candidate — callers
+ * validate with HEX_RE. Empty stays empty so the field can be cleared.
+ */
+function normalizeHex(raw: string): string {
+  let v = raw.trim();
+  if (!v) return "";
+  if (!v.startsWith("#")) v = "#" + v;
+  return v.toUpperCase();
+}
 
 /** Source slot: a domain link / non-URL label, or an honest "no source" note. */
 function sourceNode(
@@ -143,7 +170,17 @@ export default function DraftReview({
   // Operator-added items (manual completion of what the AI missed). These are
   // always included on create (accepted by default) and validated server-side.
   type AddedColor = { name: string; hex: string; role: string };
-  type AddedAsset = { asset_type: string; name_en: string; name_ar: string };
+  type AddedAsset = {
+    asset_type: string;
+    name_en: string;
+    name_ar: string;
+    // Optional uploaded image: a public URL + detected extension. Upload is
+    // optional, so an asset can be added without a file.
+    image_url?: string;
+    ext?: string;
+    uploading?: boolean;
+    uploadError?: boolean;
+  };
   const [addedColors, setAddedColors] = useState<AddedColor[]>([]);
   const [addedAssets, setAddedAssets] = useState<AddedAsset[]>([]);
 
@@ -170,8 +207,41 @@ export default function DraftReview({
   const removeAssetRow = (i: number) =>
     setAddedAssets((p) => p.filter((_, idx) => idx !== i));
 
-  // A valid hex is #RRGGBB; an added color also needs a name + role.
-  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+  /**
+   * Upload an operator-chosen file for an added-asset row to the public
+   * `brand-assets` bucket. The draft has no brand id yet, so the path is
+   * scoped to the run: `ai-drafts/<runId>/<uuid>.<ext>`. On success the row
+   * keeps the public URL + detected extension; both flow into the create
+   * payload's `decisions.added.assets[]`.
+   */
+  async function uploadAssetFile(i: number, file: File) {
+    updateAssetRow(i, { uploading: true, uploadError: false });
+    try {
+      const supabase = createClient();
+      const ext = extFromName(file.name) || "png";
+      const uuid = crypto?.randomUUID?.() ?? String(Date.now());
+      const path = `ai-drafts/${runId}/${uuid}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(ASSET_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if (upErr) {
+        updateAssetRow(i, { uploading: false, uploadError: true });
+        return;
+      }
+      const { data } = supabase.storage.from(ASSET_BUCKET).getPublicUrl(path);
+      const publicUrl = `${data.publicUrl}?v=${Date.now()}`;
+      updateAssetRow(i, {
+        image_url: publicUrl,
+        ext,
+        uploading: false,
+        uploadError: false,
+      });
+    } catch {
+      updateAssetRow(i, { uploading: false, uploadError: true });
+    }
+  }
+
+  // An added color needs a name + valid #RRGGBB hex + role.
   const validAddedColors = addedColors.filter(
     (c) => c.name.trim() && HEX_RE.test(c.hex) && COLOR_ROLES.includes(c.role as typeof COLOR_ROLES[number]),
   );
@@ -237,7 +307,15 @@ export default function DraftReview({
       // asset_type, length caps) before inserting.
       added: {
         colors: validAddedColors,
-        assets: validAddedAssets,
+        // Strip transient UI flags (uploading/uploadError); send only the
+        // persisted shape incl. the optional uploaded image_url + extension.
+        assets: validAddedAssets.map((a) => ({
+          asset_type: a.asset_type,
+          name_en: a.name_en,
+          name_ar: a.name_ar,
+          ...(a.image_url ? { image_url: a.image_url } : {}),
+          ...(a.ext ? { ext: a.ext } : {}),
+        })),
       },
     };
     const fd = new FormData();
@@ -488,12 +566,34 @@ export default function DraftReview({
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-[12px] text-muted">{t.colorHex}</span>
-                    <Input
-                      type="color"
-                      className="h-9 w-14 p-1"
-                      value={HEX_RE.test(c.hex) ? c.hex : "#000000"}
-                      onChange={(e) => updateColorRow(i, { hex: e.target.value })}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      {/* Primary entry: type the hex (#RRGGBB). Normalized on
+                          change so a leading '#' is added and case folded. */}
+                      <Input
+                        value={c.hex}
+                        placeholder={t.colorHexHint}
+                        aria-invalid={c.hex.trim() !== "" && !HEX_RE.test(c.hex)}
+                        className="w-28 font-mono"
+                        onChange={(e) =>
+                          updateColorRow(i, { hex: normalizeHex(e.target.value) })
+                        }
+                      />
+                      {/* Synced swatch picker: picking updates the text field. */}
+                      <Input
+                        type="color"
+                        aria-label={t.colorHex}
+                        className="h-9 w-10 shrink-0 p-1"
+                        value={HEX_RE.test(c.hex) ? c.hex : "#000000"}
+                        onChange={(e) =>
+                          updateColorRow(i, { hex: normalizeHex(e.target.value) })
+                        }
+                      />
+                    </div>
+                    {c.hex.trim() !== "" && !HEX_RE.test(c.hex) && (
+                      <span className="mt-1 block text-[11px] text-danger">
+                        {t.colorHexInvalid}
+                      </span>
+                    )}
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-[12px] text-muted">{t.colorRole}</span>
@@ -579,6 +679,53 @@ export default function DraftReview({
                       />
                     </label>
                   )}
+                  {/* Optional image upload (svg/png/jpg/webp) → brand-assets
+                      bucket; resulting public URL rides into the create payload. */}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-surface"
+                      aria-hidden={a.image_url ? undefined : "true"}
+                    >
+                      {a.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={a.image_url}
+                          alt={t.assetImagePreview}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-muted">{t.assetImage}</span>
+                      )}
+                    </span>
+                    <label className="cursor-pointer rounded-md border border-line bg-surface px-2.5 py-1.5 text-[12px] font-medium text-ink hover:border-link">
+                      {a.uploading ? t.assetUploading : t.assetUpload}
+                      <input
+                        type="file"
+                        accept={ASSET_ACCEPT}
+                        className="hidden"
+                        disabled={a.uploading}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void uploadAssetFile(i, f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {a.image_url && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateAssetRow(i, { image_url: undefined, ext: undefined })
+                        }
+                        className="rounded-md px-2 py-1.5 text-[12px] font-medium text-muted hover:text-danger"
+                      >
+                        {t.assetClearImage}
+                      </button>
+                    )}
+                    {a.uploadError && (
+                      <span className="text-[12px] text-danger">{t.assetUploadError}</span>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"

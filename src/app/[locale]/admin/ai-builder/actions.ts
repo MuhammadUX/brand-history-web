@@ -291,7 +291,13 @@ export async function createDraftBrand(
       bulkHigh?: boolean;
       added?: {
         colors?: Array<{ name?: string; hex?: string; role?: string }>;
-        assets?: Array<{ asset_type?: string; name_en?: string; name_ar?: string }>;
+        assets?: Array<{
+          asset_type?: string;
+          name_en?: string;
+          name_ar?: string;
+          image_url?: string;
+          ext?: string;
+        }>;
       };
     } = {};
     try {
@@ -370,17 +376,35 @@ export async function createDraftBrand(
         source: "",
       }));
 
+    // Accept an optional uploaded image: must be a string URL (http/https) and
+    // length-capped. Anything malformed is dropped to null (asset still kept).
+    const ALLOWED_EXT = new Set(["svg", "png", "jpg", "jpeg", "webp"]);
+    const cleanImageUrl = (raw: unknown): string | null => {
+      const s = cap(raw, 2048);
+      if (!s) return null;
+      return /^https?:\/\//i.test(s) ? s : null;
+    };
+    const cleanExt = (raw: unknown): string | null => {
+      const e = cap(raw, 8).toLowerCase().replace(/^\./, "");
+      return ALLOWED_EXT.has(e) ? e : null;
+    };
+
     const addedAssets = (decisions.added?.assets ?? [])
       .map((a) => ({
         asset_type: cap(a.asset_type, 40),
         name_en: cap(a.name_en, 120),
         name_ar: cap(a.name_ar, 120),
+        image_url: cleanImageUrl(a.image_url),
+        ext: cleanExt(a.ext),
       }))
       .filter((a) => a.asset_type && (a.name_en || a.name_ar))
       .map((a) => ({
         asset_type: a.asset_type,
         name_en: a.name_en || a.name_ar,
         name_ar: a.name_ar || a.name_en,
+        image_url: a.image_url,
+        // Persist the uploaded file's format when known; else the default pair.
+        formats: a.ext ? [a.ext] : ["svg", "png"],
       }));
 
     const allColors = [...acceptedColors, ...addedColors];
@@ -468,16 +492,22 @@ export async function createDraftBrand(
     }
     if (allAssets.length) {
       await supabase.from("brand_assets").insert(
-        allAssets.map((a, i) => ({
-          brand_id: brand.id,
-          asset_type: a.asset_type,
-          name_en: a.name_en,
-          name_ar: a.name_ar,
-          download_policy: "host",
-          formats: ["svg", "png"],
-          is_archived: false,
-          sort_order: i,
-        }))
+        allAssets.map((a, i) => {
+          // Added assets may carry an uploaded image_url + per-file formats;
+          // accepted (AI-drafted) assets do not. Read them defensively.
+          const withImg = a as { image_url?: string | null; formats?: string[] };
+          return {
+            brand_id: brand.id,
+            asset_type: a.asset_type,
+            name_en: a.name_en,
+            name_ar: a.name_ar,
+            download_policy: "host",
+            image_url: withImg.image_url ?? null,
+            formats: withImg.formats ?? ["svg", "png"],
+            is_archived: false,
+            sort_order: i,
+          };
+        })
       );
     }
     if (acceptedTimeline.length) {
