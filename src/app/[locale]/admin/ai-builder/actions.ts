@@ -282,11 +282,16 @@ export async function createDraftBrand(
     if (!draft) return { ok: false, message: "error" };
 
     // Parse operator decisions + edits from the form.
-    // Shape: { fields: {overview,summary,sector_slug,founded_year,...}, accept: {key:bool}, bulkHigh:bool }
+    // Shape: { fields: {overview,summary,sector_slug,founded_year,...}, accept: {key:bool}, bulkHigh:bool,
+    //          added: { colors:[{name,hex,role}], assets:[{asset_type,name_en,name_ar}] } }
     let decisions: {
       fields?: Record<string, string>;
       accept?: Record<string, boolean>;
       bulkHigh?: boolean;
+      added?: {
+        colors?: Array<{ name?: string; hex?: string; role?: string }>;
+        assets?: Array<{ asset_type?: string; name_en?: string; name_ar?: string }>;
+      };
     } = {};
     try {
       decisions = JSON.parse(str(fd, "decisions") || "{}");
@@ -339,8 +344,49 @@ export async function createDraftBrand(
     const acceptedAssets = draft.assets.filter((_, i) => isAccepted("asset:" + i));
     const acceptedTimeline = draft.timeline.filter((_, i) => isAccepted("timeline:" + i));
 
-    if (acceptedColors.length < 1) fails.push("vColor");
-    if (acceptedAssets.length < 1) fails.push("vAsset");
+    // Operator-added items (manual completion of what the AI missed). Each is
+    // server-validated here: invalid rows are silently dropped so a malformed
+    // client payload can never insert bad data, while well-formed rows are kept.
+    const COLOR_ROLES = new Set(["primary", "secondary", "neutral", "accent"]);
+    const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+    const cap = (s: unknown, n: number): string =>
+      String(s ?? "").trim().slice(0, n);
+
+    const addedColors = (decisions.added?.colors ?? [])
+      .map((c) => ({
+        name: cap(c.name, 80),
+        hex: cap(c.hex, 7),
+        role: cap(c.role, 20).toLowerCase(),
+      }))
+      .filter(
+        (c) => c.name && HEX_RE.test(c.hex) && COLOR_ROLES.has(c.role)
+      )
+      .map((c) => ({
+        name: c.name,
+        hex: c.hex,
+        role: c.role,
+        confidence: 1,
+        source: "",
+      }));
+
+    const addedAssets = (decisions.added?.assets ?? [])
+      .map((a) => ({
+        asset_type: cap(a.asset_type, 40),
+        name_en: cap(a.name_en, 120),
+        name_ar: cap(a.name_ar, 120),
+      }))
+      .filter((a) => a.asset_type && (a.name_en || a.name_ar))
+      .map((a) => ({
+        asset_type: a.asset_type,
+        name_en: a.name_en || a.name_ar,
+        name_ar: a.name_ar || a.name_en,
+      }));
+
+    const allColors = [...acceptedColors, ...addedColors];
+    const allAssets = [...acceptedAssets, ...addedAssets];
+
+    if (allColors.length < 1) fails.push("vColor");
+    if (allAssets.length < 1) fails.push("vAsset");
     if (!summary_en?.trim() || !summary_ar?.trim()) fails.push("vOverview");
 
     if (fails.length > 0) {
@@ -386,8 +432,8 @@ export async function createDraftBrand(
         summary_en,
         summary_ar,
         primary_color:
-          acceptedColors.find((c) => c.role === "primary")?.hex ||
-          acceptedColors[0]?.hex ||
+          allColors.find((c) => c.role === "primary")?.hex ||
+          allColors[0]?.hex ||
           "#3B5BDB",
         claim_status: "unclaimed",
         publication_state, // asserted 'draft'
@@ -406,10 +452,10 @@ export async function createDraftBrand(
       return { ok: false, message: "error" };
     }
 
-    // Children: accepted colors / assets / timeline.
-    if (acceptedColors.length) {
+    // Children: accepted + operator-added colors / assets, accepted timeline.
+    if (allColors.length) {
       await supabase.from("brand_colors").insert(
-        acceptedColors.map((col, i) => ({
+        allColors.map((col, i) => ({
           brand_id: brand.id,
           name: col.name,
           hex: col.hex,
@@ -419,9 +465,9 @@ export async function createDraftBrand(
         }))
       );
     }
-    if (acceptedAssets.length) {
+    if (allAssets.length) {
       await supabase.from("brand_assets").insert(
-        acceptedAssets.map((a, i) => ({
+        allAssets.map((a, i) => ({
           brand_id: brand.id,
           asset_type: a.asset_type,
           name_en: a.name_en,
@@ -464,6 +510,8 @@ export async function createDraftBrand(
       accepted_colors: acceptedColors.length,
       accepted_assets: acceptedAssets.length,
       accepted_timeline: acceptedTimeline.length,
+      added_colors: addedColors.length,
+      added_assets: addedAssets.length,
       source: "ai",
     });
 

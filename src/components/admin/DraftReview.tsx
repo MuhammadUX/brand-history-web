@@ -140,6 +140,45 @@ export default function DraftReview({
   const [error, setError] = useState<string | null>(null);
   const [validation, setValidation] = useState<string[]>([]);
 
+  // Operator-added items (manual completion of what the AI missed). These are
+  // always included on create (accepted by default) and validated server-side.
+  type AddedColor = { name: string; hex: string; role: string };
+  type AddedAsset = { asset_type: string; name_en: string; name_ar: string };
+  const [addedColors, setAddedColors] = useState<AddedColor[]>([]);
+  const [addedAssets, setAddedAssets] = useState<AddedAsset[]>([]);
+
+  const COLOR_ROLES = ["primary", "secondary", "neutral", "accent"] as const;
+  const ASSET_TYPES = ["logo_primary", "secondary", "icon", "wordmark", "monochrome"] as const;
+  const roleLabel: Record<string, string> = {
+    primary: t.rolePrimary,
+    secondary: t.roleSecondary,
+    neutral: t.roleNeutral,
+    accent: t.roleAccent,
+  };
+
+  const addColorRow = () =>
+    setAddedColors((p) => [...p, { name: "", hex: "#000000", role: "primary" }]);
+  const updateColorRow = (i: number, patch: Partial<AddedColor>) =>
+    setAddedColors((p) => p.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  const removeColorRow = (i: number) =>
+    setAddedColors((p) => p.filter((_, idx) => idx !== i));
+
+  const addAssetRow = () =>
+    setAddedAssets((p) => [...p, { asset_type: "logo_primary", name_en: "", name_ar: "" }]);
+  const updateAssetRow = (i: number, patch: Partial<AddedAsset>) =>
+    setAddedAssets((p) => p.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
+  const removeAssetRow = (i: number) =>
+    setAddedAssets((p) => p.filter((_, idx) => idx !== i));
+
+  // A valid hex is #RRGGBB; an added color also needs a name + role.
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+  const validAddedColors = addedColors.filter(
+    (c) => c.name.trim() && HEX_RE.test(c.hex) && COLOR_ROLES.includes(c.role as typeof COLOR_ROLES[number]),
+  );
+  const validAddedAssets = addedAssets.filter(
+    (a) => a.asset_type.trim() && (a.name_en.trim() || a.name_ar.trim()),
+  );
+
   const setDecision = (key: string, d: Decision) =>
     setDecisions((p) => ({ ...p, [key]: p[key] === d ? "pending" : d }));
   const decisionOf = (key: string): Decision => decisions[key] ?? "pending";
@@ -164,8 +203,8 @@ export default function DraftReview({
   };
 
   // Live right-rail checklist (mirror of server validation).
-  const acceptedColorCount = colorKeys.filter(isAccepted).length;
-  const acceptedAssetCount = assetKeys.filter(isAccepted).length;
+  const acceptedColorCount = colorKeys.filter(isAccepted).length + validAddedColors.length;
+  const acceptedAssetCount = assetKeys.filter(isAccepted).length + validAddedAssets.length;
   const overviewOk =
     (isAccepted("overview") &&
       (!showEn || fields.overview_en.trim()) &&
@@ -194,6 +233,12 @@ export default function DraftReview({
       fields,
       accept,
       bulkHigh: false, // bulk choices are already materialised into `accept`
+      // Operator-added colors/assets. Server re-validates each (hex, role,
+      // asset_type, length caps) before inserting.
+      added: {
+        colors: validAddedColors,
+        assets: validAddedAssets,
+      },
     };
     const fd = new FormData();
     fd.set("decisions", JSON.stringify(payload));
@@ -400,6 +445,9 @@ export default function DraftReview({
               {t.blockColors}
             </h2>
             <div className="space-y-3">
+              {draft.colors.length === 0 && addedColors.length === 0 && (
+                <p className="text-[13px] text-muted">{t.colorsEmpty}</p>
+              )}
               {draft.colors.map((c, i) => {
                 const key = "color:" + i;
                 return (
@@ -412,10 +460,66 @@ export default function DraftReview({
                       />
                       <span className="font-medium text-ink">{c.name}</span>
                       <span className="text-[12px] text-muted">{c.hex}</span>
+                      {c.role && (
+                        <span className="text-[12px] text-muted">· {roleLabel[c.role] ?? c.role}</span>
+                      )}
                     </div>
                   </AIReviewBlock>
                 );
               })}
+
+              {/* Operator-added color rows (accepted by default on create). */}
+              {addedColors.map((c, i) => (
+                <div
+                  key={"added-color-" + i}
+                  className="flex flex-wrap items-end gap-2 rounded-md border border-line bg-surface-2 px-3 py-2"
+                >
+                  <span
+                    className="h-9 w-9 shrink-0 rounded border border-line"
+                    style={{ backgroundColor: HEX_RE.test(c.hex) ? c.hex : "transparent" }}
+                    aria-hidden
+                  />
+                  <label className="block flex-1 min-w-[120px]">
+                    <span className="mb-1 block text-[12px] text-muted">{t.colorName}</span>
+                    <Input
+                      value={c.name}
+                      onChange={(e) => updateColorRow(i, { name: e.target.value })}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[12px] text-muted">{t.colorHex}</span>
+                    <Input
+                      type="color"
+                      className="h-9 w-14 p-1"
+                      value={HEX_RE.test(c.hex) ? c.hex : "#000000"}
+                      onChange={(e) => updateColorRow(i, { hex: e.target.value })}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[12px] text-muted">{t.colorRole}</span>
+                    <Select
+                      value={c.role}
+                      onChange={(e) => updateColorRow(i, { role: e.target.value })}
+                    >
+                      {COLOR_ROLES.map((r) => (
+                        <option key={r} value={r}>{roleLabel[r]}</option>
+                      ))}
+                    </Select>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeColorRow(i)}
+                  >
+                    {t.removeRow}
+                  </Button>
+                </div>
+              ))}
+
+              <Button type="button" variant="ghost" size="sm" onClick={addColorRow}>
+                {"+ " + t.addColor}
+              </Button>
             </div>
           </Card>
 
@@ -425,6 +529,9 @@ export default function DraftReview({
               {t.blockAssets}
             </h2>
             <div className="space-y-3">
+              {draft.assets.length === 0 && addedAssets.length === 0 && (
+                <p className="text-[13px] text-muted">{t.assetsEmpty}</p>
+              )}
               {draft.assets.map((a, i) => {
                 const key = "asset:" + i;
                 return (
@@ -436,6 +543,57 @@ export default function DraftReview({
                   </AIReviewBlock>
                 );
               })}
+
+              {/* Operator-added asset rows (included on create). */}
+              {addedAssets.map((a, i) => (
+                <div
+                  key={"added-asset-" + i}
+                  className="flex flex-wrap items-end gap-2 rounded-md border border-line bg-surface-2 px-3 py-2"
+                >
+                  <label className="block">
+                    <span className="mb-1 block text-[12px] text-muted">{t.assetType}</span>
+                    <Select
+                      value={a.asset_type}
+                      onChange={(e) => updateAssetRow(i, { asset_type: e.target.value })}
+                    >
+                      {ASSET_TYPES.map((ty) => (
+                        <option key={ty} value={ty}>{ty}</option>
+                      ))}
+                    </Select>
+                  </label>
+                  {showEn && (
+                    <label className="block flex-1 min-w-[120px]">
+                      <span className="mb-1 block text-[12px] text-muted">{t.assetNameEn}</span>
+                      <Input
+                        value={a.name_en}
+                        onChange={(e) => updateAssetRow(i, { name_en: e.target.value })}
+                      />
+                    </label>
+                  )}
+                  {showAr && (
+                    <label className="block flex-1 min-w-[120px]" dir="rtl">
+                      <span className="mb-1 block text-[12px] text-muted">{t.assetNameAr}</span>
+                      <Input
+                        value={a.name_ar}
+                        onChange={(e) => updateAssetRow(i, { name_ar: e.target.value })}
+                      />
+                    </label>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAssetRow(i)}
+                  >
+                    {t.removeRow}
+                  </Button>
+                </div>
+              ))}
+
+              <Button type="button" variant="ghost" size="sm" onClick={addAssetRow}>
+                {"+ " + t.addAsset}
+              </Button>
+              <p className="text-[12px] text-muted">{t.assetUploadNote}</p>
             </div>
           </Card>
 
