@@ -90,11 +90,16 @@ export async function runDraftWorker(runId: string): Promise<void> {
   } catch (e) {
     console.error("[ai-builder/worker] provider error:", e);
     const error_code = classifyAiError(e);
+    const error_detail = (e instanceof Error ? e.message : String(e)).slice(
+      0,
+      4000
+    );
     await admin
       .from("profile_builder_runs")
       .update({
         status: "failed",
         error_code,
+        error_detail,
         updated_at: new Date().toISOString(),
       })
       .eq("id", run.id)

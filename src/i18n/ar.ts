@@ -705,6 +705,7 @@ const ar: Dictionary = {
       discarded: "تم إلغاء هذه العملية.",
       failedTitle: "تعذّر إنشاء مسودة لـ",
       tryAgain: "العودة إلى منشئ الذكاء الاصطناعي",
+      technicalDetails: "تفاصيل تقنية (ما الذي أعاده الذكاء الاصطناعي)",
       deleteRun: "حذف",
       deleteRunConfirm: "حذف هذه العملية؟ لا يمكن التراجع.",
       deleteAll: "حذف كل المسودات",

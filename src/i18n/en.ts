@@ -706,6 +706,7 @@ const en = {
       discarded: "This run was discarded.",
       failedTitle: "Couldn't build a draft for",
       tryAgain: "Back to AI builder",
+      technicalDetails: "Technical details (what the AI returned)",
       deleteRun: "Delete",
       deleteRunConfirm: "Delete this run? This can't be undone.",
       deleteAll: "Delete all drafts",

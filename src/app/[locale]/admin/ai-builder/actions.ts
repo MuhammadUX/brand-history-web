@@ -107,6 +107,7 @@ export async function startRun(locale: string, fd: FormData): Promise<void> {
       .update({
         status: "failed",
         error_code: classifyAiError(e),
+        error_detail: (e instanceof Error ? e.message : String(e)).slice(0, 4000),
         updated_at: new Date().toISOString(),
       })
       .eq("id", run.id)

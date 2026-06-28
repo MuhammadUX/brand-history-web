@@ -34,7 +34,7 @@ export default async function AiBuilderRun({
   const supabase = await createServerSupabase();
   const { data: run } = await supabase
     .from("profile_builder_runs")
-    .select("id, input_name, status, draft, brand_id, languages, hints, error_code")
+    .select("id, input_name, status, draft, brand_id, languages, hints, error_code, error_detail")
     .eq("id", runId)
     .maybeSingle();
 
@@ -95,9 +95,10 @@ export default async function AiBuilderRun({
     const errors = t.errors as unknown as Record<string, string>;
     const code = (run.error_code as string | null) || "unknown";
     const reason = errors?.[code] || errors?.unknown || t.noDraft;
+    const detail = (run.error_detail as string | null) || null;
     return (
       <AdminShell locale={typedLocale} operator={access.operator} active="ai-builder">
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto max-w-xl">
           <StateBlock
             state="error"
             icon="⚠"
@@ -109,6 +110,16 @@ export default async function AiBuilderRun({
               </Button>
             }
           />
+          {detail && (
+            <details className="mt-4 rounded-lg border border-line bg-surface-2 p-3 text-start">
+              <summary className="cursor-pointer text-[13px] font-semibold text-muted">
+                {t.technicalDetails}
+              </summary>
+              <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[12px] text-ink">
+                {detail}
+              </pre>
+            </details>
+          )}
         </div>
       </AdminShell>
     );

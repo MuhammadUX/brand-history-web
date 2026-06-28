@@ -40,7 +40,15 @@ export class GeminiLlmProvider implements LlmProvider {
       systemInstruction: { parts: [{ text: buildSystemPrompt(sectors) }] },
       contents: [{ role: "user", parts: [{ text: buildUserPrompt(input) }] }],
       tools: [{ google_search: {} }, { url_context: {} }],
-      generationConfig: { temperature: 0.2 },
+      generationConfig: {
+        temperature: 0.2,
+        // gemini-2.5-flash enables "thinking" by default, which consumes the
+        // output-token budget and was leaving the JSON truncated (finishReason
+        // MAX_TOKENS) -> unparseable. Disable thinking and give the answer plenty
+        // of room so the full JSON comes back intact.
+        thinkingConfig: { thinkingBudget: 0 },
+        maxOutputTokens: 8192,
+      },
     };
 
     // Retry transient overload (503) / rate-limit (429) a couple of times with
@@ -69,14 +77,27 @@ export class GeminiLlmProvider implements LlmProvider {
     }
 
     const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      candidates?: Array<{
+        finishReason?: string;
+        content?: { parts?: Array<{ text?: string }> };
+      }>;
     };
+    const finishReason = data.candidates?.[0]?.finishReason ?? "UNKNOWN";
     const raw =
       data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") ??
       "";
 
     const parsed = extractJson(raw);
-    if (!parsed) throw new Error("gemini_unparseable_response");
+    if (!parsed) {
+      // Surface enough detail for the operator/logs to see WHY it couldn't parse
+      // (e.g. finishReason=MAX_TOKENS truncation, or non-JSON text).
+      const snippet = raw.slice(0, 1500);
+      throw new Error(
+        `gemini_unparseable_response (finishReason=${finishReason}): ${
+          snippet || "(empty response)"
+        }`
+      );
+    }
 
     return buildDraft(parsed, { url, sectors });
   }

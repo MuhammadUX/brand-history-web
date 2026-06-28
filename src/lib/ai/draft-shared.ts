@@ -111,6 +111,7 @@ Return ONLY a single JSON object (no markdown, no code fences, no commentary) wi
 Rules:
 - Sector: pick the brand's best-fitting sector. PREFER a slug from this allowed list: [${sectors.join(", ") || "none"}]. If one fits, set sector_slug to it and set sector_new to null. If NOTHING in the list fits, set sector_slug to null AND propose sector_new = { slug (lowercase, hyphenated, e.g. "real-estate"), name_en, name_ar }. Never both — when sector_slug is set, sector_new must be null.
 - Colors: Enumerate EVERY swatch in the brand's palette individually (all primaries AND all secondaries/neutrals/accents) — do not return only the main color. For each color provide its name, role (one of: primary, secondary, neutral, accent), and exact hex. If a brand-guidelines URL is given, READ it fully and list ALL named colors in it. NEVER invent a hex; if you are unsure of an exact value, lower that color's confidence.
+- Sources: every source/field_sources value MUST be a short bare domain only (e.g. "stc.com", "wikipedia.org") — NEVER a full URL, query string, or search/redirect link. Keep the whole JSON compact.
 - All confidence values are 0..1. hex like #RRGGBB.
 - timeline change_kind MUST be one of: founding, logo, wordmark, color, refresh, rebrand, rename, identity; if you find no genuine identity events, return an empty timeline.
 - If nothing can be verified, set found=false and leave text fields empty.`;
